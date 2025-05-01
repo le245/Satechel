@@ -1,0 +1,539 @@
+<%- include("../../views/partials/admin/header") %>
+     <style>
+     
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin-left: var(--sidebar-width);
+            margin-top: 0;
+            padding: 0;
+            background-color: #f8f9fc;
+        }
+        .content-main {
+            padding: 2rem;
+        }
+        .card {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 0.15rem 1.75rem rgba(0, 0, 0, 0.05);
+        }
+        .card-header {
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e3e6f0;
+            margin-bottom: 1rem;
+        }
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border-radius: 0.25rem;
+            border: 1px solid #d1d3e2;
+            background-color: white;
+            color: #6e707e;
+            transition: border-color 0.15s ease-in-out;
+        }
+        .form-control:focus {
+            border-color: #bac8f3;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+        }
+        .form-label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 0.25rem;
+            border: 1px solid #d1d3e2;
+            background-color: white;
+            color: #6e707e;
+        }
+        .btn {
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.25rem;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background-color: var(--fluorescent-blue);
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #1a0699;
+        }
+        .btn-secondary {
+            background-color: #858796;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #717384;
+        }
+        .error-message {
+            color: #e74a3b;
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+        .thumbnails-container {
+            display: flex;
+            overflow-x: auto;
+            padding: 10px 0;
+            gap: 10px;
+        }
+        .thumbnail {
+            position: relative;
+            flex: 0 0 auto;
+        }
+        .thumbnail img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid #d1d3e2;
+        }
+        .remove-icon {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #e74a3b;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            text-align: center;
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 20px;
+        }
+        .image-cropper {
+            margin: 20px 0;
+            max-width: 100%;
+            display: none;
+        }
+        .cropper-container {
+            margin-bottom: 15px;
+        }
+        .color-variant {
+            background-color: #f8f9fc;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            border: 1px solid #d1d3e2;
+            position: relative;
+        }
+        .remove-variant {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: #e74a3b;
+            cursor: pointer;
+        }
+        .add-variant-btn {
+            background-color: #4e73df;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .add-variant-btn:hover {
+            background-color: #2e59d9;
+        }
+     
+    </style>
+</head>
+<body>
+  
+    <section class="content-main">
+        <div class="content-header">
+            <h2 class="content-title">Add New Bag</h2>
+            <p>Create a new bag product with color variants</p>
+        </div>
+
+        <form id="productForm" method="POST" action="/admin/addProducts" enctype="multipart/form-data">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="mb-4">
+                        <label for="product_name" class="form-label">Bag Name</label>
+                        <input type="text" placeholder="Enter bag name" name="productName" class="form-control" id="product_name">
+                        <div id="productName-error" class="error-message"></div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">Description</label>
+                        <textarea placeholder="Describe the bag features, materials, etc." name="description" class="form-control" rows="4" id="descriptionid"></textarea>
+                        <div id="description-error" class="error-message"></div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="mb-4">
+                                <label class="form-label">Regular Price ($)</label>
+                                <input placeholder="99.99" name="regularPrice" type="text" class="form-control" id="regularPrice">
+                                <div id="regularPrice-error" class="error-message"></div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="mb-4">
+                                <label class="form-label">Sale Price ($)</label>
+                                <input placeholder="79.99" name="salePrice" type="text" class="form-control" id="salePrice">
+                                <div id="salePrice-error" class="error-message"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4>Color Variants</h4>
+                </div>
+                <div class="card-body">
+                    <div id="variantsContainer">
+                     
+                        <div class="color-variant">
+                            <span class="remove-variant"><i class="fas fa-times"></i></span>
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Color</label>
+                                        <input type="text" name="colors[]" placeholder="e.g. Black, Blue, Red" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Quantity</label>
+                                        <input type="number" name="quantities[]" placeholder="Available stock" class="form-control" min="0">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="button" id="addVariantBtn" class="add-variant-btn">
+                        <i class="fas fa-plus"></i> Add Another Color Variant
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4>Category</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <label class="form-label">Bag Category</label>
+                            <select class="form-select" name="category" id="categorySelect">
+                                <% for(let i = 0; i < cat.length; i++) { %>
+                                    <option value="<%= cat[i].name %>" data-offer="<%= cat[i].categoryOffer || 0 %>"><%= cat[i].name %></option>
+                                <% } %>
+                            </select>
+                            <div id="category-error" class="error-message"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4>Product Images</h4>
+                </div>
+                <div class="card-body">
+                    <p>Upload at least 3 high-quality images of the bag from different angles</p>
+                    <div id="addedImagesContainer" class="thumbnails-container"></div>
+                    
+                    <input
+                    class="form-control"
+                    type="file"
+                    name="productImages"
+                    id="productImagesInput"
+                    accept="image/png, image/jpeg, image/jpg"
+                    multiple
+                    onchange="handleImageUpload(event)"
+                />
+                    <div id="images-error" class="error-message"></div>
+                    
+                    <div id="cropperContainer" class="image-cropper">
+                        <div class="cropper-container">
+                            <img id="imageToCrop" src="" alt="Image to crop">
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <button type="button" id="cropButton" class="btn btn-primary">Crop & Add</button>
+                            <button type="button" id="cancelCrop" class="btn btn-secondary">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-end">
+                <button class="btn btn-primary" type="submit">
+                    <i class="fas fa-save"></i> Save Product
+                </button>
+            </div>
+        </form>
+    </section>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+    <script>
+        let cropper;
+        const croppedImages = new Map();
+        const imageInput = document.getElementById("imageInput");
+        const cropperContainer = document.getElementById("cropperContainer");
+        const imageToCrop = document.getElementById("imageToCrop");
+        const cropButton = document.getElementById("cropButton");
+        const cancelCrop = document.getElementById("cancelCrop");
+        const addedImagesContainer = document.getElementById("addedImagesContainer");
+        const productForm = document.getElementById("productForm");
+        const regularPriceInput = document.getElementById("regularPrice");
+        const salePriceInput = document.getElementById("salePrice");
+        const categorySelect = document.getElementById("categorySelect");
+        const addVariantBtn = document.getElementById("addVariantBtn");
+        const variantsContainer = document.getElementById("variantsContainer");
+
+        // Handle image selection
+        imageInput.addEventListener("change", (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imageToCrop.src = e.target.result;
+                    cropperContainer.style.display = "block";
+
+                    if (cropper) cropper.destroy();
+                    cropper = new Cropper(imageToCrop, {
+                        aspectRatio: 1,
+                        viewMode: 1,
+                        autoCropArea: 0.8,
+                        responsive: true,
+                        background: false,
+                        zoomable: true,
+                        guides: true,
+                    });
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Crop and add image
+        cropButton.addEventListener("click", () => {
+            if (cropper) {
+                const canvas = cropper.getCroppedCanvas({
+                    width: 600,
+                    height: 600,
+                });
+
+                canvas.toBlob(
+                    (blob) => {
+                        const fileName = `bag-${Date.now()}.jpeg`;
+                        const file = new File([blob], fileName, { type: "image/jpeg" });
+
+                        croppedImages.set(fileName, file);
+                        addThumbnail(file);
+
+                        cropper.destroy();
+                        cropperContainer.style.display = "none";
+                        imageInput.value = "";
+                    },
+                    "image/jpeg",
+                    0.95
+                );
+            }
+        });
+
+        // Cancel cropping
+        cancelCrop.addEventListener("click", () => {
+            if (cropper) cropper.destroy();
+            cropperContainer.style.display = "none";
+            imageInput.value = "";
+        });
+
+        // Add thumbnail preview
+        function addThumbnail(file) {
+            const thumbnail = document.createElement("div");
+            thumbnail.classList.add("thumbnail");
+            thumbnail.dataset.filename = file.name;
+
+            const img = document.createElement("img");
+            img.src = URL.createObjectURL(file);
+
+            const removeIcon = document.createElement("span");
+            removeIcon.classList.add("remove-icon");
+            removeIcon.innerHTML = "×";
+            removeIcon.onclick = () => {
+                thumbnail.remove();
+                croppedImages.delete(file.name);
+            };
+
+            thumbnail.appendChild(img);
+            thumbnail.appendChild(removeIcon);
+            addedImagesContainer.appendChild(thumbnail);
+        }
+
+        // Add color variant
+        addVariantBtn.addEventListener("click", () => {
+            const variantDiv = document.createElement("div");
+            variantDiv.classList.add("color-variant");
+            variantDiv.innerHTML = `
+                <span class="remove-variant"><i class="fas fa-times"></i></span>
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="mb-3">
+                            <label class="form-label">Color</label>
+                            <input type="text" name="colors[]" placeholder="e.g. Black, Blue, Red" class="form-control">
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="mb-3">
+                            <label class="form-label">Quantity</label>
+                            <input type="number" name="quantities[]" placeholder="Available stock" class="form-control" min="0">
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            variantsContainer.appendChild(variantDiv);
+            
+            // Add event listener to remove button
+            const removeBtn = variantDiv.querySelector('.remove-variant');
+            removeBtn.addEventListener('click', () => {
+                variantDiv.remove();
+            });
+        });
+
+        // Add event listeners to existing remove buttons
+        document.querySelectorAll('.remove-variant').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (document.querySelectorAll('.color-variant').length > 1) {
+                    btn.closest('.color-variant').remove();
+                } else {
+                    alert("You must have at least one color variant.");
+                }
+            });
+        });
+
+        // Form validation
+        function validateForm() {
+            clearErrorMessages();
+            const name = document.getElementById("product_name").value;
+            const description = document.getElementById("descriptionid").value;
+            const regularPrice = regularPriceInput.value;
+            const category = categorySelect.value;
+            const colorInputs = document.querySelectorAll('input[name="colors[]"]');
+            const quantityInputs = document.querySelectorAll('input[name="quantities[]"]');
+            
+            let isValid = true;
+
+            if (name.trim() === "") {
+                displayErrorMessage("productName-error", "Please enter a bag name.");
+                isValid = false;
+            }
+
+            if (description.trim() === "") {
+                displayErrorMessage("description-error", "Please enter a product description.");
+                isValid = false;
+            }
+
+            if (!/^\d+(\.\d{1,2})?$/.test(regularPrice) || parseFloat(regularPrice) <= 0) {
+                displayErrorMessage("regularPrice-error", "Please enter a valid positive price (e.g., 99.99).");
+                isValid = false;
+            }
+
+            if (category.trim() === "") {
+                displayErrorMessage("category-error", "Please select a category.");
+                isValid = false;
+            }
+
+            if (croppedImages.size < 3) {
+                displayErrorMessage("images-error", "Please upload and crop at least 3 images.");
+                isValid = false;
+            }
+
+            // Validate color variants
+            let hasValidVariant = false;
+            for (let i = 0; i < colorInputs.length; i++) {
+                if (colorInputs[i].value.trim() !== "" && 
+                    quantityInputs[i].value.trim() !== "" && 
+                    parseInt(quantityInputs[i].value) >= 0) {
+                    hasValidVariant = true;
+                }
+            }
+
+            if (!hasValidVariant) {
+                alert("Please add at least one valid color variant with quantity.");
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        function displayErrorMessage(elementId, message) {
+            const errorElement = document.getElementById(elementId);
+            errorElement.innerText = message;
+            errorElement.style.display = "block";
+        }
+
+        function clearErrorMessages() {
+            const errorElements = document.getElementsByClassName("error-message");
+            Array.from(errorElements).forEach((element) => {
+                element.innerText = "";
+                element.style.display = "none";
+            });
+        }
+
+        productForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            if (validateForm()) {
+                const formData = new FormData(productForm);
+
+                croppedImages.forEach((file, fileName) => {
+                    formData.append("images", file, fileName);
+                });
+
+                try {
+                    const response = await fetch("/admin/addProducts", {
+                        method: "POST",
+                        body: formData,
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        await Swal.fire({
+                            icon: "success",
+                            title: "Success!",
+                            text: "Bag product added successfully",
+                            showConfirmButton: true,
+                            confirmButtonColor: "#3085d6",
+                            timer: 2000,
+                        });
+                        window.location.href = "/admin/products";
+                    } else {
+                        await Swal.fire({
+                            icon: "error",
+                            title: "Error",
+                            text: data.message || "Error adding product",
+                            confirmButtonColor: "#d33",
+                        });
+                    }
+                } catch (error) {
+                    console.error("Submission error:", error);
+                    await Swal.fire({
+                        icon: "error",
+                        title: "Server Error",
+                        text: "An unexpected error occurred",
+                        confirmButtonColor: "#d33",
+                    });
+                }
+            }
+        });
+    </script>
+    <%- include("../../views/partials/admin/footer") %>
+</body>
+</html>

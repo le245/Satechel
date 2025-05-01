@@ -1,0 +1,338 @@
+<%- include("../../views/partials/admin/header") %>
+
+<div class="container">
+    <div class="header">
+        <div class="title">Categories</div>
+        <button class="add-button" id="add-category-btn"><span class="plus-icon">+</span> Add Category</button>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-container">
+        <form action="/admin/category" method="GET" class="search-form">
+            <input type="text" id="search-input" name="search" placeholder="Search categories..." value="<%= search %>">
+            <button type="submit" id="search-btn" class="btn btn-primary">Search</button>
+            <a href="/admin/category" class="btn btn-secondary" id="clear-search-btn">Clear</a>
+        </form>
+    </div>
+
+    <!-- Categories Table -->
+    <div class="table-container">
+        <table class="categories-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Created At</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="categories-table-body">
+                <% if (cat && cat.length > 0) { %>
+                    <% cat.forEach(category => { %>
+                        <tr>
+                            <td><%= category._id %></td>
+                            <td><%= category.name %></td>
+                            <td><%= category.description %></td>
+                            <td><%= new Date(category.createdAt).toLocaleDateString() %></td>
+                            <td>
+                                <span class="badge <%= category.isListed ? 'badge-success' : 'badge-danger' %>">
+                                    <%= category.isListed ? 'Listed' : 'Unlisted' %>
+                                </span>
+                            </td>
+                            <td class="actions">
+                                <a href="/admin/editCategory?id=<%= category._id %>" class="btn btn-secondary btn-sm">Edit</a>
+                                <% if(category.isListed) { %>
+                                    <a href="/admin/listCategory?id=<%= category._id %>" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to unlist this category?')">Unlist</a>
+                                <% } else { %>
+                                    <a href="/admin/unlistCategory?id=<%= category._id %>" class="btn btn-success btn-sm">List</a>
+                                <% } %>
+                            </td>
+                        </tr>
+                    <% }); %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="6" style="text-align: center">No categories found</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" id="pagination">
+        <% if (totalPages > 1) { %>
+            <% if (currentPage > 1) { %>
+                <a href="/admin/category?page=<%= currentPage - 1 %><%= search ? '&search=' + search : '' %>" class="page-link">&laquo; Previous</a>
+            <% } %>
+            
+            <% for(let i = 1; i <= totalPages; i++) { %>
+                <a href="/admin/category?page=<%= i %><%= search ? '&search=' + search : '' %>" class="page-link <%= i === currentPage ? 'active' : '' %>"><%= i %></a>
+            <% } %>
+            
+            <% if (currentPage < totalPages) { %>
+                <a href="/admin/category?page=<%= currentPage + 1 %><%= search ? '&search=' + search : '' %>" class="page-link">Next &raquo;</a>
+            <% } %>
+        <% } %>
+    </div>
+
+    <!-- Add/Edit Category Modal -->
+    <div id="category-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Add Category</h3>
+                <span class="close">&times;</span>
+            </div>
+            <form id="category-form" action="/admin/addCategory" method="POST">
+                <input type="hidden" id="category-id" name="categoryId">
+                <div class="form-group">
+                    <label for="category-name">Category Name</label>
+                    <input type="text" id="category-name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="category-description">Description</label>
+                    <textarea id="category-description" name="description"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary close-btn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+    }
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 20px;
+        background-color: #f5f5f5;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+    .title {
+        font-size: 24px;
+        font-weight: bold;
+        color: #333;
+    }
+    .add-button {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+    }
+    .add-button:hover {
+        background-color: #45a049;
+    }
+    .plus-icon {
+        margin-right: 5px;
+        font-size: 18px;
+    }
+    .search-container {
+        margin-bottom: 20px;
+    }
+    .search-form {
+        display: flex;
+        gap: 10px;
+    }
+    #search-input {
+        flex: 1;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+    .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 500;
+    }
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+    }
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+    .btn-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+    .btn-success {
+        background-color: #28a745;
+        color: white;
+    }
+    .btn-sm {
+        padding: 4px 8px;
+        font-size: 14px;
+    }
+    .table-container {
+        overflow-x: auto;
+    }
+    .categories-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+    .categories-table th, .categories-table td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    .categories-table th {
+        background-color: #f5f5f5;
+        font-weight: bold;
+    }
+    .badge {
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+    .badge-success {
+        background-color: #28a745;
+        color: white;
+    }
+    .badge-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+    .actions {
+        display: flex;
+        gap: 5px;
+    }
+    .actions a {
+        text-decoration: none;
+    }
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 5px;
+        margin-top: 20px;
+    }
+    .page-link {
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        text-decoration: none;
+        color: #007bff;
+    }
+    .page-link.active {
+        background-color: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+    }
+    .modal-content {
+        background-color: white;
+        padding: 30px;
+        border-radius: 8px;
+        width: 400px;
+        max-width: 90%;
+    }
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    .modal-header h3 {
+        font-size: 20px;
+        margin: 0;
+    }
+    .close {
+        font-size: 24px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    .form-group {
+        margin-bottom: 15px;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+    }
+    .form-group input, .form-group textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+    .form-group textarea {
+        height: 100px;
+        resize: vertical;
+    }
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+    }
+</style>
+
+<script>
+    const addCategoryBtn = document.getElementById('add-category-btn');
+    const categoryModal = document.getElementById('category-modal');
+    const categoryForm = document.getElementById('category-form');
+    const modalTitle = document.getElementById('modal-title');
+    const categoryIdInput = document.getElementById('category-id');
+    const categoryNameInput = document.getElementById('category-name');
+    const categoryDescriptionInput = document.getElementById('category-description');
+
+    // Open modal when Add Category button is clicked
+    addCategoryBtn.addEventListener('click', () => {
+        modalTitle.textContent = 'Add Category';
+        categoryIdInput.value = '';
+        categoryNameInput.value = '';
+        categoryDescriptionInput.value = '';
+        categoryModal.style.display = 'flex';
+    });
+
+    // Close modal when Close or Cancel button is clicked
+    const closeButtons = document.querySelectorAll('.close, .close-btn');
+    closeButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            categoryModal.style.display = 'none';
+        });
+    });
+
+    // Close modal when clicking outside
+    window.addEventListener('click', (event) => {
+        if (event.target === categoryModal) {
+            categoryModal.style.display = 'none';
+        }
+    });
+</script>
+
+<%- include("../../views/partials/admin/footer") %>
