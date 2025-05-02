@@ -3,6 +3,7 @@ const router = express.Router();
 const passport = require("passport");
 const userController = require("../controllers/users/userController");
 const profileController=require("../controllers/users/profileController")
+const productController=require("../controllers/users/productController")
 
 router.get("/pageNotFound", userController.pageNotFound);
 router.get("/home", userController.loadHomepage);
@@ -22,6 +23,8 @@ router.post("/login",userController.login)
 //home &shop
 router.get('/home',userController.loadHomepage)
 router.get("/logout",userController.logout)
+router.get("/shop",userController.getShop)
+router.get("/product-details/:id",productController.getProductDetailPage)
 
 //profile
 router.get("/forgot-password",profileController.getForgotPassPage)

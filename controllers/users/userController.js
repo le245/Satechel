@@ -28,7 +28,7 @@ const loadHomepage = async (req, res) => {
         }else{
               return res.render('home',{user:userData})  
         }
-        console.log('user data',userData)
+        // console.log('user data',userData)
     } catch (error) {
         console.log("Home page not loading :",error)
         res.status(500).send('Server Error')
@@ -270,6 +270,30 @@ const logout=  async(req,res)=>{
     }
 
 }
+const getShop = async(req,res)=>{
+    try {
+        const email = req.session.userEmail 
+        
+        if(!email){
+       
+            return res.redirect('/home')
+        }
+        // const category=await Category.find({isListed:true})   
+
+        const products=await Product.find({isBlocked : false})
+    .populate('category')
+    .exec();
+    
+ 
+            let userData= await User.findOne({email:email})
+            res.render("shop",{user:userData,products})
+
+        
+    } catch (error) {
+        console.error('Error get shop:', error.message);
+        return res.status(500).json({ success: false, message: 'An error occurred' });
+    }
+}
 
 module.exports = {
     loadHomepage,
@@ -282,5 +306,6 @@ module.exports = {
     resendOtp,
     loadlogin,
     login,
-    logout
+    logout,
+    getShop
 };

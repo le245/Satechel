@@ -16,7 +16,18 @@
         body {
             background-color: #ffffff;
             color: #333333;
+        }
+
+        .content {
+            margin-left: var(--sidebar-width, 250px);
             padding: 20px;
+            transition: margin-left 0.3s ease;
+            background-color: #ffffff;
+            min-height: 100vh;
+        }
+
+        .sidebar.collapsed ~ .content {
+            margin-left: var(--sidebar-collapsed-width, 60px);
         }
 
         .content-header {
@@ -55,7 +66,7 @@
             border: 1px solid #ddd;
             border-radius: 5px;
             font-size: 14px;
-            transition: border-color 0.3s;
+            transition: border-color 0.3s, box-shadow 0.3s;
         }
 
         .form-control:focus {
@@ -90,7 +101,7 @@
         }
 
         .btn-primary:hover {
-            background-color: #142054;
+            background-color: #b21f1f;
         }
 
         .btn-danger {
@@ -109,18 +120,20 @@
         }
 
         .image-preview {
-            width: 100%;
-            max-height: 200px;
             display: flex;
-            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
             margin-bottom: 15px;
             border: 1px dashed #ddd;
             padding: 10px;
+            background-color: #f8f9fa;
         }
 
         .image-preview img {
-            max-height: 180px;
-            max-width: 100%;
+            max-height: 100px;
+            max-width: 100px;
+            object-fit: cover;
+            border-radius: 5px;
         }
 
         .select-control {
@@ -130,12 +143,13 @@
             border-radius: 5px;
             font-size: 14px;
             background-color: white;
-            transition: border-color 0.3s;
+            transition: border-color 0.3s, box-shadow 0.3s;
         }
-        
+
         .select-control:focus {
             border-color: #1a2a6c;
             outline: none;
+            box-shadow: 0 0 0 2px rgba(26, 42, 108, 0.2);
         }
 
         .checkbox-group {
@@ -165,7 +179,7 @@
         }
 
         .file-input-label:hover {
-            background-color: #142054;
+            background-color: #b21f1f;
         }
 
         .file-input {
@@ -181,6 +195,7 @@
         .file-name {
             margin-left: 10px;
             font-size: 14px;
+            color: #333;
         }
 
         .back-link {
@@ -190,12 +205,17 @@
             color: #1a2a6c;
             font-weight: 600;
             margin-bottom: 20px;
+            transition: color 0.3s;
+        }
+
+        .back-link:hover {
+            color: #b21f1f;
         }
 
         .back-link i {
             margin-right: 8px;
         }
-        
+
         .textarea-control {
             width: 100%;
             padding: 12px 15px;
@@ -205,117 +225,152 @@
             min-height: 120px;
             resize: vertical;
             font-family: Arial, sans-serif;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .textarea-control:focus {
+            border-color: #1a2a6c;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(26, 42, 108, 0.2);
         }
 
         @media (max-width: 768px) {
+            .content {
+                margin-left: var(--sidebar-collapsed-width, 60px);
+                padding: 10px;
+            }
+
             .form-row {
                 flex-direction: column;
                 gap: 0;
             }
-            
+
             .edit-form-container {
                 padding: 20px;
+            }
+
+            .btn {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .content {
+                margin-left: 0;
+            }
+
+            .edit-form-container {
+                padding: 15px;
+            }
+
+            .image-preview img {
+                max-height: 80px;
+                max-width: 80px;
             }
         }
     </style>
 </head>
 <body>
+<%- include("../../views/partials/admin/header") %>
 
-<div class="edit-form-container">
-    <a href="/admin/products" class="back-link">
-        <i class="fas fa-arrow-left"></i> Back to Products
-    </a>
-    
-    <div class="content-header">
-        <h2 class="content-title">Edit Product</h2>
+<div class="content">
+    <div class="edit-form-container">
+        <a href="/admin/products" class="back-link">
+            <i class="fas fa-arrow-left"></i> Back to Products
+        </a>
+        
+        <div class="content-header">
+            <h2 class="content-title">Edit Product</h2>
+        </div>
+        
+        <form action="/admin/updateProduct" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="productId" value="<%= product._id %>">
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="productName">Product Name</label>
+                    <input type="text" class="form-control" id="productName" name="productName" value="<%= product.productName %>" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <select class="select-control" id="category" name="category" required>
+                        <option value="">Select Category</option>
+                        <% categories.forEach(category => { %>
+                            <option value="<%= category._id %>" <%= product.category && product.category._id.toString() === category._id.toString() ? 'selected' : '' %>><%= category.name %></option>
+                        <% }); %>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="salePrice">Sale Price</label>
+                    <input type="number" step="0.01" class="form-control" id="salePrice" name="salePrice" value="<%= product.salePrice %>" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="offerPrice">Offer Price</label>
+                    <input type="number" step="0.01" class="form-control" id="offerPrice" name="offerPrice" value="<%= product.offerPrice || '' %>">
+                </div>
+                
+                <div class="form-group">
+                    <label for="quantity">Quantity</label>
+                    <input type="number" class="form-control" id="quantity" name="quantity" value="<%= product.quantity %>" required>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea class="textarea-control" id="description" name="description" rows="4"><%= product.description %></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>Current Images</label>
+                <div class="image-preview">
+                    <% if (product.images && product.images.length > 0) { %>
+                        <% product.images.forEach(image => { %>
+                            <img src="/Uploads/products/<%= image %>" alt="Product Image">
+                        <% }); %>
+                    <% } else { %>
+                        <p>No images available</p>
+                    <% } %>
+                </div>
+                
+                <div class="file-input-group">
+                    <label class="file-input-label">
+                        Choose New Images
+                        <input type="file" class="file-input" name="images" multiple accept="image/*">
+                    </label>
+                    <span class="file-name"></span>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="featured" name="featured" <%= product.featured ? 'checked' : '' %>>
+                    <label for="featured">Featured Product</label>
+                </div>
+            </div>
+            
+            <div class="form-buttons">
+                <button type="submit" class="btn btn-primary">Update Product</button>
+                <a href="/admin/products" class="btn btn-danger">Cancel</a>
+            </div>
+        </form>
     </div>
-    
-    <form action="/admin/updateProduct" method="POST" enctype="multipart/form-data">
-        <input type="hidden" name="productId" value="<%= product._id %>">
-        
-        <div class="form-row">
-            <div class="form-group">
-                <label for="productName">Product Name</label>
-                <input type="text" class="form-control" id="productName" name="productName" value="<%= product.productName %>" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="category">Category</label>
-                <select class="select-control" id="category" name="category" required>
-                    <option value="">Select Category</option>
-                    <% categories.forEach(category => { %>
-                        <option value="<%= category._id %>" <%= product.category && product.category._id.toString() === category._id.toString() ? 'selected' : '' %>><%= category.name %></option>
-                    <% }); %>
-                </select>
-            </div>
-        </div>
-        
-        <div class="form-row">
-            <div class="form-group">
-                <label for="salePrice">Sale Price</label>
-                <input type="number" class="form-control" id="salePrice" name="salePrice" value="<%= product.salePrice %>" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="offerPrice">Offer Price</label>
-                <input type="number" class="form-control" id="offerPrice" name="offerPrice" value="<%= product.offerPrice || '' %>">
-            </div>
-            
-            <div class="form-group">
-                <label for="quantity">Quantity</label>
-                <input type="number" class="form-control" id="quantity" name="quantity" value="<%= product.quantity %>" required>
-            </div>
-        </div>
-        
-        <div class="form-group">
-            <label for="description">Description</label>
-            <textarea class="textarea-control" id="description" name="description" rows="4"><%= product.description %></textarea>
-        </div>
-        
-        <div class="form-group">
-            <label>Current Images</label>
-            <div class="image-preview">
-                <% if (product.images && product.images.length > 0) { %>
-                    <% product.images.forEach(image => { %>
-                        <img src="/uploads/products/<%= image %>" alt="Product Image">
-                    <% }); %>
-                <% } else { %>
-                    <p>No images available</p>
-                <% } %>
-            </div>
-            
-            <div class="file-input-group">
-                <label class="file-input-label">
-                    Choose New Images
-                    <input type="file" class="file-input" name="images" multiple>
-                </label>
-                <span class="file-name"></span>
-            </div>
-        </div>
-        
-        <div class="form-group">
-            <div class="checkbox-group">
-                <input type="checkbox" id="featured" name="featured" <%= product.featured ? 'checked' : '' %>>
-                <label for="featured">Featured Product</label>
-            </div>
-        </div>
-        
-        <div class="form-buttons">
-            <button type="submit" class="btn btn-primary">Update Product</button>
-            <a href="/admin/products" class="btn btn-danger">Cancel</a>
-        </div>
-    </form>
 </div>
 
 <script>
-    // Display file name when selected
     document.querySelector('.file-input').addEventListener('change', function(e) {
         const fileName = e.target.files.length > 1 
             ? e.target.files.length + ' files selected' 
-            : e.target.files[0].name;
+            : e.target.files[0]?.name || '';
         document.querySelector('.file-name').textContent = fileName;
     });
 </script>
 
+<%- include("../../views/partials/admin/footer") %>
 </body>
 </html>

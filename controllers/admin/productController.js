@@ -284,12 +284,7 @@ const getAllProducts=async(req,res)=>{
         const search=req.query.search ||"";
         const page=req.query.page||1;
         const limit=4;
-        const productData=await Product.find({
-            $or:[
-                {productName:{$regex:new RegExp(".*"+search+".*")}},
-             
-
-            ],
+        const productData=await Product.find({$or:[{productName:{$regex:new RegExp(".*"+search+".*")}},],
         }).limit(limit*1)
         .skip((page-1)*limit)
         .populate('category')
@@ -321,9 +316,41 @@ const getAllProducts=async(req,res)=>{
         res.redirect("/pageerror")
     }
 }
+
+const blockProduct = async(req,res) =>{
+  try {
+  
+    const productId = req.query.id;
+  
+    await Product.updateOne({ _id: productId }, { isBlocked: true });
+    
+    return res.status(200).json({success:true, message:"blocked successfully"})
+} catch (error) {
+    console.error("Error blocking product:", error);
+    res.redirect("/admin/pageerror");
+}
+}
+
+const unblockProduct = async (req, res) => {
+    try {
+        const productId = req.query.id;
+        if(!productId){
+          return res.status(400).json({success:false, message:"product id not found"})
+        }
+        await Product.updateOne({ _id: productId }, { isBlocked: false });
+        return res.status(200).json({success:true, message:"unblocked successfully"})
+    } catch (error) {
+        console.error("Error unblocking product:", error);
+        res.redirect("/admin/pageerror");
+    }
+};
+
+
 module.exports={
     getProductAddPage,
     addproducts,
-    getAllProducts
+    getAllProducts,
+    blockProduct,
+    unblockProduct
 
 }

@@ -1,0 +1,476 @@
+<%- include("../../views/partials/user/header") %>
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        /* Header styles */
+        header {
+            background-color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 20px 0;
+        }
+        
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .logo {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+            text-decoration: none;
+        }
+        
+        .logo span {
+            font-size: 14px;
+            display: block;
+            color: #888;
+            letter-spacing: 2px;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+        
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            position: relative;
+        }
+        
+        .nav-links a.active::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background-color: #333;
+            bottom: -5px;
+            left: 0;
+        }
+        
+        .user-actions {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .user-actions a {
+            color: #333;
+            text-decoration: none;
+        }
+        
+        .icon {
+            font-size: 20px;
+        }
+        
+        /* Promo banner */
+        .promo-banner {
+            background-color: #b8c6cc;
+            padding: 15px 0;
+        }
+        
+        .promo-container {
+            display: flex;
+            justify-content: space-around;
+            max-width: 1200px;
+            margin: 0 auto;
+            color: #333;
+        }
+        
+        .promo-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+        
+        /* Shop content */
+        .shop-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        
+        .shop-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .shop-title {
+            font-size: 32px;
+            font-weight: 600;
+        }
+        
+        .shop-filters {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .filter-button {
+            padding: 8px 15px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* Product grid */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+        }
+        
+        .product-card {
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .product-image {
+            height: 300px;
+            background-color: #f0f0f0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s;
+        }
+        
+        .product-card:hover .product-image img {
+            transform: scale(1.05);
+        }
+        
+        .product-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background-color: #333;
+            color: white;
+            padding: 5px 10px;
+            font-size: 12px;
+            border-radius: 3px;
+        }
+        
+        .product-info {
+            padding: 20px;
+        }
+        
+        .product-category {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        
+        .product-name {
+            font-size: 18px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .product-price {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .price {
+            font-weight: 600;
+            font-size: 18px;
+        }
+        
+        .add-to-cart {
+            width: 40px;
+            height: 40px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .add-to-cart:hover {
+            background-color: #555;
+        }
+        
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 50px;
+            gap: 10px;
+        }
+        
+        .page-button {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid #ddd;
+            border-radius: 50%;
+            background-color: white;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        
+        .page-button.active {
+            background-color: #333;
+            color: white;
+            border-color: #333;
+        }
+        
+        .page-button:hover:not(.active) {
+            background-color: #f0f0f0;
+        }
+        
+        /* Newsletter section */
+        .newsletter {
+            background-color: #f0f0f0;
+            padding: 60px 0;
+            margin-top: 60px;
+        }
+        
+        .newsletter-container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+            padding: 0 20px;
+        }
+        
+        .newsletter h2 {
+            font-size: 28px;
+            margin-bottom: 15px;
+        }
+        
+        .newsletter p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .newsletter-form {
+            display: flex;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .newsletter-form input {
+            flex: 1;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px 0 0 4px;
+            font-size: 16px;
+        }
+        
+        .newsletter-form button {
+            padding: 15px 30px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        
+        .newsletter-form button:hover {
+            background-color: #555;
+        }
+        
+        /* Footer */
+        footer {
+            background-color: #333;
+            color: white;
+            padding: 60px 0 30px;
+        }
+        
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+        }
+        
+        .footer-column h3 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .footer-column h3::after {
+            content: '';
+            position: absolute;
+            width: 30px;
+            height: 2px;
+            background-color: white;
+            bottom: -8px;
+            left: 0;
+        }
+        
+        .footer-column ul {
+            list-style: none;
+        }
+        
+        .footer-column li {
+            margin-bottom: 10px;
+        }
+        
+        .footer-column a {
+            color: #ccc;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .footer-column a:hover {
+            color: white;
+        }
+        
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .social-link {
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            transition: background-color 0.3s;
+        }
+        
+        .social-link:hover {
+            background-color: rgba(255,255,255,0.2);
+        }
+        
+        .copyright {
+            max-width: 1200px;
+            margin: 30px auto 0;
+            padding: 20px 20px 0;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+            color: #aaa;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+  
+    
+  
+    <!-- Shop Content -->
+    <div class="shop-container">
+        <div class="shop-header">
+          <h1 class="shop-title">Our Collection</h1>
+          <div class="shop-filters">
+            <button class="filter-button">
+              <span>Filter</span>
+              <span class="icon">⚙️</span>
+            </button>
+            <button class="filter-button">
+              <span>Sort By: Newest</span>
+              <span class="icon">▼</span>
+            </button>
+          </div>
+        </div>
+      
+        <!-- Product Grid -->
+        <div class="product-grid" >
+          <% products.forEach(product => { 
+            const firstVariant = product.variants && product.variants.length > 0 ? product.variants[0] : null;
+          %>
+            <div class="product-card" onclick="window.location.href='/product-details/<%= product._id %>'">
+              <div class="product-image">
+                <img src="<%= product.productImage[0] %>" alt="<%= product.productName %>">
+      
+                <% if (product.productOffer >= 30) { %>
+                  <div class="product-badge">BESTSELLER</div>
+                <% } else if (product.productOffer >= 10) { %>
+                  <div class="product-badge">SALE</div>
+                <% } else if (new Date(product.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)) { %>
+                  <div class="product-badge">NEW</div>
+                <% } %>
+              </div>
+              <div class="product-info">
+                <div class="product-category"><%= product.category.name %></div>
+                <h3 class="product-name"><%= product.productName %></h3>
+                <div class="product-price">
+                  <% if (firstVariant) { %>
+                    <div class="price">₹<%= firstVariant.salesPrice || firstVariant.regularPrice %></div>
+                  <% } else { %>
+                    <div class="price">Price not available</div>
+                  <% } %>
+                  <button class="add-to-cart">+</button>
+                </div>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+      
+          
+        
+        <!-- Pagination -->
+        <div class="pagination">
+            <button class="page-button active">1</button>
+            <button class="page-button">2</button>
+            <button class="page-button">3</button>
+            <button class="page-button">4</button>
+            <button class="page-button">→</button>
+        </div>
+    </div>
+    
+    <!-- Newsletter Section -->
+    <section class="newsletter">
+        <div class="newsletter-container">
+            <h2>Join Our Newsletter</h2>
+            <p>Subscribe to get special offers, free giveaways, and once-in-a-lifetime deals.</p>
+            <form class="newsletter-form">
+                <input type="email" placeholder="Your email address">
+                <button type="submit">Subscribe</button>
+            </form>
+        </div>
+    </section>
+    
+    <%- include("../../views/partials/user/footer") %>

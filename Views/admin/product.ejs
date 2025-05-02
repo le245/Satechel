@@ -1,5 +1,22 @@
 <%- include("../../views/partials/admin/header") %>
+
+<!-- Assuming the header partial includes <!DOCTYPE html>, <html>, <head>, and opening <body> -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.css">
 <style>
+    :root {
+    --sidebar-width: 200px;
+    --sidebar-collapsed-width: 70px;
+    --header-height: 60px;
+    --primary-color: #cbcfda;
+    --secondary-color: #858796;
+    --dark-bg: #f5f7fa; /* Light background to match screenshot */
+    --card-bg: #ffffff; /* White for table container */
+    --text-color: #333;
+    --fluorescent-green: #28a745; /* Adjusted to green for "Unblock" button */
+    --gradient-green: linear-gradient(180deg, #1a2a6c, #b21f1f); /* Sidebar gradient */
+}
+
+/* General Reset and Body Styling */
 * {
     margin: 0;
     padding: 0;
@@ -8,8 +25,45 @@
 }
 
 body {
-    background-color: #ffffff; /* Changed to white background */
-    color: #333333; /* Adjusted text color for better contrast */
+    background-color: var(--dark-bg);
+    color: var(--text-color);
+}
+
+/* Sidebar Styling */
+.sidebar {
+    /* background: rgba(0, 0, 255, 0.438); */
+    width: var(--sidebar-width);
+    height: 100vh;
+    position: fixed;
+    padding-top: 20px;
+}
+
+.sidebar h2 {
+    color: white;
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 24px;
+}
+
+.sidebar ul {
+    list-style: none;
+}
+
+.sidebar ul li {
+    margin: 20px 0;
+}
+
+.sidebar ul li a {
+    color: white;
+    text-decoration: none;
+    font-size: 16px;
+    padding: 10px 20px;
+    display: block;
+    transition: background 0.3s;
+}
+
+.sidebar ul li a:hover {
+    background-color: rgba(255, 255, 255, 0.2);
 }
 
 /* Content Styling */
@@ -17,7 +71,6 @@ body {
     margin-left: var(--sidebar-width);
     padding: 20px;
     transition: margin-left 0.3s ease;
-    background-color: #ffffff; /* Ensuring content area has white background */
 }
 
 .sidebar.collapsed ~ .content {
@@ -38,7 +91,6 @@ body {
 .card-header {
     display: flex;
     justify-content: center;
-    background-color: #ffffff; /* Ensuring white background */
 }
 
 .input-group {
@@ -75,7 +127,7 @@ body {
 
 /* Table Styling */
 .right {
-    background-color: #ffffff; /* Changed to white background */
+    background-color: var(--card-bg);
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     overflow-x: auto;
@@ -129,7 +181,7 @@ body {
 }
 
 .btn-success {
-    background-color: #28a745; /* Changed from var(--fluorescent-green) to standard green */
+    background-color: var(--fluorescent-green);
 }
 
 .btn-success:hover {
@@ -156,9 +208,8 @@ a.text-white {
     border-radius: 5px;
     border: 1px solid #ccc;
     text-decoration: none;
-    color: #333333; /* Adjusted text color */
+    color: var(--text-color);
     transition: background 0.3s;
-    background-color: #ffffff; /* Ensuring white background */
 }
 
 .pagination .page-link:hover {
@@ -172,18 +223,12 @@ a.text-white {
 }
 
 /* Add Product Button */
-.add-product-btn {
+a[href="/admin/addProducts"] {
     background-color: #1a2a6c !important;
-    color: white;
-    padding: 10px 20px;
-    text-decoration: none;
-    display: inline-block;
-    border-radius: 5px;
     transition: background 0.3s;
-    margin-top: 20px;
 }
 
-.add-product-btn:hover {
+a[href="/admin/addProducts"]:hover {
     background-color: #b21f1f !important;
 }
 
@@ -241,7 +286,20 @@ a.text-white {
     }
 }
 </style>
-
+<!-- <aside class="sidebar">
+    <h2>Admin</h2>
+    <ul>
+        <li><a href="/admin/dashboard">Dashboard</a></li>
+        <li><a href="/admin/customers">Customers</a></li>
+        <li><a href="/admin/category">Categories</a></li>
+        <li><a href="/admin/addproducts">Add products</a></li>
+        <li><a href="/admin/products">Products</a></li>
+        <li><a href="/admin/coupons">Coupons</a></li>
+        <li><a href="/admin/banners">Banners</a></li>
+        <li><a href="/admin/settings">Settings</a></li>
+        <li><a href="/admin/logout">Logout</a></li>
+    </ul>
+</aside> -->
 
 <!-- Content -->
 <div class="content">
@@ -263,7 +321,7 @@ a.text-white {
                     <th scope="col"><b>Product name</b></th>
                     <th scope="col"><b>Category</b></th>
                     <th scope="col"><b>Sale Price</b></th>
-                    <th scope="col"><b>Offer Price</b></th>
+                    <th scope="col"><b>Regular Price</b></th>
                     <th scope="col"><b>Offer</b></th>
                     <th scope="col"><b>Quantity</b></th>
                     <th scope="col"><b>Action</b></th>
@@ -275,17 +333,19 @@ a.text-white {
                     <tr>
                         <td><%= data[i].productName %></td>
                         <td><%= data[i].category ? data[i].category.name : "No Category" %></td>
-                        <td><%= data[i].salePrice %></td>
-                        <td><%= data[i].offerPrice || "N/A" %></td>
                         <td>
-                            <button class="btn btn-info" style="width: 100px;">
-                                <a href="" class="text-white">Add Offer</a>
-                            </button>
-                            <button class="btn btn-info" style="width: 100px;">
-                                <a href="" class="text-white">Remove</a>
-                            </button>
-                        </td>
-                        <td><%= data[i].quantity %></td>
+                            <%= data[i].salePrice || (data[i].variants.length ? data[i].variants[0].salesPrice : "N/A") %>
+                          </td>
+                          <td>
+                            <%= data[i].regularPrice || (data[i].variants.length ? data[i].variants[0].regularPrice : "N/A") %>
+                          </td>
+                          <td>
+                            <%= data[i].productOffer || "N/A" %>
+                          </td>
+                          
+                          <td>
+                            <%= data[i].quantity || (data[i].variants.length ? data[i].variants[0].quantity : "N/A") %>
+                          </td>
                         <td>
                             <% if (data[i].isBlocked === false) { %>
                                 <button class="btn btn-danger" style="width: 80px;" onclick="blockProduct('<%= data[i]._id %>')">Block</button>
@@ -295,7 +355,7 @@ a.text-white {
                         </td>
                         <td>
                             <button class="btn btn-info" style="width: 80px;">
-                                <a href="/admin/editProducts?id=<%= data[i]._id %>" class="text-white" style="text-decoration: none;">Edit</a>
+                                <a href="/admin/editProduct?id=<%= data[i]._id %>" class="text-white" style="text-decoration: none;">Edit</a>
                             </button>
                         </td>
                     </tr>
@@ -314,104 +374,98 @@ a.text-white {
             </ul>
         </nav>
     </div>
-    <a href="/admin/addProducts" class="add-product-btn">Add Product</a>
+    <a href="/admin/addProducts" style="background-color: blue; color: white; padding: 10px 20px; text-decoration: none; display: inline-block; border-radius: 5px;">Add Product</a>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 
 <script>
-   function blockProduct(productId) {
-    Swal.fire({
-        title: 'Block Product',
-        text: 'Are you sure you want to block this product?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, block it!',
-        cancelButtonText: 'No, cancel'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            fetch('/admin/blockProduct', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: productId })
-            })
-            .then(response => {
-                console.log('Response status:', response.status); // Debug log
-                if (!response.ok) {
-                    throw new Error(`Network response was not ok: ${response.statusText}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log('Response data:', data); // Debug log
-                if (data.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Product blocked successfully!'
-                    }).then(() => location.reload());
-                } else {
-                    throw new Error(data.message || 'Failed to block product');
-                }
-            })
-            .catch(error => {
-                console.error('Block product error:', error); // Debug log
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: error.message || 'Something went wrong!'
-                });
-            });
-        }
-    });
-}
+    function blockProduct(productId) {
+        Swal.fire({
+            title: 'Block Product',
+            text: 'Are you sure you want to block this product?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, block it!',
+            cancelButtonText: 'No, cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/admin/blockProduct?id=${productId}`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                })
 
-function unblockProduct(productId) {
-    Swal.fire({
-        title: 'Unblock Product',
-        text: 'Are you sure you want to unblock this product?',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, unblock it!',
-        cancelButtonText: 'No, cancel'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            fetch('/admin/unblockProduct', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: productId })
-            })
-            .then(response => {
-                console.log('Response status:', response.status); // Debug log
-                if (!response.ok) {
-                    throw new Error(`Network response was not ok: ${response.statusText}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log('Response data:', data); // Debug log
-                if (data.success) {
+                
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: 'Product blocked successfully!'
+                        }).then(() => location.reload());
+                    } else {
+                        throw new Error(data.message || 'Failed to block product');
+                    }
+                })
+                .catch(error => {
                     Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Product unblocked successfully!'
-                    }).then(() => location.reload());
-                } else {
-                    throw new Error(data.message || 'Failed to unblock product');
-                }
-            })
-            .catch(error => {
-                console.error('Unblock product error:', error); // Debug log
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: error.message || 'Something went wrong!'
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Something went wrong!'
+                    });
                 });
-            });
-        }
-    });
-}
+            }
+        });
+    }
+
+    function unblockProduct(productId) {
+        Swal.fire({
+            title: 'Unblock Product',
+            text: 'Are you sure you want to unblock this product?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, unblock it!',
+            cancelButtonText: 'No, cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/admin/unblockProduct?id=${productId}`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: 'Product unblocked successfully!'
+                        }).then(() => location.reload());
+                    } else {
+                        throw new Error(data.message || 'Failed to unblock product');
+                    }
+                })
+                .catch(error => {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: error.message || 'Something went wrong!'
+                    });
+                });
+            }
+        });
+    }
 </script>
 
 <%- include("../../views/partials/admin/footer") %>
