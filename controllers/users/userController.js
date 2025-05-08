@@ -17,17 +17,15 @@ const pageNotFound = async (req, res) => {
 const loadHomepage = async (req, res) => {
 
     try {
+        const user = req.session.user
+        
         const email = req.session.userEmail 
+
         const category=await Category.find({isListed:true})
         let productData=await Product.find()
-        let userData;
-        if(email){
-             userData= await User.findOne({email:email})
-            res.render("home",{user:userData})
-
-        }else{
-              return res.render('home',{user:userData})  
-        }
+        let userData=await User.findOne({_id:user , isBlocked:false})
+       
+        return res.render('home',{user:userData})
         // console.log('user data',userData)
     } catch (error) {
         console.log("Home page not loading :",error)
@@ -165,8 +163,7 @@ const verifyOtp = async (req, res) => {
         await saveUserData.save();
         req.session.user = saveUserData._id;
         req.session.userEmail = userData.email
-        // req.session.userLogged = true
-        delete req.session.userData;
+
         delete req.session.userOtp;
 
         return res.json({ success: true, redirectUrl: '/home' });
@@ -205,11 +202,9 @@ const resendOtp = async (req, res) => {
 
 const loadlogin=async (req,res)=>{
     try {
-        if(!req.session.user){
+      
             return res.render("login")
-        }else{
-            res.redirect("/home")
-        }
+
     } catch (error) {
         res.redirect("/pageNotFound")
     }
@@ -218,17 +213,14 @@ const loadlogin=async (req,res)=>{
 const login = async (req, res) => {
     try {
        
-        if (req.session.user) {
-            return res.redirect("/home");
-        }
-
         const { email, password } = req.body;
 
         if (!email || !password) {
             return res.render("login", { message: "Email and password are required" });
         }
 
-        const findUser = await User.findOne({ isAdmin: 0, email: email });
+        const findUser = await User.findOne({email: email });
+        console.log('login user is',findUser)
 
         if (!findUser) {
             return res.render("login", { message: "User not found" });
@@ -238,7 +230,7 @@ const login = async (req, res) => {
             return res.render("login", { message: "User is blocked by admin" });
         }
 
-        const passwordMatch = await bcrypt.compare(password, findUser.password);
+        const passwordMatch = await bcrypt.compare(password,findUser.password);
 
         if (!passwordMatch) {
             return res.render("login", { message: "Incorrect password" });
@@ -249,52 +241,122 @@ const login = async (req, res) => {
         return res.redirect("/home");
     } catch (error) {
         console.error("Login error:", error);
-        return res.render("login", { message: "Login failed. Please try again later" });
+      
     }
 };
 
+
 const logout=  async(req,res)=>{
     try {
-        req.session.destroy((error)=>{
-            if(error){
-                
-                console.log("Session destruction error",error.message);
-                return res.redirect("/pageNotFound")
-            }
-            return res.redirect("/login")
-        })
+       
+       if(req.session.userEmail){
+        delete req.session.user
+        delete req.session.userEmail
+       }
+       return res.redirect('/login')
         
     } catch (error) {
         console.log("Logout error",error);
         res.redirect("/pageNotFound")
     }
-
 }
-const getShop = async(req,res)=>{
+
+
+const getShop = async (req, res) => {
     try {
-        const email = req.session.userEmail 
-        
-        if(!email){
-       
-            return res.redirect('/home')
+        const email = req.session.userEmail;
+        if (!email) {
+            return res.redirect('/home');
         }
-        // const category=await Category.find({isListed:true})   
 
-        const products=await Product.find({isBlocked : false})
-    .populate('category')
-    .exec();
     
- 
-            let userData= await User.findOne({email:email})
-            res.render("shop",{user:userData,products})
+        const userData = await User.findOne({ email,isBlocked:false }).lean();
+        if (!userData) {
+            return res.redirect('/home');
+        }
+
+    
+        const categories = await Category.find({ isListed: true }).lean();
+
+        const page = parseInt(req.query.page) || 1;
+        const limit = 9;
+        const skip = (page - 1) * limit;
+
+    
+        const searchQuery = req.query.search || ''; 
+        const sortBy = req.query.sort || 'default'; 
+        const categoryFilter = req.query.category || '';
+        const minPrice = parseFloat(req.query.minPrice) || 0;
+        const maxPrice = parseFloat(req.query.maxPrice) || Infinity;
+
+        let query = { isBlocked: false };
 
         
-    } catch (error) {
-        console.error('Error get shop:', error.message);
-        return res.status(500).json({ success: false, message: 'An error occurred' });
-    }
-}
+        if (searchQuery) {
+            query.productName = { $regex: searchQuery, $options: 'i' };
+        }
 
+        if (categoryFilter) {
+            query.category = categoryFilter;
+        }
+
+        if (minPrice || maxPrice !== Infinity) {
+            query['variants'] = {
+                $elemMatch: {
+                    $or: [
+                        { salesPrice: { $gte: minPrice, $lte: maxPrice } },
+                        { regularPrice: { $gte: minPrice, $lte: maxPrice } },
+                    ],
+                },
+            };
+        }
+
+       
+        let sortOption = {};
+        switch (sortBy) {
+            case 'price-low-to-high':
+                sortOption = { 'variants.salesPrice': 1, 'variants.regularPrice': 1 };
+                break;
+            case 'price-high-to-low':
+                sortOption = { 'variants.salesPrice': -1, 'variants.regularPrice': -1 };
+                break;
+            case 'aA-zZ':
+                sortOption = { productName: 1 };
+                break;
+            case 'zZ-aA':
+                sortOption = { productName: -1 };
+                break;
+            default:
+                sortOption = { createdAt: -1 }; 
+        }
+
+        const totalProducts = await Product.countDocuments(query);
+        const totalPages = Math.ceil(totalProducts / limit);
+
+        const products = await Product.find(query)
+            .populate('category')
+            .sort(sortOption)
+            .skip(skip)
+            .limit(limit)
+            .lean();
+
+        res.render("shop", {
+            user: userData,
+            products,
+            categories, 
+            currentPage: page,
+            totalPages,
+            searchQuery, 
+            sortBy, 
+            categoryFilter,
+            minPrice,
+            maxPrice, 
+        });
+    } catch (error) {
+        console.error('Error in getShop:', error.message);
+        return res.status(500).render("pageerror", { message: "An error occurred while loading the shop page." });
+    }
+};
 module.exports = {
     loadHomepage,
     pageNotFound,

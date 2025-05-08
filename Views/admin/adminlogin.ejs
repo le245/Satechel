@@ -74,7 +74,7 @@
           id="adminEmail"
           name="email"
           value="adminSatchel@gmail.com"
-          required
+         
         />
         <div id="emailError" class="error-message"></div>
       </div>
@@ -86,7 +86,7 @@
           id="adminPassword"
           name="password"
           value="12345qwe"
-          required
+        
         />
         <div id="passwordError" class="error-message"></div>
       </div>
@@ -122,16 +122,16 @@
         if (!isValid) {
           event.preventDefault();
         } else {
-          // Optionally clear server-side message after successful client validation
+
           const alert = document.querySelector('.alert');
           if (alert) alert.style.display = 'none';
         }
       });
 
-      // Handle server-side message display (if any)
+
       const alert = document.querySelector('.alert');
       if (alert && !alert.textContent.trim()) {
-        alert.style.display = 'none'; // Hide if empty
+        alert.style.display = 'none';
       }
     });
   </script>

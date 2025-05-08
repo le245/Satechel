@@ -25,6 +25,7 @@
                     <th>Description</th>
                     <th>Created At</th>
                     <th>Status</th>
+                    <th>Offer</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -41,6 +42,13 @@
                                     <%= category.isListed ? 'Listed' : 'Unlisted' %>
                                 </span>
                             </td>
+                            <td>
+                                <% if (category.offer && category.offer.percentage) { %>
+                                    <span class="badge badge-info"><%= category.offer.percentage %>%</span>
+                                <% } else { %>
+                                    <span>-</span>
+                                <% } %>
+                            </td>
                             <td class="actions">
                                 <a href="/admin/editCategory?id=<%= category._id %>" class="btn btn-secondary btn-sm">Edit</a>
                                 <% if(category.isListed) { %>
@@ -48,12 +56,17 @@
                                 <% } else { %>
                                     <a href="/admin/unlistCategory?id=<%= category._id %>" class="btn btn-success btn-sm">List</a>
                                 <% } %>
+                                <% if (category.offer && category.offer.percentage) { %>
+                                    <button class="btn btn-warning btn-sm" onclick="removeOffer('<%= category._id %>')">Remove Offer</button>
+                                <% } else { %>
+                                    <button class="btn btn-info btn-sm" onclick="addOffer('<%= category._id %>')">Add Offer</button>
+                                <% } %>
                             </td>
                         </tr>
                     <% }); %>
                 <% } else { %>
                     <tr>
-                        <td colspan="6" style="text-align: center">No categories found</td>
+                        <td colspan="7" style="text-align: center">No categories found</td>
                     </tr>
                 <% } %>
             </tbody>
@@ -64,7 +77,7 @@
     <div class="pagination" id="pagination">
         <% if (totalPages > 1) { %>
             <% if (currentPage > 1) { %>
-                <a href="/admin/category?page=<%= currentPage - 1 %><%= search ? '&search=' + search : '' %>" class="page-link">&laquo; Previous</a>
+                <a href="/admin/category?page=<%= currentPage - 1 %><%= search ? '&search=' + search : '' %>" class="page-link">« Previous</a>
             <% } %>
             
             <% for(let i = 1; i <= totalPages; i++) { %>
@@ -72,7 +85,7 @@
             <% } %>
             
             <% if (currentPage < totalPages) { %>
-                <a href="/admin/category?page=<%= currentPage + 1 %><%= search ? '&search=' + search : '' %>" class="page-link">Next &raquo;</a>
+                <a href="/admin/category?page=<%= currentPage + 1 %><%= search ? '&search=' + search : '' %>" class="page-link">Next »</a>
             <% } %>
         <% } %>
     </div>
@@ -82,17 +95,19 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="modal-title">Add Category</h3>
-                <span class="close">&times;</span>
+                <span class="close">×</span>
             </div>
             <form id="category-form" action="/admin/addCategory" method="POST">
                 <input type="hidden" id="category-id" name="categoryId">
                 <div class="form-group">
                     <label for="category-name">Category Name</label>
-                    <input type="text" id="category-name" name="name" required>
+                    <input type="text" id="category-name" name="name" maxlength="50">
+                    <div id="name-error" class="error-message"></div>
                 </div>
                 <div class="form-group">
                     <label for="category-description">Description</label>
-                    <textarea id="category-description" name="description"></textarea>
+                    <textarea id="category-description" name="description" maxlength="500"></textarea>
+                    <div id="description-error" class="error-message"></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary close-btn">Cancel</button>
@@ -111,7 +126,8 @@
     }
     .container {
         max-width: 1200px;
-        margin: 0 auto;
+        margin-left: auto;
+        margin-right: 20px;
     }
     .header {
         display: flex;
@@ -181,6 +197,14 @@
         background-color: #28a745;
         color: white;
     }
+    .btn-info {
+        background-color: #17a2b8;
+        color: white;
+    }
+    .btn-warning {
+        background-color: #ffc107;
+        color: black;
+    }
     .btn-sm {
         padding: 4px 8px;
         font-size: 14px;
@@ -216,11 +240,16 @@
         background-color: #dc3545;
         color: white;
     }
+    .badge-info {
+        background-color: #17a2b8;
+        color: white;
+    }
     .actions {
         display: flex;
         gap: 5px;
+        flex-wrap: wrap;
     }
-    .actions a {
+    .actions a, .actions button {
         text-decoration: none;
     }
     .pagination {
@@ -299,6 +328,15 @@
         gap: 10px;
         margin-top: 20px;
     }
+    .error-message {
+        color: #dc3545;
+        font-size: 12px;
+        margin-top: 5px;
+        display: none;
+    }
+    .error {
+        border-color: #dc3545 !important;
+    }
 </style>
 
 <script>
@@ -310,16 +348,15 @@
     const categoryNameInput = document.getElementById('category-name');
     const categoryDescriptionInput = document.getElementById('category-description');
 
-    // Open modal when Add Category button is clicked
     addCategoryBtn.addEventListener('click', () => {
         modalTitle.textContent = 'Add Category';
         categoryIdInput.value = '';
         categoryNameInput.value = '';
         categoryDescriptionInput.value = '';
+        clearErrorMessages();
         categoryModal.style.display = 'flex';
     });
 
-    // Close modal when Close or Cancel button is clicked
     const closeButtons = document.querySelectorAll('.close, .close-btn');
     closeButtons.forEach(button => {
         button.addEventListener('click', () => {
@@ -327,12 +364,245 @@
         });
     });
 
-    // Close modal when clicking outside
     window.addEventListener('click', (event) => {
         if (event.target === categoryModal) {
             categoryModal.style.display = 'none';
         }
     });
+
+    function clearErrorMessages() {
+        const errorElements = document.querySelectorAll('.error-message');
+        errorElements.forEach(element => {
+            element.innerHTML = '';
+            element.style.display = 'none';
+        });
+        const inputElements = document.querySelectorAll('#category-name, #category-description');
+        inputElements.forEach(element => {
+            element.classList.remove('error');
+        });
+    }
+
+    function showError(elementId, message) {
+        const errorElement = document.getElementById(elementId);
+        errorElement.innerHTML = message;
+        errorElement.style.display = 'block';
+        const inputElement = document.getElementById(elementId.replace('-error', ''));
+        inputElement.classList.add('error');
+    }
+
+    categoryForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        clearErrorMessages();
+
+        const name = categoryNameInput.value.trim();
+        const description = categoryDescriptionInput.value.trim();
+
+        // Client-side validation matching backend
+        if (!name) {
+            showError('name-error', 'Category name is required');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Missing Field',
+                text: 'Category name is required'
+            });
+            return;
+        }
+
+        if (name.length < 2 || name.length > 50) {
+            showError('name-error', 'Category name must be between 2 and 50 characters');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Invalid Input',
+                text: 'Category name must be between 2 and 50 characters'
+            });
+            return;
+        }
+
+        const nameRegex = /^[a-zA-Z0-9\s\-'&]+$/;
+        if (!nameRegex.test(name)) {
+            showError('name-error', 'Category name can only contain letters, numbers, spaces, hyphens, and ampersands');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Invalid Input',
+                text: 'Category name can only contain letters, numbers, spaces, hyphens, and ampersands'
+            });
+            return;
+        }
+
+        if (!description) {
+            showError('description-error', 'Description is required');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Missing Field',
+                text: 'Description is required'
+            });
+            return;
+        }
+
+        if (description.length < 10 || description.length > 500) {
+            showError('description-error', 'Description must be between 10 and 500 characters');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Invalid Input',
+                text: 'Description must be between 10 and 500 characters'
+            });
+            return;
+        }
+
+        const descriptionRegex = /^[a-zA-Z0-9\s.,!?'"\-()]+$/;
+        if (!descriptionRegex.test(description)) {
+            showError('description-error', 'Description contains invalid characters');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Invalid Input',
+                text: 'Description contains invalid characters'
+            });
+            return;
+        }
+
+        try {
+            const response = await fetch('/admin/addCategory', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name, description })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to add category');
+            }
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: data.message || 'Category added successfully'
+            }).then(() => {
+                categoryModal.style.display = 'none';
+                location.reload();
+            });
+        } catch (error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.message || 'An error occurred while adding the category'
+            });
+        }
+    });
+
+    async function addOffer(categoryId) {
+        const { value: percentage } = await Swal.fire({
+            title: 'Add Offer',
+            input: 'number',
+            inputLabel: 'Offer Percentage',
+            inputPlaceholder: 'Enter percentage (1-100)',
+            inputAttributes: {
+                min: 1,
+                max: 100,
+                step: 1
+            },
+            showCancelButton: true,
+            confirmButtonText: 'Add Offer',
+            inputValidator: (value) => {
+                if (!value) {
+                    return 'Percentage is required';
+                }
+                if (value < 1 || value > 100) {
+                    return 'Percentage must be between 1 and 100';
+                }
+            }
+        });
+
+        if (percentage) {
+            try {
+                const response = await fetch('/admin/addCategoryOffer', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        percentage: parseInt(percentage),
+                        categoryId
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.status) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Offer Added',
+                        text: 'The offer has been added successfully'
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Failed',
+                        text: data.message || 'Failed to add offer'
+                    });
+                }
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An error occurred while adding the offer'
+                });
+                console.error('Error adding offer:', error);
+            }
+        }
+    }
+
+    async function removeOffer(categoryId) {
+        const result = await Swal.fire({
+            title: 'Remove Offer',
+            text: 'Are you sure you want to remove the offer from this category?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, remove it',
+            cancelButtonText: 'No, cancel'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                const response = await fetch('/admin/removeCategoryOffer', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ categoryId })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.status) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Offer Removed',
+                        text: 'The offer has been removed successfully'
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Failed',
+                        text: data.message || 'Failed to remove offer'
+                    });
+                }
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An error occurred while removing the offer'
+                });
+                console.error('Error removing offer:', error);
+            }
+        }
+    }
 </script>
 
 <%- include("../../views/partials/admin/footer") %>

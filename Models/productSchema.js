@@ -20,18 +20,18 @@ const productSchema = new Schema(
       type: [String],
       required: true,
     },
-    regularPrice : {
-        type : Number,
-        required : true
-    },
-    salePrice : {
-        type : Number,
-        required : true
-    },
-    productOffer:{
-        type : Number,
-        required : true
-    },
+    // regularPrice : {
+    //     type : Number,
+    //     required : true
+    // },
+    // salePrice : {
+    //     type : Number,
+    //     required : true
+    // },
+    // productOffer:{
+    //     type : Number,
+    //     required : true
+    // },
     isBlocked: {
       type: Boolean,
       default: false,

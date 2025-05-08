@@ -100,9 +100,8 @@ const addproducts = async (req, res) => {
   
     try {
 
-        console.log(1);
       const { productName, description, category, variants,productImages } = req.body;
-      console.log(req.body.productName || 0,"======================================")
+
 
   if (
     !productName || productName.trim() === '' ||
@@ -167,9 +166,7 @@ const addproducts = async (req, res) => {
           ? parseFloat(variant.salesPrice)
           : null;
   
-        if (!['15ml', '50ml', '100ml'].includes(variant.size)) {
-          throw new Error('Invalid size: ${variant.size}');
-        }
+       
         if (isNaN(quantity) || quantity < 0) {
           throw new Error('Quantity must be a non-negative number');
         }
@@ -345,12 +342,137 @@ const unblockProduct = async (req, res) => {
     }
 };
 
+const getEditProduct = async (req, res) => {
+  try {
+    const id = req.query.id;
+    const product = await Product.findOne({ _id: id });
+    if (!product) {
+      throw new Error('Product not found');
+    }
+    const categories = await Category.find({});
+    res.render('product-edit', {
+      product: product,
+      cat: categories, 
+    });
+  } catch (error) {
+    console.error('Error fetching product for edit:', error);
+    res.redirect('/admin/pageerror');
+  }
+};
+
+const editProduct = async (req, res) => {
+  try {
+
+    const id = req.params.id;
+    const { productName, description, category, variants ,productImages } = req.body;
+  console.log(req.body)
+
+    const existingProduct = await Product.findOne({
+      productName,
+      _id: { $ne: id }, 
+    });
+    if (existingProduct) {
+      return res.status(400).json({ error: 'Product name already exists' });
+    }
+
+    if (!productName || !description || !category || !variants) {
+      return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    
+    const categoryExists = await Category.findById(category);
+    if (!categoryExists) {
+      return res.status(400).json({ error: 'Invalid category' });
+    }
+
+  
+    let parsedVariants;
+    try {
+      parsedVariants = JSON.parse(variants);
+      if (!Array.isArray(parsedVariants) || parsedVariants.length === 0) {
+        return res.status(400).json({ error: 'At least one variant is required' });
+      }
+      const colors = new Set();
+      for (const variant of parsedVariants) {
+        if (!variant.color || variant.quantity < 0 || variant.regularPrice <= 0) {
+          return res.status(400).json({ error: 'Invalid variant data' });
+        }
+        if (colors.has(variant.color)) {
+          return res.status(400).json({ error: 'Duplicate variant colors are not allowed' });
+        }
+        if (variant.salesPrice && (variant.salesPrice >= variant.regularPrice || variant.salesPrice < 0)) {
+          return res.status(400).json({ error: 'Sale price must be less than regular price and non-negative' });
+        }
+        colors.add(variant.color);
+      }
+    } catch (error) {
+      return res.status(400).json({ error: 'Invalid variants data' });
+    }
+
+    if (!productImages || !Array.isArray(productImages) || productImages.length < 3) {
+      return res.status(400).json({
+        success: false,
+        error: 'At least 3 product images are required',
+      });
+    }
+    
+    const imagePaths = [];
+    for (const base64Image of productImages) {
+      try {
+        const result = await handleUpload(base64Image);
+        imagePaths.push(result.secure_url);
+      } catch (err) {
+        console.error('Error uploading image to Cloudinary:', err);
+        return res.status(400).json({
+          success: false,
+          error: 'Failed to upload one or more images to Cloudinary',
+        });
+      }
+    }
+
+
+    const updatedProduct = await Product.findByIdAndUpdate(
+      id,
+      {
+        productName,
+        description,
+        category,
+        variants: parsedVariants,
+        productImage: imagePaths,
+      },
+      { new: true }
+    );
+
+    if (updatedProduct) {
+      return res.status(200).json({
+        success: true,
+        message: 'Product added successfully',
+        redirectUrl: '/admin/product',
+      });
+    
+    } else {
+      res.status(404).json({ error: 'Product not found' });
+    }
+  } catch (error) {
+    console.error('Error in editProduct:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 
 module.exports={
     getProductAddPage,
     addproducts,
     getAllProducts,
     blockProduct,
-    unblockProduct
+    unblockProduct,
+    getEditProduct,
+    editProduct
 
 }
+
+
+
+
+
+

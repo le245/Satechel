@@ -1,8 +1,6 @@
 const Product=require("../../Models/productSchema")
 const User=require("../../Models/userSchema")
 
-
-
 const getProductDetailPage = async(req,res) =>{
     try {
         
@@ -14,7 +12,7 @@ const getProductDetailPage = async(req,res) =>{
        const product =await Product.findById(productId).populate('category')
        
       
-       const userData=await User.findOne({email})
+       const userData=await User.findOne({email , isBlocked:false})
        
        const relatedProducts = await Product.find({
         category: product.category._id, 

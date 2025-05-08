@@ -35,6 +35,8 @@ router.post("/addProducts",adminAuth,productController.addproducts)
 router.get("/products",adminAuth,productController.getAllProducts);
 router.get("/blockProduct",adminAuth,productController.blockProduct);
 router.get("/unblockProduct",adminAuth,productController.unblockProduct);
+router.get("/editProduct",adminAuth,productController.getEditProduct)
+router.put("/editProduct/:id",adminAuth,productController.editProduct )
 
 
 

@@ -1,7 +1,7 @@
 const User = require("../../Models/userSchema");
 const bcrypt = require("bcrypt");
 
-const loadLogin = (req, res) => {
+const loadLogin = async (req, res) => {
     if (req.session.admin) {
         return res.redirect("/admin/dashboard");
     }
@@ -23,7 +23,7 @@ const login = async (req, res) => {
         if (admin) {
             const passwordMatch = await bcrypt.compare(password, admin.password);
             if (passwordMatch) {
-                req.session.admin = admin._id; // Store admin ID for security
+                req.session.admin = admin._id; 
                 return res.redirect("/admin/dashboard");
             } else {
                 req.session.message = "Invalid password";

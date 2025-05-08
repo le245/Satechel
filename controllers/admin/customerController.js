@@ -37,9 +37,8 @@ const customerInfo = async (req, res) => {
         }).countDocuments();
 
        
-        const totalPages = Math.ceil(count / limit);
 
-       
+       const totalPages=Math.ceil(count/limit)
         res.render('customers', {
             userData,
             totalPages,
@@ -82,3 +81,5 @@ module.exports = {
     unblockCustomer,
    
 };
+
+

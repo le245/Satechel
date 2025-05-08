@@ -245,13 +245,13 @@
                                 <div class="col-md-6">
                                     <div class="mb-4">
                                         <label for="product_name" class="form-label">Product Name</label>
-                                        <input type="text" placeholder="Enter product name" value="nameeeee" name="productName" class="form-control" id="product_name" required>
+                                        <input type="text" placeholder="Enter product name" value="nameeeee" name="productName" class="form-control" id="product_name" >
                                         <div id="productName-error" class="error-message"></div>
                                     </div>
 
                                     <div class="mb-4">
                                         <label class="form-label">Description</label>
-                                        <textarea placeholder="Enter product description"  id="descriptionid" name="description" class="form-control" rows="4" required>
+                                        <textarea placeholder="Enter product description"  id="descriptionid" name="description" class="form-control" rows="4" >
             
                                         </textarea>
                                         <div id="description-error" class="error-message"></div>
@@ -260,7 +260,7 @@
                                     <!-- Category Selection -->
                                     <div class="mb-4">
                                         <label class="form-label">Category</label>
-                                        <select class="form-select" id="category" name="category" required>
+                                        <select class="form-select" id="category" name="category">
                                             <option value="">Select Category</option>
                                             <% for(let i=0; i<cat.length; i++) { %>
                                                 <option value="<%=cat[i].name%>"><%=cat[i].name%></option>
@@ -322,26 +322,26 @@
                                         <div class="col-md-6 mb-3">
                                             <div class="variant-item p-3 border rounded" id="variant-0">
                                                 <div class="d-flex justify-content-between mb-2">
-                                                    <h5>Size Variant #1</h5>
+                                                    <h5>Color Variant #1</h5>
                                                     <button type="button" class="btn-remove-variant" onclick="removeVariant(0)">×</button>
                                                 </div>
                                                 <div class="row">
                                                     <div class="col-md-6 mb-2">
-                                                        <label class="form-label">Size</label>
-                                                        <select class="form-select variant-size" required>
-                                                            <option value="">Select Size</option>
-                                                            <option value="15ml">15ml</option>
-                                                            <option value="50ml" selected>50ml</option>
-                                                            <option value="100ml">100ml</option>
+                                                        <label class="form-label">Color</label>
+                                                        <select class="form-select variant-size" >
+                                                            <option value="">Select Color</option>
+                                                            <option value="15ml">red</option>
+                                                            <option value="50ml" selected>blue</option>
+                                                            <option value="100ml">white</option>
                                                         </select>
                                                     </div>
                                                     <div class="col-md-6 mb-2">
                                                         <label class="form-label">Quantity</label>
-                                                        <input type="number" value="12121" class="form-control variant-quantity" placeholder="Quantity" min="0" required>
+                                                        <input type="number" value="12121" class="form-control variant-quantity" placeholder="Quantity" min="0" >
                                                     </div>
                                                     <div class="col-md-6 mb-2">
                                                         <label class="form-label">Regular Price</label>
-                                                        <input type="number" value="121221212" class="form-control variant-regular-price" placeholder="$" required>
+                                                        <input type="number" value="121221212" class="form-control variant-regular-price" placeholder="$" >
                                                     </div>
                                                     <div class="col-md-6 mb-2">
                                                         <label class="form-label">Sale Price</label>
@@ -355,26 +355,26 @@
                                         <div class="col-md-6 mb-3">
                                             <div class="variant-item p-3 border rounded" id="variant-1">
                                                 <div class="d-flex justify-content-between mb-2">
-                                                    <h5>Size Variant #2</h5>
+                                                    <h5>Color Variant #2</h5>
                                                     <button type="button" class="btn-remove-variant" onclick="removeVariant(1)">×</button>
                                                 </div>
                                                 <div class="row">
                                                     <div class="col-md-6 mb-2">
-                                                        <label class="form-label">Size</label>
-                                                        <select class="form-select variant-size" required>
-                                                            <option value="">Select Size</option>
-                                                            <option value="15ml">15ml</option>
-                                                            <option value="50ml">50ml</option>
-                                                            <option value="100ml" selected>100ml</option>
+                                                        <label class="form-label">Color</label>
+                                                        <select class="form-select variant-size" >
+                                                            <option value="">Select Color</option>
+                                                            <option value="15ml">yellow</option>
+                                                            <option value="50ml">green</option>
+                                                            <option value="100ml" selected>pink</option>
                                                         </select>
                                                     </div>
                                                     <div class="col-md-6 mb-2">
                                                         <label class="form-label">Quantity</label>
-                                                        <input type="number" value="1212" class="form-control variant-quantity" placeholder="Quantity" min="0" required>
+                                                        <input type="number" value="1212" class="form-control variant-quantity" placeholder="Quantity" min="0" >
                                                     </div>
                                                     <div class="col-md-6 mb-2">
                                                         <label class="form-label">Regular Price</label>
-                                                        <input type="number" value="121221212"  class="form-control variant-regular-price" placeholder="$" required>
+                                                        <input type="number" value="121221212"  class="form-control variant-regular-price" placeholder="$" >
                                                     </div>
                                                     <div class="col-md-6 mb-2">
                                                         <label class="form-label">Sale Price</label>
@@ -384,7 +384,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <button type="button" class="btn-add-variant" id="addVariant">Add Size Variant</button>
+                                    <button type="button" class="btn-add-variant" id="addVariant">Add Color Variant</button>
                                     <div id="variants-error" class="error-message"></div>
                                     <input type="hidden" id="variants-data" name="variants" value='[]'>
                                 </div>
