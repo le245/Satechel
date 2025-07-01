@@ -1,0 +1,527 @@
+
+<%- include('../../views/partials/user/header') %>
+
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+    :root {
+        --primary-color: #3a3a3a;
+        --accent-color: #a67c52;
+        --light-accent: #d4c3b0;
+        --text-dark: #2a2a2a;
+        --text-light: #767676;
+        --background-light: #f9f7f5;
+        --border-color: #e2e2e2;
+        --shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    body {
+        background-color: var(--background-light);
+        font-family: 'Poppins', sans-serif;
+    }
+
+    .wishlist-container {
+        max-width: 1200px;
+        margin: 40px auto;
+        padding: 0 15px;
+    }
+
+    .wishlist-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding: 20px 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .wishlist-header h1 {
+        font-size: 28px;
+        color: var(--text-dark);
+        margin: 0;
+        font-weight: 600;
+        letter-spacing: 1px;
+    }
+
+    .wishlist-actions {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+    }
+
+    .wishlist-count {
+        color: var(--text-light);
+        font-size: 14px;
+        font-weight: 300;
+    }
+
+    .btn-clear-wishlist {
+        background: #d33;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background 0.3s;
+    }
+
+    .btn-clear-wishlist:hover {
+        background: #b00;
+    }
+
+    .wishlist-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+        padding: 20px 0;
+    }
+
+    .wishlist-item {
+        background: #fff;
+        border-radius: 12px;
+        padding: 15px;
+        text-align: center;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow);
+        position: relative;
+    }
+
+    .wishlist-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .wishlist-item img {
+        max-width: 100%;
+        height: 200px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+
+    .item-title {
+        font-size: 15px;
+        color: var(--text-dark);
+        margin: 10px 0;
+        font-weight: 500;
+    }
+
+    .item-price {
+        font-size: 16px;
+        color: var(--accent-color);
+        font-weight: 600;
+        margin: 10px 0;
+    }
+
+    .item-unavailable {
+        font-size: 13px;
+        color: #d33;
+        margin: 10px 0;
+    }
+
+    .move-to-bag {
+        background: var(--accent-color);
+        color: white;
+        border: none;
+        padding: 10px;
+        border-radius: 8px;
+        width: 100%;
+        margin: 10px 0;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        text-transform: uppercase;
+        transition: background 0.3s;
+    }
+
+    .move-to-bag:hover:not(:disabled) {
+        background: var(--primary-color);
+    }
+
+    .move-to-bag:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+    }
+
+    .remove-item {
+        background: none;
+        border: none;
+        color: var(--text-light);
+        font-size: 12px;
+        cursor: pointer;
+        transition: color 0.3s;
+    }
+
+    .remove-item:hover:not(:disabled) {
+        color: #c92466;
+    }
+
+    .remove-item:disabled {
+        color: #ccc;
+        cursor: not-allowed;
+    }
+
+    .loading-spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid var(--accent-color);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        display: none;
+        margin: 0 auto;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .empty-wishlist {
+        text-align: center;
+        padding: 50px;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        margin: 20px 0;
+    }
+
+    .empty-wishlist h2 {
+        color: var(--text-dark);
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 15px;
+    }
+
+    .empty-wishlist p {
+        color: var(--text-light);
+        font-size: 16px;
+        max-width: 400px;
+        margin: 0 auto 20px;
+    }
+
+    .shop-now-btn {
+        background: var(--accent-color);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        text-transform: uppercase;
+        transition: background 0.3s;
+    }
+
+    .shop-now-btn:hover {
+        background: var(--primary-color);
+    }
+
+    @media (max-width: 768px) {
+        .wishlist-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        .wishlist-actions {
+            width: 100%;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .wishlist-grid {
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .wishlist-item {
+            padding: 12px;
+        }
+        .wishlist-item img {
+            height: 180px;
+        }
+    }
+</style>
+
+<div class="wishlist-container">
+    <div class="wishlist-header">
+        <div>
+            <h1>My Wishlist</h1>
+            <div class="wishlist-count">
+                <%= wishlist && wishlist.products ? wishlist.products.length : 0 %> items
+            </div>
+        </div>
+        <% if (wishlist && wishlist.products.length > 0) { %>
+            <div class="wishlist-actions">
+                <button class="btn-clear-wishlist" onclick="clearWishlist()" aria-label="Clear wishlist">Clear Wishlist</button>
+            </div>
+        <% } %>
+    </div>
+
+    <% if (!wishlist || wishlist.products.length === 0) { %>
+        <div class="empty-wishlist">
+            <h2>Your Wishlist is Empty</h2>
+            <p>Add items you love to your wishlist. Review them anytime and move them to your cart easily.</p>
+            <a href="/shop" class="shop-now-btn">Shop Now</a>
+        </div>
+    <% } else { %>
+        <div class="wishlist-grid">
+            <% wishlist.products.forEach((item, index) => { %>
+                <% if (item.productId) { %>
+                    <div class="wishlist-item">
+                        <a href="/product/<%= item.productId._id %>">
+                            <img src="<%= item.productId.productImage[0] ? item.productId.productImage[0] : '/images/placeholder.jpg' %>" 
+                                 alt="<%= item.productId.productName %>" >
+                        </a>
+                        <h3 class="item-title"><%= item.productId.productName %></h3>
+                        <% 
+                            const price = item.productId.salesPrice || item.productId.regularPrice || 0;
+                            const isAvailable = !item.productId.isBlocked && item.productId.status === 'Available' && item.productId.quantity > 0;
+                        %>
+                        <p class="item-price">₹<%= price.toLocaleString('en-IN') %></p>
+                        <% if (!isAvailable) { %>
+                            <p class="item-unavailable">Unavailable</p>
+                        <% } %>
+                        <button class="move-to-bag" 
+                                onclick="addToCart('<%= item.productId._id %>', '<%= item.productId.productName %>', <%= price %>, <%= item.productId.quantity %>)" 
+                                <%= !isAvailable ? 'disabled' : '' %>
+                                aria-label="Add <%= item.productId.productName %> to cart">
+                            Add to Cart
+                            <span class="loading-spinner"></span>
+                        </button>
+                        <button class="remove-item" 
+                                onclick="removeFromWishlist('<%= item.productId._id %>')" 
+                                aria-label="Remove <%= item.productId.productName %> from wishlist">
+                            Remove
+                            <span class="loading-spinner"></span>
+                        </button>
+                    </div>
+                <% } else { %>
+                    <div class="wishlist-item">
+                        <p>Product not available</p>
+                        <button class="remove-item" 
+                                onclick="removeFromWishlist('<%= item._id %>')" 
+                                aria-label="Remove unavailable item from wishlist">
+                            Remove
+                            <span class="loading-spinner"></span>
+                        </button>
+                    </div>
+                <% } %>
+            <% }); %>
+        </div>
+    <% } %>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        
+        let isSubmitting = false;
+
+        window.addToCart = async function(productId, productName, price, stock) {
+
+            console.log(productId,productName,price,stock)
+            if (isSubmitting) return;
+            isSubmitting = true;
+
+            const button = event.currentTarget;
+            const spinner = button.querySelector('.loading-spinner');
+            button.disabled = true;
+            spinner.style.display = 'block';
+
+            try {
+                if (stock <= 0) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Out of Stock',
+                        text: `${productName} is currently out of stock.`,
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                    return;
+                }
+
+                const response = await fetch(`/add-to-cart?fromWishlist=true`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ productId, quantity: 1 })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Added to Cart',
+                        text: `${productName} has been added to your cart.`,
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                    removeFromWishlist(productId)
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Failed',
+                        text: data.message || 'Failed to add item to cart.',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                }
+            } catch (error) {
+                console.error('Error adding to cart:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Something went wrong. Please try again.',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+            } finally {
+                isSubmitting = false;
+                button.disabled = false;
+                spinner.style.display = 'none';
+            }
+        };
+
+        window.removeFromWishlist = async function(productId) {
+           
+            if (isSubmitting) return;
+            isSubmitting = true;
+
+            const button = event.currentTarget;
+            const spinner = button.querySelector('.loading-spinner');
+            button.disabled = true;
+            spinner.style.display = 'block';
+
+            try {
+                const response = await fetch('/removeFromWishlist', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ productId })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    const item = button.closest('.wishlist-item');
+                    item.style.opacity = '0';
+                    item.style.transform = 'scale(0.9)';
+                    item.style.transition = 'all 0.5s ease';
+
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Removed',
+                        text: 'Item removed from wishlist.',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Failed',
+                        text: data.message || 'Failed to remove item from wishlist.',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                }
+            } catch (error) {
+                console.error('Error removing from wishlist:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Something went wrong. Please try again.',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+            } finally {
+                isSubmitting = false;
+                button.disabled = false;
+                spinner.style.display = 'none';
+            }
+        };
+
+        window.clearWishlist = async function() {
+            const result = await Swal.fire({
+                title: 'Clear Wishlist',
+                text: 'Are you sure you want to remove all items from your wishlist?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#a67c52',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, clear it',
+                cancelButtonText: 'Cancel'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    const response = await fetch('/clearWishlist', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    const data = await response.json();
+
+                    if (data.success) {
+                        window.location.reload();
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Wishlist Cleared',
+                            text: 'All items have been removed from your wishlist.',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Failed',
+                            text: data.message || 'Failed to clear wishlist.',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error clearing wishlist:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Something went wrong. Please try again.',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                }
+            }
+        };
+    });
+</script>
+
+<%- include('../../views/partials/user/footer') %>

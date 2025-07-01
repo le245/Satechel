@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Satchel Login</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: url('/img/login.jpg') no-repeat center center fixed;
+      background-size: cover;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .login-container {
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(4px);
+    }
+    .login-form {
+      background-color: rgba(255, 255, 255, 0.95);
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      width: 320px;
+      text-align: center;
+    }
+    .login-form h2 {
+      margin-bottom: 25px;
+      color: #2c3e50;
+    }
+    .login-form input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 15px;
+    }
+    .login-form button {
+      width: 100%;
+      padding: 12px;
+      background-color: #2c3e50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background-color 0.3s ease;
+    }
+    .login-form button:hover {
+      background-color: #1a252f;
+    }
+    .divider {
+      margin: 20px 0;
+      text-align: center;
+      font-size: 14px;
+      color: #888;
+      position: relative;
+    }
+    .divider::before,
+    .divider::after {
+      content: "";
+      position: absolute;
+      width: 40%;
+      height: 1px;
+      background: #ccc;
+      top: 50%;
+    }
+    .divider::before {
+      left: 0;
+    }
+    .divider::after {
+      right: 0;
+    }
+    .google-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: white;
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .google-btn img {
+      width: 20px;
+      height: 20px;
+      margin-right: 10px;
+    }
+    .google-btn span {
+      font-size: 15px;
+      color: #444;
+    }
+    .google-btn:hover {
+      background-color: #f1f1f1;
+    }
+    .error-message {
+      color: red;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+    .forget-password-link{
+      font-size:0.875rem;
+      color:#007bff;
+      text-decoration: none;
+
+    }
+    .forget-password-link:hover{
+      color: #0056b3;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <form class="login-form" action="/login" method="POST">
+      <h2>Welcome to Satchel</h2>
+      <input type="email" name="email" placeholder="Email" />
+      
+      <input type="password" name="password" placeholder="Password"  />
+      
+      <div class="form-group d-flex justify-content-end">
+        <a href="/forgot-password" class="forget-password-link ms-auto">Forgot Password</a>
+
+      </div>
+      
+      <% if (locals.message && message.length > 0) { %>
+        <div class="error-message">
+          <%= message %>
+        </div>
+      <% } %>
+      <button type="submit">Login</button>
+      <div id="customerBlockError" style="color: red; margin-top: 10px;"></div>
+
+
+      <div class="divider">or</div>
+
+      <div class="google-btn">
+        <a href="/auth/google">
+          <img src="/img/Google_Icons-09-512.webp" alt="Google logo">
+          <span>Login with Google</span>
+        </a>
+      </div>
+
+      <div class="divider">Don't have an account?</div>
+            <a href="/signup">
+           <button type="button" class="btn btn-outline-primary" style="width: 100%; padding: 12px; border-radius: 8px; font-size: 16px;">
+                 Create Account
+            </button>
+            </a>
+    </form>
+  </div>
+
+
+</body>
+</html>

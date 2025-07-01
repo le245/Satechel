@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Cart</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      padding: 30px;
+    }
+
+    .cart {
+      max-width: 800px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .cart h2 {
+      margin-bottom: 20px;
+    }
+
+    .cart-item {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid #ddd;
+      padding: 10px 0;
+    }
+
+    .cart-item:last-child {
+      border-bottom: none;
+    }
+
+    .cart-item span {
+      width: 20%;
+      text-align: center;
+    }
+
+    .total {
+      text-align: right;
+      font-weight: bold;
+      font-size: 18px;
+      margin-top: 20px;
+    }
+
+    .btn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background: #45a049;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cart">
+    <h2>Your Cart</h2>
+    <div class="cart-item">
+      <span>Bag A</span>
+      <span>2</span>
+      <span>$40</span>
+      <span>$80</span>
+    </div>
+    <div class="cart-item">
+      <span>Bag B</span>
+      <span>1</span>
+      <span>$60</span>
+      <span>$60</span>
+    </div>
+
+    <div class="total">Total: $140</div>
+
+    <button class="btn" onclick="checkout()">Checkout</button>
+  </div>
+
+  <script>
+    function checkout() {
+      alert("Proceeding to checkout...");
+    }
+  </script>
+
+</body>
+</html>

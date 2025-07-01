@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Satchel Account Blocked</title>
+    <link rel="icon" href="/image/Screenshot 2025-01-02 185508.png" type="image/png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #333;
+        }
+
+        .blocked-container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .blocked-icon {
+            font-size: 50px;
+            color: #dc3545;
+            margin-bottom: 20px;
+        }
+
+        .blocked-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #dc3545;
+            margin-bottom: 15px;
+        }
+
+        .blocked-message {
+            font-size: 1rem;
+            color: #6c757d;
+            margin-bottom: 25px;
+        }
+
+        .blocked-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .blocked-buttons .btn {
+            padding: 10px;
+            font-size: 1rem;
+            border-radius: 5px;
+            text-decoration: none;
+            width: 100%;
+            max-width: 200px;
+            margin: 0 auto;
+        }
+
+        .blocked-buttons .btn-contact {
+            background-color: #007bff;
+            color: white;
+            border: none;
+        }
+
+        .blocked-buttons .btn-contact:hover {
+            background-color: #0056b3;
+        }
+
+        .blocked-buttons .btn-logout {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+        }
+
+        .blocked-buttons .btn-logout:hover {
+            background-color: #b02a37;
+        }
+
+        @media (max-width: 576px) {
+            .blocked-container {
+                padding: 20px;
+                margin: 10px;
+            }
+
+            .blocked-title {
+                font-size: 1.5rem;
+            }
+
+            .blocked-icon {
+                font-size: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="blocked-container">
+        <i class="fas fa-ban blocked-icon"></i>
+        <div class="blocked-title">Account Blocked</div>
+        <p class="blocked-message">Your account has been blocked. Please contact support for assistance.</p>
+        <div class="blocked-buttons">
+            <a href="/contact-support" class="btn btn-contact">Contact Support</a>
+            <button class="btn btn-logout" id="logout-btn">Log Out</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const logoutBtn = document.getElementById('logout-btn');
+            logoutBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                Swal.fire({
+                    title: 'Log Out?',
+                    text: 'You will be redirected to the login page.',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Log Out',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/logout';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,544 @@
+<%- include("../../views/partials/admin/header") %>
+
+<!-- Ensure SweetAlert2 is included -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<div class="container">
+    <div class="header">
+        <div class="title">Categories</div>
+        <button class="add-button" id="add-category-btn"><span class="plus-icon">+</span> Add Category</button>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-container">
+        <form action="/admin/category" method="GET" class="search-form">
+            <input type="text" id="search-input" name="search" placeholder="Search categories..." value="<%= search %>">
+            <button type="submit" id="search-btn" class="btn btn-primary">Search</button>
+            <a href="/admin/category" class="btn btn-secondary" id="clear-search-btn">Clear</a>
+        </form>
+    </div>
+
+    <!-- Categories Table -->
+    <div class="table-container">
+        <table class="categories-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Created At</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="categories-table-body">
+                <% if (cat && cat.length > 0) { %>
+                    <% cat.forEach(category => { %>
+                        <tr>
+                            <td><%= category._id %></td>
+                            <td><%= category.name %></td>
+                            <td><%= category.description %></td>
+                            <td><%= new Date(category.createdAt).toLocaleDateString() %></td>
+                            <td>
+                                <span class="badge <%= category.isListed ? 'badge-success' : 'badge-danger' %>">
+                                    <%= category.isListed ? 'Listed' : 'Unlisted' %>
+                                </span>
+                            </td>
+                            <td class="actions">
+                                <a href="/admin/editCategory?id=<%= category._id %>" class="btn btn-secondary btn-sm">Edit</a>
+                                <% if(category.isListed) { %>
+                                    <button class="btn btn-danger btn-sm unlist-btn" data-id="<%= category._id %>">Unlist</button>
+                                <% } else { %>
+                                    <a href="/admin/unlistCategory?id=<%= category._id %>" class="btn btn-success btn-sm">List</a>
+                                <% } %>
+                            </td>
+                        </tr>
+                    <% }); %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="7" style="text-align: center">No categories found</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" id="pagination">
+        <% if (totalPages > 1) { %>
+            <% if (currentPage > 1) { %>
+                <a href="/admin/category?page=<%= currentPage - 1 %><%= search ? '&search=' + search : '' %>" class="page-link">« Previous</a>
+            <% } %>
+            <% for(let i = 1; i <= totalPages; i++) { %>
+                <a href="/admin/category?page=<%= i %><%= search ? '&search=' + search : '' %>" class="page-link <%= i === currentPage ? 'active' : '' %>"><%= i %></a>
+            <% } %>
+            <% if (currentPage < totalPages) { %>
+                <a href="/admin/category?page=<%= currentPage + 1 %><%= search ? '&search=' + search : '' %>" class="page-link">Next »</a>
+            <% } %>
+        <% } %>
+    </div>
+
+    <!-- Add/Edit Category Modal -->
+    <div id="category-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Add Category</h3>
+                <span class="close">×</span>
+            </div>
+            <form id="category-form" action="/admin/addCategory" method="POST">
+                <input type="hidden" id="category-id" name="categoryId">
+                <div class="form-group">
+                    <label for="category-name">Category Name</label>
+                    <input type="text" id="category-name" name="name" maxlength="50">
+                    <div id="name-error" class="error-message"></div>
+                </div>
+                <div class="form-group">
+                    <label for="category-description">Description</label>
+                    <textarea id="category-description" name="description" maxlength="500"></textarea>
+                    <div id="description-error" class="error-message"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary close-btn">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="save-category-btn">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+    }
+    .container {
+        max-width: 1200px;
+        margin-left: auto;
+        margin-right: 20px;
+    }
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 20px;
+        background-color: #f5f5f5;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+    .title {
+        font-size: 24px;
+        font-weight: bold;
+        color: #333;
+    }
+    .add-button {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+    }
+    .add-button:hover {
+        background-color: #45a049;
+    }
+    .plus-icon {
+        margin-right: 5px;
+        font-size: 18px;
+    }
+    .search-container {
+        margin-bottom: 20px;
+    }
+    .search-form {
+        display: flex;
+        gap: 10px;
+    }
+    #search-input {
+        flex: 1;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+    .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 500;
+    }
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+    }
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+    .btn-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+    .btn-success {
+        background-color: #28a745;
+        color: white;
+    }
+    .btn-info {
+        background-color: #17a2b8;
+        color: white;
+    }
+    .btn-warning {
+        background-color: #ffc107;
+        color: black;
+    }
+    .btn-sm {
+        padding: 4px 8px;
+        font-size: 14px;
+    }
+    .table-container {
+        overflow-x: auto;
+    }
+    .categories-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+    .categories-table th, .categories-table td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    .categories-table th {
+        background-color: #f5f5f5;
+        font-weight: bold;
+    }
+    .badge {
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+    .badge-success {
+        background-color: #28a745;
+        color:  white;
+    }
+    .badge-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+    .badge-info {
+        background-color: #17a2b8;
+        color: white;
+    }
+    .actions {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+    }
+    .actions a, .actions button {
+        text-decoration: none;
+    }
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 5px;
+        margin-top: 20px;
+    }
+    .page-link {
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        text-decoration: none;
+        color: #007bff;
+    }
+    .page-link.active {
+        background-color: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+    }
+    .modal-content {
+        background-color: white;
+        padding: 30px;
+        border-radius: 8px;
+        width: 400px;
+        max-width: 90%;
+    }
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    .modal-header h3 {
+        font-size: 20px;
+        margin: 0;
+    }
+    .close {
+        font-size: 24px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    .form-group {
+        margin-bottom: 15px;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+    }
+    .form-group input, .form-group textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+    .form-group textarea {
+        height: 100px;
+        resize: vertical;
+    }
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+    }
+    .error-message {
+        color: #dc3545;
+        font-size: 12px;
+        margin-top: 5px;
+        display: none;
+    }
+    .error {
+        border-color: #dc3545 !important;
+    }
+</style>
+
+<script>
+    const addCategoryBtn = document.getElementById('add-category-btn');
+    const categoryModal = document.getElementById('category-modal');
+    const categoryForm = document.getElementById('category-form');
+    const modalTitle = document.getElementById('modal-title');
+    const categoryIdInput = document.getElementById('category-id');
+    const categoryNameInput = document.getElementById('category-name');
+    const categoryDescriptionInput = document.getElementById('category-description');
+    const saveCategoryBtn = document.getElementById('save-category-btn');
+
+    addCategoryBtn.addEventListener('click', () => {
+        modalTitle.textContent = 'Add Category';
+        categoryIdInput.value = '';
+        categoryNameInput.value = '';
+        categoryDescriptionInput.value = '';
+        clearErrorMessages();
+        categoryModal.style.display = 'flex';
+    });
+
+    const closeButtons = document.querySelectorAll('.close, .close-btn');
+    closeButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            categoryModal.style.display = 'none';
+        });
+    });
+
+    window.addEventListener('click', (event) => {
+        if (event.target === categoryModal) {
+            categoryModal.style.display = 'none';
+        }
+    });
+
+    function clearErrorMessages() {
+        const errorElements = document.querySelectorAll('.error-message');
+        errorElements.forEach(element => {
+            element.innerHTML = '';
+            element.style.display = 'none';
+        });
+        const inputElements = document.querySelectorAll('#category-name, #category-description');
+        inputElements.forEach(element => {
+            element.classList.remove('error');
+        });
+    }
+
+    function showError(elementId, message) {
+        const errorElement = document.getElementById(elementId);
+        errorElement.innerHTML = message;
+        errorElement.style.display = 'block';
+        const inputElement = document.getElementById(elementId.replace('-error', ''));
+        inputElement.classList.add('error');
+    }
+
+    categoryForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        clearErrorMessages();
+        saveCategoryBtn.disabled = true;
+
+        if (typeof Swal === 'undefined') {
+            console.error('SweetAlert2 is not loaded');
+            alert('SweetAlert2 is not loaded. Please contact support.');
+            saveCategoryBtn.disabled = false;
+            return;
+        }
+
+        const name = categoryNameInput.value.trim();
+        const description = categoryDescriptionInput.value.trim();
+
+        if (!name) {
+            showError('name-error', 'Category name is required');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Missing Field',
+                text: 'Category name is required'
+            });
+            saveCategoryBtn.disabled = false;
+            return;
+        }
+
+        if (name.length < 2 || name.length > 50) {
+            showError('name-error', 'Category name must be between 2 and 50 characters');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Invalid Input',
+                text: 'Category name must be between 2 and 50 characters'
+            });
+            saveCategoryBtn.disabled = false;
+            return;
+        }
+
+        const nameRegex = /^[a-zA-Z0-9\s\-'&]+$/;
+        if (!nameRegex.test(name)) {
+            showError('name-error', 'Category name can only contain letters, numbers, spaces, hyphens, and ampersands');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Invalid Input',
+                text: 'Category name can only contain letters, numbers, spaces, hyphens, and ampersands'
+            });
+            saveCategoryBtn.disabled = false;
+            return;
+        }
+
+        if (!description) {
+            showError('description-error', 'Description is required');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Missing Field',
+                text: 'Description is required'
+            });
+            saveCategoryBtn.disabled = false;
+            return;
+        }
+
+        if (description.length < 10 || description.length > 500) {
+            showError('description-error', 'Description must be between 10 and 500 characters');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Invalid Input',
+                text: 'Description must be between 10 and 500 characters'
+            });
+            saveCategoryBtn.disabled = false;
+            return;
+        }
+
+        const descriptionRegex = /^[a-zA-Z0-9\s.,!?'"\-()]+$/;
+        if (!descriptionRegex.test(description)) {
+            showError('description-error', 'Description contains invalid characters');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Invalid Input',
+                text: 'Description contains invalid characters'
+            });
+            saveCategoryBtn.disabled = false;
+            return;
+        }
+
+        try {
+            Swal.fire({
+                title: 'Saving...',
+                text: 'Please wait while the category is being added.',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            console.log('Sending request to /admin/addCategory with:', { name, description });
+            const response = await fetch('/admin/addCategory', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name, description })
+            });
+
+            const data = await response.json().catch(() => ({}));
+            console.log('Server response:', data);
+
+            if (!response.ok) {
+                Swal.close();
+                if (data.error && /already exists/i.test(data.error)) {
+                    showError('name-error', 'A category with this name already exists');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Duplicate Category',
+                        text: 'A category with this name already exists'
+                    });
+                    return;
+                }
+                throw new Error(data.error || 'Failed to add category');
+            }
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Category Added',
+                text: 'The category was added successfully!',
+                timer: 1500,
+                showConfirmButton: false
+            }).then(() => {
+                categoryModal.style.display = 'none';
+                location.reload();
+            });
+        } catch (error) {
+            console.error('Error adding category:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.message || 'An error occurred while adding the category'
+            });
+        } finally {
+            saveCategoryBtn.disabled = false;
+        }
+    });
+
+    document.querySelectorAll('.unlist-btn').forEach(button => {
+        button.addEventListener('click', (event) => {
+            const categoryId = event.target.getAttribute('data-id');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Unlist Category',
+                text: 'Are you sure you want to unlist this category?',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, Unlist',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = `/admin/listCategory?id=${categoryId}`;
+                }
+            });
+        });
+    });
+</script>
+
+<%- include("../../views/partials/admin/footer") %>

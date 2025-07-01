@@ -1,0 +1,406 @@
+<!-- Keep header unchanged -->
+<%- include('../../views/partials/admin/header') %>
+<section class="main-content">
+    <div class="content-header">
+        <h2 class="content-title">Order Management</h2>
+        <div class="search-container">
+            <input type="text" class="form-control search-input" id="searchInput" placeholder="Search by Order ID or Customer">
+            <select class="form-control filter-select" id="statusFilter">
+                <option value="">All Statuses</option>
+                <option value="Pending">Pending</option>
+                <option value="Processing">Processing</option>
+                <option value="Shipped">Shipped</option>
+                <option value="Delivered">Delivered</option>
+                <option value="Cancelled">Cancelled</option>
+            </select>
+        </div>
+    </div>
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="ordersTable">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Products</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (orders && orders.length > 0) { %>
+                            <% orders.forEach(order => { %>
+                                <tr>
+                                    <td>#<%= order.orderId || 'N/A' %></td>
+                                    <td>
+                                        <%= order.userId && order.userId.name ? order.userId.name : 'Unknown' %>
+                                        <br>
+                                        <span class="text-muted small">
+                                            <%= order.userId && order.userId.email ? order.userId.email : 'No email' %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <%= order.items ? order.items.length : 0 %> items
+                                    </td>
+                                    <td>₹<%= order.finalAmount ? order.finalAmount.toFixed(2) : '0.00' %></td>
+                                    <td>
+                                        <select onchange="updateOrderStatus(this, '<%= order._id %>')" class="status-select <%= order.status ? order.status.toLowerCase() : 'pending' %>" data-previous-status="<%= order.status || 'Pending' %>">
+                                            <option value="Pending" <%= order.status === 'Pending' ? 'selected' : '' %>>Pending</option>
+                                            <option value="Processing" <%= order.status === 'Processing' ? 'selected' : '' %>>Processing</option>
+                                            <option value="Shipped" <%= order.status === 'Shipped' ? 'selected' : '' %>>Shipped</option>
+                                            <option value="Delivered" <%= order.status === 'Delivered' ? 'selected' : '' %>>Delivered</option>
+                                            <option value="Cancelled" <%= order.status === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
+                                        </select>
+                                        <span class="loading-spinner" style="display: none;"></span>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="dropdown">
+                                            <a href="/admin/orders/orderDetails/<%= order?.orderId || '' %>" data-bs-toggle="dropdown" class="btn btn-light rounded btn-sm font-sm">
+                                                <i class="fas fa-ellipsis-h"></i>
+                                            </a>
+                                            <div class="dropdown-menu">
+                                                <a class="dropdown-item" href="/admin/orders/orderDetails/<%= order?.orderId || '' %>">View Details</a>
+                                                <a class="dropdown-item text-danger" href="#" onclick="confirmCancel('<%= order._id %>')">Cancel Order</a>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <div class="text-muted">No orders found</div>
+                                </td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination Controls -->
+            <% if (totalPages > 1) { %>
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+                            <a class="page-link" href="?page=1" aria-label="First">
+                                <span aria-hidden="true">««</span>
+                            </a>
+                        </li>
+                        <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+                            <a class="page-link" href="?page=<%= currentPage - 1 %>" aria-label="Previous">
+                                <span aria-hidden="true">«</span>
+                            </a>
+                        </li>
+                        <% 
+                            const maxPagesToShow = 3;
+                            let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+                            let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+                            if (endPage === totalPages) {
+                                startPage = Math.max(1, endPage - maxPagesToShow + 1);
+                            }
+                        %>
+                        <% for(let i = startPage; i <= endPage; i++) { %>
+                            <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                                <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+                            </li>
+                        <% } %>
+                        <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                            <a class="page-link" href="?page=<%= currentPage + 1 %>" aria-label="Next">
+                                <span aria-hidden="true">»</span>
+                            </a>
+                        </li>
+                        <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                            <a class="page-link" href="?page=<%= totalPages %>" aria-label="Last">
+                                <span aria-hidden="true">»»</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            <% } %>
+        </div>
+    </div>
+</section>
+
+<style>
+    .main-content {
+        margin-left: var(--sidebar-width);
+        padding: 20px;
+        transition: all 0.3s ease;
+    }
+
+    .content-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+
+    .content-title {
+        font-size: 1.8rem;
+        margin-bottom: 0;
+        color: #343a40;
+    }
+
+    .search-container {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .search-input, .filter-select {
+        border-radius: 4px;
+        padding: 8px;
+        font-size: 0.9rem;
+    }
+
+    .search-input {
+        max-width: 300px;
+    }
+
+    .filter-select {
+        max-width: 200px;
+    }
+
+    .table {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .table thead th {
+        background-color: #f8f9fc;
+        border-bottom: 2px solid #e3e6f0;
+        font-weight: 700;
+        color: #4e73df;
+    }
+
+    .table td {
+        vertical-align: middle;
+        padding: 12px 8px;
+    }
+
+    .status-select {
+        width: 130px;
+        padding: 6px 30px 6px 10px;
+        border-radius: 4px;
+        font-weight: 600;
+        text-align: left;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M1 4l5 5 5-5' fill='none' stroke='currentColor' stroke-width='1.5'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 1px solid transparent;
+    }
+
+    .status-select.pending {
+        background-color: #fff3cd;
+        border-color: #ffeeba;
+        color: #856404;
+    }
+
+    .status-select.processing {
+        background-color: #cce5ff;
+        border-color: #b8daff;
+        color: #004085;
+    }
+
+    .status-select.shipped {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+    }
+
+    .status-select.delivered {
+        background-color: #d1e7dd;
+        border-color: #badbcc;
+        color: #0f5132;
+    }
+
+    .status-select.cancelled {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+    }
+
+    .loading-spinner {
+        width: 20px;
+        height: 20px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #3498db;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        display: none;
+        margin-left: 10px;
+        vertical-align: middle;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .pagination .page-link {
+        color: #007bff;
+        border-radius: 4px;
+        margin: 0 2px;
+        padding: 6px 12px;
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: #007bff;
+        border-color: #007bff;
+        color: white;
+    }
+
+    .pagination .page-item.disabled .page-link {
+        color: #6c757d;
+        pointer-events: none;
+        background-color: #fff;
+        border-color: #dee2e6;
+    }
+
+    @media (max-width: 768px) {
+        .main-content {
+            margin-left: 0;
+            padding: 15px;
+        }
+
+        .search-container {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .search-input, .filter-select {
+            max-width: 100%;
+        }
+
+        .table {
+            font-size: 0.9rem;
+        }
+
+        .status-select {
+            width: 100px;
+        }
+    }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function confirmCancel(orderId) {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'Do you want to cancel this order?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, cancel it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = `/admin/order/cancel/${orderId}`;
+            }
+        });
+    }
+
+    function updateOrderStatus(selectElement, orderId) {
+        const newStatus = selectElement.value;
+        const loadingSpinner = selectElement.closest('tr').querySelector('.loading-spinner');
+        selectElement.disabled = true;
+        loadingSpinner.style.display = 'inline-block';
+
+        fetch(`/admin/updateOrderStatus/${orderId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status: newStatus })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                selectElement.className = `status-select ${newStatus.toLowerCase()}`;
+                selectElement.dataset.previousStatus = newStatus;
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Status Updated',
+                    text: data.message,
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+            } else {
+                selectElement.value = selectElement.dataset.previousStatus;
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Update Failed',
+                    text: data.message || 'Failed to update order status',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+            }
+        })
+        .catch(error => {
+            selectElement.value = selectElement.dataset.previousStatus;
+            Swal.fire({
+                icon: 'error',
+                title: 'Network Error',
+                text: 'Could not update order status. Please try again.',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+        })
+        .finally(() => {
+            loadingSpinner.style.display = 'none';
+            selectElement.disabled = false;
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const statusSelects = document.querySelectorAll('.status-select');
+        statusSelects.forEach(select => {
+            select.classList.add(select.value.toLowerCase());
+            select.dataset.previousStatus = select.value;
+        });
+
+        const searchInput = document.getElementById('searchInput');
+        const statusFilter = document.getElementById('statusFilter');
+        const tableRows = document.querySelectorAll('#ordersTable tbody tr');
+
+        function filterTable() {
+            const searchText = searchInput.value.toLowerCase();
+            const selectedStatus = statusFilter.value;
+
+            tableRows.forEach(row => {
+                const orderId = row.cells[0].textContent.toLowerCase();
+                const customerName = row.cells[1].textContent.toLowerCase();
+                const status = row.cells[4].querySelector('.status-select').value;
+
+                const matchesSearch = orderId.includes(searchText) || customerName.includes(searchText);
+                const matchesStatus = !selectedStatus || status === selectedStatus;
+
+                row.style.display = matchesSearch && matchesStatus ? '' : 'none';
+            });
+        }
+
+    
+        let debounceTimeout;
+        searchInput.addEventListener('input', () => {
+            clearTimeout(debounceTimeout);
+            debounceTimeout = setTimeout(filterTable, 300);
+        });
+        statusFilter.addEventListener('change', filterTable);
+    });
+</script>
+<%- include('../../views/partials/admin/footer') %>

@@ -1,0 +1,444 @@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.css">
+<%- include("../../views/partials/admin/header") %>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Arial', sans-serif;
+    }
+
+    body {
+        background-color: white;
+        color: var(--text-color);
+    }
+
+    .sidebar {
+        width: var(--sidebar-width);
+        height: 100vh;
+        position: fixed;
+        padding-top: 20px;
+    }
+
+    .sidebar h2 {
+        color: white;
+        text-align: center;
+        margin-bottom: 30px;
+        font-size: 24px;
+    }
+
+    .sidebar ul {
+        list-style: none;
+    }
+
+    .sidebar ul li {
+        margin: 20px 0;
+    }
+
+    .sidebar ul li a {
+        color: white;
+        text-decoration: none;
+        font-size: 16px;
+        padding: 10px 20px;
+        display: block;
+        transition: background 0.3s;
+    }
+
+    .sidebar ul li a:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .content {
+        margin-left: var(--sidebar-width);
+        padding: 20px;
+        transition: margin-left 0.3s ease;
+    }
+
+    .sidebar.collapsed ~ .content {
+        margin-left: var(--sidebar-collapsed-width);
+    }
+
+    .content-header {
+        margin-bottom: 20px;
+    }
+
+    .content-title {
+        font-size: 28px;
+        font-weight: 600;
+        color: #1a2a6c;
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: center;
+    }
+
+    .input-group {
+        background-color: white;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        transition: box-shadow 0.3s;
+        width: 500px;
+    }
+
+    .input-group:hover {
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .form-control {
+        border: none !important;
+        outline: none;
+        padding: 10px 15px;
+        font-size: 14px;
+    }
+
+    .btn {
+        background-color: #1a2a6c;
+        color: white;
+        border-radius: 0 50px 50px 0 !important;
+        padding: 10px 20px;
+        font-size: 14px;
+        border: none;
+        transition: background 0.3s;
+    }
+
+    .btn:hover {
+        background-color: #b21f1f;
+    }
+
+    .right {
+        background-color: var(--card-bg);
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        overflow-x: auto;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 0;
+    }
+
+    .table thead {
+        background-color: #1a2a6c;
+        color: white;
+    }
+
+    .table th, .table td {
+        padding: 15px;
+        text-align: center;
+        font-size: 14px;
+    }
+
+    .table th {
+        font-weight: 600;
+    }
+
+    .table tbody tr {
+        border-bottom: 1px solid #e9ecef;
+        transition: background 0.3s;
+    }
+
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+
+    .product-image {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 5px;
+        border: 1px solid #e9ecef;
+    }
+
+    .btn-info {
+        background-color: #17a2b8;
+    }
+
+    .btn-info:hover {
+        background-color: #138496;
+    }
+
+    .btn-danger {
+        background-color: #dc3545;
+    }
+
+    .btn-danger:hover {
+        background-color: #c82333;
+    }
+
+    .btn-success {
+        background-color: var(--fluorescent-green);
+    }
+
+    .btn-success:hover {
+        background-color: #218838;
+    }
+
+    a.text-white {
+        text-decoration: none;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    .pagination .page-item {
+        margin: 0 5px;
+    }
+
+    .pagination .page-link {
+        padding: 10px 20px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        text-decoration: none;
+        color: var(--text-color);
+        transition: background 0.3s;
+    }
+
+    .pagination .page-link:hover {
+        background-color: #e9ecef;
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: #1a2a6c;
+        border-color: #1a2a6c;
+        color: white;
+    }
+
+    a[href="/admin/addProducts"] {
+        background-color: #1a2a6c !important;
+        transition: background 0.3s;
+    }
+
+    a[href="/admin/addProducts"]:hover {
+        background-color: #b21f1f !important;
+    }
+
+    @media (max-width: 768px) {
+        .content {
+            margin-left: var(--sidebar-collapsed-width);
+            padding: 10px;
+        }
+
+        .input-group {
+            width: 100% !important;
+        }
+
+        .table th, .table td {
+            padding: 8px;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+
+        .pagination .page-link {
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
+        .product-image {
+            width: 40px;
+            height: 40px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .sidebar {
+            width: 100%;
+            height: auto;
+            position: relative;
+        }
+
+        .content {
+            margin-left: 0;
+        }
+
+        .table th, .table td {
+            padding: 6px;
+            font-size: 12px;
+        }
+
+        .btn {
+            padding: 3px 6px;
+            font-size: 10px;
+        }
+
+        .pagination .page-link {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .product-image {
+            width: 30px;
+            height: 30px;
+        }
+    }
+</style>
+
+<!-- Content -->
+<div class="content">
+    <div class="content-header">
+        <h2 class="content-title card-title">Products</h2>
+    </div>
+    <header class="card-header text-center mb-20">
+        <form action="" method="get" class="d-inline">
+            <div class="input-group input-group-sm border border-1 border-grey rounded-pill">
+                <input type="text" class="form-control border-0 rounded-pill" placeholder="Search products or brands" name="search">
+                <button class="btn border-0" type="submit">Search</button>
+            </div>
+        </form>
+    </header>
+ 
+    <div class="right mt-5">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th scope="col"><b>Image</b></th>
+                    <th scope="col"><b>Product Name</b></th>
+                    <th scope="col"><b>Category</b></th>
+                    <th scope="col"><b>Regular Price</b></th>
+                    <th scope="col"><b>Quantity</b></th>
+                    <th scope="col"><b>Action</b></th>
+                    <th scope="col"><b>Edit</b></th>
+                </tr>
+            </thead>
+            <tbody>
+                <% data.forEach(product => { %>
+                    <tr>
+                        <td>
+                            <% if (product.productImage && product.productImage.length > 0) { %>
+                                <img src="<%= product.productImage[0] %>" alt="<%= product.productName %>" class="product-image">
+                            <% } else { %>
+                                <span>No Image</span>
+                            <% } %>
+                        </td>
+                        <td><%= product.productName %></td>
+                        <td><%= product.category ? product.category.name : "No Category" %></td>
+                        <td><%= product.regularPrice || "N/A" %></td>
+                        <td><%= product.quantity || "N/A" %></td>
+                        <td>
+                            <% if (product.isBlocked === false) { %>
+                                <button class="btn btn-danger" style="width: 80px;" onclick="blockProduct('<%= product._id %>')">Block</button>
+                            <% } else { %>
+                                <button class="btn btn-success" style="width: 80px;" onclick="unblockProduct('<%= product._id %>')">Unblock</button>
+                            <% } %>
+                        </td>
+                        <td>
+                            <button class="btn btn-info" style="width: 80px;">
+                                <a href="/admin/editProduct?id=<%= product._id %>" class="text-white" style="text-decoration: none;">Edit</a>
+                            </button>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+    <div class="container mt-3">
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center mb-20">
+                <% for (let i = 1; i <= totalPages; i++) { %>
+                    <li class="page-item <%= (i === currentPage) ? 'active' : '' %>">
+                        <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+                    </li>
+                <% } %>
+            </ul>
+        </nav>
+    </div>
+    <a href="/admin/addProducts" style="background-color: blue; color: white; padding: 10px 20px; text-decoration: none; display: inline-block; border-radius: 5px;">Add Product</a>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+
+<script>
+    function blockProduct(productId) {
+        Swal.fire({
+            title: 'Block Product',
+            text: 'Are you sure you want to block this product?',
+            icon: 'octobre',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, block it!',
+            cancelButtonText: 'No, cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/admin/blockProduct?id=${productId}`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: 'Product blocked successfully!'
+                        }).then(() => location.reload());
+                    } else {
+                        throw new Error(data.message || 'Failed to block product');
+                    }
+                })
+                .catch(error => {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Something went wrong!'
+                    });
+                });
+            }
+        });
+    }
+
+    function unblockProduct(productId) {
+        Swal.fire({
+            title: 'Unblock Product',
+            text: 'Are you sure you want to unblock this product?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, unblock it!',
+            cancelButtonText: 'No, cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/admin/unblockProduct?id=${productId}`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: 'Product unblocked successfully!'
+                        }).then(() => location.reload());
+                    } else {
+                        throw new Error(data.message || 'Failed to unblock product');
+                    }
+                })
+                .catch(error => {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: error.message || 'Something went wrong!'
+                    });
+                });
+            }
+        });
+    }
+</script>
+
+<%- include("../../views/partials/admin/footer") %>

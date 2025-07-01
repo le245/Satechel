@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Customer Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <!-- Add SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <%- include("../../views/partials/admin/header") %>
+    <style>
+        :root {
+            --sidebar-width: 250px;
+            --sidebar-collapsed-width: 70px;
+            --header-height: 60px;
+            --primary-color: #cbcfda;
+            --secondary-color: #858796;
+            --dark-bg: #1a1a1a;
+            --card-bg: #242424;
+            --text-color: #e4e4e4;
+            --fluorescent-green: #2b08ee;
+            --gradient-green: linear-gradient(135deg, #b0aec8, rgb(120, 100, 100));
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fc;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, #010612 0%, #224abe 100%);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            padding-top: var(--header-height);
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+        }
+        
+        .sidebar-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: var(--header-height);
+            background: rgba(1, 6, 18, 0.9);
+            display: flex;
+            align-items: center;
+            padding: 0 1rem;
+            transition: all 0.3s ease;
+            z-index: 1001;
+        }
+        
+        .logo-full {
+            display: flex;
+            align-items: center;
+            color: white;
+            text-decoration: none;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            color: white;
+            background: var(--gradient-green);
+        }
+        
+        .nav-link i {
+            width: 20px;
+            text-align: center;
+            margin-right: 1rem;
+        }
+        
+        .nav-link.active {
+            background: var(--gradient-green);
+            color: white;
+        }
+        
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .content-header {
+            margin-bottom: 25px;
+        }
+        
+        .content-title {
+            font-size: 1.8rem;
+            margin-bottom: 0;
+        }
+        
+        .table {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .table thead th {
+            background-color: #f8f9fc;
+            border-bottom: 2px solid #e3e6f0;
+            font-weight: 700;
+            color: #4e73df;
+        }
+        
+        .btn-block {
+            width: 80px;
+        }
+        
+        .pagination .page-item.active .page-link {
+            background-color: #4e73df;
+            border-color: #4e73df;
+        }
+        
+        .pagination .page-link {
+            color: #4e73df;
+        }
+        
+        .search-container {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="content-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="content-title">Customers</h2>
+            </div>
+        </div>
+        
+        <!-- Search Bar -->
+        <div class="search-container">
+            <form action="/admin/customers" method="get">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Search customers..." name="search" value="<%= search || '' %>">
+                    <button class="btn btn-primary" type="submit">Search</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Customer Table -->
+        <div class="card shadow mb-4">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th scope="col">Name</th>
+                                <th scope="col">Email</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% for(let i = 0; i < userData.length; i++) { %>
+                                <tr>
+                                    <td><%= userData[i].name %></td>
+                                    <td><%= userData[i].email %></td>
+                                    <td>
+                                        <% if(userData[i].isBlocked === false) { %>
+                                            <a href="#" class="btn btn-danger btn-block block-btn" data-id="<%= userData[i]._id %>" data-action="block">Block</a>
+                                        <% } else { %>
+                                            <a href="#" class="btn btn-success btn-block block-btn" data-id="<%= userData[i]._id %>" data-action="unblock">Unblock</a>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Pagination -->
+       <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                <% for(let i = 1; i <= totalPages; i++) { %>
+                    <li class="page-item <%= (i === currentPage) ? 'active' : '' %>">
+                        <a class="page-link" href="?page=<%= i %>&search=<%= search || '' %>"><%= i %></a>
+                    </li>
+                <% } %>
+            </ul>
+        </nav>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+ 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const blockButtons = document.querySelectorAll('.block-btn');
+            blockButtons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const userId = button.getAttribute('data-id');
+                    const action = button.getAttribute('data-action');
+                    const actionText = action === 'block' ? 'block' : 'unblock';
+                    const actionTitle = action === 'block' ? 'Block User' : 'Unblock User';
+                    const actionConfirmText = action === 'block' ? 'This user will be blocked.' : 'This user will be unblocked.';
+                    const actionUrl = action === 'block' ? `/admin/blockCustomer?id=${userId}` : `/admin/unblockCustomer?id=${userId}`;
+
+                    Swal.fire({
+                        title: `Are you sure you want to ${actionTitle}?`,
+                        text: actionConfirmText,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: action === 'block' ? '#dc3545' : '#28a745',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: `Yes, ${actionText}!`,
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.href = actionUrl;
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>

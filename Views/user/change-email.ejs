@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Change Email</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .is-invalid {
+            border-color: #e53e3e;
+        }
+        .error-message {
+            color: #e53e3e;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-200 font-sans">
+    <section class="content-main min-h-screen flex items-center justify-center py-20">
+        <div class="card bg-white rounded-lg shadow-md p-8 w-full max-w-md border border-gray-300">
+            <div class="card-body">
+                <h4 class="text-2xl font-bold text-gray-800 mb-6 text-center">Enter Current Email</h4>
+                <form method="post" action="/change-email" onsubmit="return validateLoginForm()">
+                    <div class="mb-6">
+                        <input 
+                            class="form-control w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500" 
+                            name="email" 
+                            placeholder="Email" 
+                            type="text" 
+                            id="email"
+                        >
+                        <div class="error-message" id="email-error"></div>
+                    </div>
+                    <div class="mb-4">
+                        <button 
+                            type="submit" 
+                            class="btn w-full bg-gray-500 text-white p-3 rounded-lg hover:bg-gray-600 transition font-semibold"
+                        >
+                            Verify
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+    <script>
+        function validateLoginForm() {
+            const emailInput = document.getElementById('email');
+            const emailError = document.getElementById('email-error');
+            const emailValue = emailInput.value.trim();
+            const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+
+            if (emailValue === '') {
+                emailError.textContent = 'Please enter your email.';
+                emailInput.classList.add('is-invalid');
+                return false;
+            } else if (!emailValue.match(emailPattern)) {
+                emailError.textContent = 'Please enter a valid email address';
+                emailInput.classList.add('is-invalid');
+                return false;
+            } else {
+                emailError.textContent = '';
+                emailInput.classList.remove('is-invalid');
+                return true;
+            }
+
+             $.ajax({
+                type: 'POST',
+                url: '/change-email',
+                data: { email: emailValue },
+                success: function (response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Email Verified',
+                            text: 'Proceeding to OTP verification...',
+                            showConfirmButton: false,
+                            timer: 1500
+                        }).then(() => {
+                            window.location.href = response.redirectUrl
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: response.message || 'Failed to verify email. Please try again.'
+                        });
+                    }
+                },
+                error: function (xhr) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: xhr.responseJSON?.message || 'An error occurred. Please try again.'
+                    });
+                }
+            });
+
+            return false;
+        }
+        
+    </script>
+</body>
+
+</html>

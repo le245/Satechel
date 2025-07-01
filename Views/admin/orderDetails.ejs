@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Details - Admin</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .order-container {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+        .section-title {
+            border-bottom: 2px solid #f1f1f1;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+        .order-header {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .product-item {
+            border-bottom: 1px solid #eee;
+            padding: 15px 0;
+        }
+        .product-item:last-child {
+            border-bottom: none;
+        }
+        .status-badge {
+            font-size: 14px;
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+        .status-Pending { background-color: #fff3cd; color: #856404; }
+        .status-Processing { background-color: #d1ecf1; color: #0c5460; }
+        .status-Shipped { background-color: #d4edda; color: #155724; }
+        .status-Delivered { background-color: #c3e6cb; color: #155724; }
+        .status-Cancelled { background-color: #f8d7da; color: #721c24; }
+        .status-ReturnRequest { background-color: #ffeeba; color: #856404; }
+        .status-Returned { background-color: #d6d8d9; color: #1b1e21; }
+        .price-details {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .tracking-timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        .tracking-timeline::before {
+            content: '';
+            position: absolute;
+            left: 9px;
+            top: 0;
+            height: 100%;
+            width: 2px;
+            background-color: #dee2e6;
+        }
+        .timeline-item {
+            position: relative;
+            padding-bottom: 25px;
+        }
+        .timeline-item:last-child {
+            padding-bottom: 0;
+        }
+        .timeline-dot {
+            position: absolute;
+            left: -30px;
+            top: 0;
+            width: 20px;
+            height: 20px;
+            background-color: #007bff;
+            border-radius: 50%;
+        }
+        .timeline-content {
+            padding-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="order-container">
+            <!-- Order Header -->
+            <div class="order-header">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h2>Order #<%= order.orderId %></h2>
+                        <p class="text-muted">
+                            Placed on <%= new Date(order.createOn).toLocaleDateString('en-US', { 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric' 
+                            }) %>
+                        </p>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <span class="status-badge status-<%= order.status.replace(/\s+/g, '') %>">
+                            <%= order.status %>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h4 class="section-title">Order Summary</h4>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-calendar-alt me-2"></i>Order Date</h5>
+                            <p class="card-text">
+                                <%= new Date(order.createOn).toLocaleDateString('en-US', { 
+                                    year: 'numeric', 
+                                    month: 'long', 
+                                    day: 'numeric' 
+                                }) %>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <% if (order.invoiceDate) { %>
+                <div class="col-md-3 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-file-invoice me-2"></i>Invoice Date</h5>
+                            <p class="card-text">
+                                <%= new Date(order.invoiceDate).toLocaleDateString('en-US', { 
+                                    year: 'numeric', 
+                                    month: 'long', 
+                                    day: 'numeric' 
+                                }) %>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <% } %>
+                <div class="col-md-3 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-shopping-cart me-2"></i>Total Items</h5>
+                            <p class="card-text"><%= order.items && Array.isArray(order.items) ? order.items.length : 0 %> items</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-money-bill-wave me-2"></i>Total Amount</h5>
+                            <p class="card-text">₹<%= order.finalAmount.toFixed(2) %></p>
+                            <p class="card-text"><strong>Payment Method:</strong> <%= order.paymentMethod || 'N/A' %></p>
+                            <p class="card-text"><strong>Status:</strong> 
+                                <span class="badge bg-<%= order.status === 'Delivered' ? 'success' : order.status === 'Cancelled' ? 'danger' : order.status === 'Processing' ? 'warning' : 'info' %>">
+                                    <%= order.status %>
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+           <!-- Order Items -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="section-title">Ordered Items</h4>
+    </div>
+    <div class="col-12">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Product</th>
+                        <th scope="col">Price</th>
+                        <th scope="col">Quantity</th>
+                        <th scope="col" class="text-end">Subtotal</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (order.items && Array.isArray(order.items)) { %>
+                        <% order.items.forEach(item => { %>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <% if (item.productId && item.productId.productImage && Array.isArray(item.productId.productImage) && item.productId.productImage.length > 0 && item.productId.productImage[0]) { %>
+                                            <img src="<%= item.productId.productImage[0] %>" alt="<%= item.productId.productName || 'Product' %>" class="img-thumbnail me-3" style="width: 60px; height: 60px; object-fit: cover;" onerror="this.src='https://via.placeholder.com/60';">
+                                        <% } else { %>
+                                            <div class="bg-light me-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                                <i class="fas fa-box text-secondary"></i>
+                                            </div>
+                                        <% } %>
+                                        <div>
+                                            <h6 class="mb-0"><%= item.productId && item.productId.productName ? item.productId.productName : 'Deleted Product' %></h6>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>₹<%= item.price ? item.price.toFixed(2) : '0.00' %></td>
+                                <td><%= item.quantity || 0 %></td>
+                                <td class="text-end">₹<%= (item.price && item.quantity) ? (item.price * item.quantity).toFixed(2) : '0.00' %></td>
+                                <td>
+                                    <p class="mb-1">Cancel: <%= item.cancelStatus || 'Completed' %></p>
+                                    <p class="mb-1">Return: <%= item.returnStatus || 'Not Requested' %></p>
+                                    <% if (item.returnStatus && item.returnStatus !== 'Not Requested') { %>
+                                        <p class="mb-1 text-muted"><small>Reason: <%= item.returnReason || 'No reason provided' %></small></p>
+                                        <p class="mb-1 text-muted"><small>Requested: <%= item.returnRequestedAt ? new Date(item.returnRequestedAt).toLocaleString() : 'N/A' %></small></p>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <% if (item.returnStatus === 'Requested') { %>
+                                        <button class="btn btn-success btn-sm me-1" onclick="approveReturn('<%= order.orderId %>', '<%= item._id %>')">
+                                            <i class="fas fa-check me-1"></i> Accept
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" onclick="rejectReturn('<%= order.orderId %>', '<%= item._id %>')">
+                                            <i class="fas fa-times me-1"></i> Decline
+                                        </button>
+                                    <% } %>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="6" class="text-center">No items found in this order.</td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+            <!-- Shipping Address -->
+           <div class="row mb-4">
+                <div class="col-md-6 mb-3">
+                    <h4 class="section-title">Shipping Address</h4>
+                    <div class="card">
+                        <div class="card-body">
+                            <% if (order.address && order.address.address && order.address.address.length > 0) { %>
+                                <% const shippingAddress = order.address.address[0]; %>
+                                <h6 class="fw-bold"><%= shippingAddress.name || 'N/A' %></h6>
+                                <p class="mb-1"><%= shippingAddress.landMark || 'N/A' %></p>
+                                <p class="mb-1">
+                                    <%= shippingAddress.city || 'N/A' %>, <%= shippingAddress.state || 'N/A' %> - <%= shippingAddress.pincode || 'N/A' %>
+                                </p>
+                                <p class="mb-1"><%= shippingAddress.country || 'India' %></p>
+                                <p class="mb-0">Phone: <%= shippingAddress.phone || 'N/A' %></p>
+                                <% if (shippingAddress.altPhone) { %>
+                                    <p class="mb-0">Alternate Phone: <%= shippingAddress.altPhone %></p>
+                                <% } %>
+                            <% } else { %>
+                                <p class="mb-0 text-muted">Address information not available</p>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <h4 class="section-title">Payment Summary</h4>
+                    <div class="card price-details">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Subtotal</span>
+                                <span id="subtotal-amount">₹<%= order.subTotal ? order.subTotal.toFixed(2) : '0.00' %></span>
+                            </div>
+                            <% if (order.discount > 0) { %>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Discount</span>
+                                <span id="discount-amount">₹<%= order.discount.toFixed(2) %></span>
+                            </div>
+                            <% } %>
+                            <% if (order.couponApplied) { %>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Coupon Applied</span>
+                                <span><i class="fas fa-check-circle me-1" style="color: #6b7280;"></i> Yes</span>
+                            </div>
+                            <% } %>
+                            <hr class="my-2">
+                            <div class="d-flex justify-content-between fw-bold">
+                                <span>Total</span>
+                                <span id="final-amount">₹<%= order.finalAmount ? order.finalAmount.toFixed(2) : '0.00' %></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Status Timeline -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h4 class="section-title">Order Status</h4>
+                    <div class="tracking-timeline">
+                        <% 
+                        const mainStatuses = ['Pending', 'Processing', 'Shipped', 'Delivered'];
+                        const returnStatuses = ['Return Request', 'Returned'];
+                        let displayStatuses = [];
+                        
+                        if (order.status === 'Cancelled') {
+                            displayStatuses = ['Pending', 'Cancelled'];
+                        } else if (returnStatuses.includes(order.status)) {
+                            displayStatuses = [...mainStatuses, ...returnStatuses.slice(0, returnStatuses.indexOf(order.status) + 1)];
+                        } else {
+                            displayStatuses = mainStatuses.slice(0, mainStatuses.indexOf(order.status) + 1);
+                        }
+                        
+                        displayStatuses.forEach((status, index) => {
+                            const isPast = index < displayStatuses.length - 1;
+                            const isCurrent = index === displayStatuses.length - 1;
+                        %>
+                            <div class="timeline-item">
+                                <div class="timeline-dot" style="background-color: <%= isCurrent ? '#007bff' : isPast ? '#28a745' : '#dee2e6' %>;"></div>
+                                <div class="timeline-content">
+                                    <h5><%= status %></h5>
+                                    <% if (isCurrent) { %>
+                                        <p class="text-muted">Current Status</p>
+                                    <% } else if (isPast) { %>
+                                        <p class="text-muted">Completed</p>
+                                    <% } %>
+                                </div>
+                            </div>
+                        <% 
+                        }); 
+                        %>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="row">
+                <div class="col-12 text-center">
+                    <a onclick="window.history.back();" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Orders
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        window.approveReturn = function(orderId, productId) {
+            Swal.fire({
+                title: 'Approve Return',
+                text: 'Are you sure you want to approve this return request?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, Approve',
+                confirmButtonColor: '#28a745',
+                cancelButtonText: 'No',
+                showLoaderOnConfirm: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch('/admin/approve-return', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ orderId, productId })
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                title: 'Return Approved',
+                                text: data.message,
+                                icon: 'success'
+                            }).then(() => location.reload());
+                        } else {
+                            Swal.fire({
+                                title: 'Error',
+                                text: data.message || 'Failed to approve return',
+                                icon: 'error'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'An error occurred while processing your request.',
+                            icon: 'error'
+                        });
+                    });
+                }
+            });
+        };
+
+        window.rejectReturn = function(orderId, productId) {
+            Swal.fire({
+                title: 'Reject Return',
+                text: 'Are you sure you want to reject this return request?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, Reject',
+                confirmButtonColor: '#dc3545',
+                cancelButtonText: 'No',
+                showLoaderOnConfirm: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch('/admin/reject-return', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ orderId, productId })
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                title: 'Return Rejected',
+                                text: data.message,
+                                icon: 'success'
+                            }).then(() => location.reload());
+                        } else {
+                            Swal.fire({
+                                title: 'Error',
+                                text: data.message || 'Failed to reject return',
+                                icon: 'error'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'An error occurred while processing your request.',
+                            icon: 'error'
+                        });
+                    });
+                }
+            });
+        };
+    </script>
+</body>
+</html>
