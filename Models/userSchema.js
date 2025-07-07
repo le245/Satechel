@@ -70,10 +70,12 @@ const userSchema = new Schema({
       enum: ['Completed', 'Pending'],
       default: 'Completed',
     },
-    description: {     // ✅ New field
-      type: String,
-      default: '',      // Optional but good for clarity
-    }
+    productId: {
+            type: Schema.Types.ObjectId,
+            ref: 'Product',
+            
+        },
+   
   },
 ],
 

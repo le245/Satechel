@@ -742,148 +742,155 @@
             }
         }
 
-       async function returnItem(button, orderId, itemId, itemName) {
-    button.classList.add('btn-loading');
-    button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Processing...';
+        async function returnItem(button, orderId, itemId, itemName) {
+            button.classList.add('btn-loading');
+            button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Processing...';
 
-    if (!orderId || !itemId) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Invalid Input',
-            text: 'Order ID or Item ID is missing.',
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true
-        });
-        button.classList.remove('btn-loading');
-        button.innerHTML = '<i class="fas fa-undo me-1"></i> Return';
-        return;
-    }
-
-    const policyResult = await Swal.fire({
-        title: `Return Item`,
-        html: `<p>Do you want to proceed with the return request for ${itemName}?</p>`,
-        icon: 'info',
-        showCancelButton: true,
-        confirmButtonColor: '#6b7280',
-        cancelButtonColor: '#9ca3af',
-        confirmButtonText: 'Proceed',
-        cancelButtonText: 'Cancel'
-    });
-
-    if (!policyResult.isConfirmed) {
-        button.classList.remove('btn-loading');
-        button.innerHTML = '<i class="fas fa-undo me-1"></i> Return';
-        return;
-    }
-
-    const result = await Swal.fire({
-        title: `Return Item`,
-        input: 'textarea',
-        inputLabel: 'Reason for Return',
-        inputPlaceholder: 'Type your reason here...',
-        inputAttributes: { 'aria-label': 'Reason for return' },
-        showCancelButton: true,
-        confirmButtonText: 'Submit Return Request',
-        cancelButtonText: 'Cancel',
-        confirmButtonColor: '#6b7280',
-        cancelButtonColor: '#9ca3af',
-        inputValidator: (value) => {
-            if (!value) return 'You need to write a reason!';
-            if (value.length < 10) return 'Reason must be at least 10 characters long!';
-        }
-    });
-
-    if (result.isConfirmed) {
-        const returnReason = result.value;
-        try {
-            const response = await fetch(`/orders/return/${orderId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ itemId, reason: returnReason })
-            });
-            const data = await response.json();
-
-            if (data.success) {
-                const row = button.closest('tr');
-                const statusCell = row.querySelector('.item-status');
-                const actionsCell = row.querySelector('.item-actions');
-
-                statusCell.textContent = 'Return Requested';
-                statusCell.classList.remove('hidden');
-                statusCell.classList.add('text-warning');
-                actionsCell.innerHTML = '';
-
-                const orderStatusBadge = document.querySelector('.status-badge');
-                if (!orderStatusBadge.textContent.includes('Return')) {
-                    orderStatusBadge.textContent = 'Return Request';
-                    orderStatusBadge.className = 'status-badge status-ReturnRequest';
-                }
-
-                const timelineContainer = document.querySelector('.tracking-timeline');
-                timelineContainer.innerHTML += `
-                    <div class="timeline-item">
-                        <div class="timeline-dot timeline-dot-ReturnRequest"></div>
-                        <div class="timeline-content">
-                            <h5 class="mb-1">Return Request</h5>
-                            <p class="text-muted mb-0">Return request submitted for ${itemName}</p>
-                        </div>
-                    </div>
-                `;
-
-                const allItems = document.querySelectorAll('#order-items .item-status');
-                const allReturned = Array.from(allItems).every(status =>
-                    status.textContent === 'Return Requested' || status.textContent === 'Returned' || status.textContent === 'Cancelled'
-                );
-                if (allReturned) {
-                    const returnOrderBtn = document.getElementById('returnOrderBtn');
-                    if (returnOrderBtn) returnOrderBtn.remove();
-                }
-
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Return Request Submitted',
-                    text: 'Your return request has been submitted successfully. You will be notified once it is processed.',
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000,
-                    timerProgressBar: true
-                });
-            } else {
+            if (!orderId || !itemId) {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Error',
-                    text: data.message || 'Failed to submit return request.',
+                    title: 'Invalid Input',
+                    text: 'Order ID or Item ID is missing.',
                     toast: true,
                     position: 'top-end',
                     showConfirmButton: false,
                     timer: 3000,
                     timerProgressBar: true
                 });
+                button.classList.remove('btn-loading');
+                button.innerHTML = '<i class="fas fa-undo me-1"></i> Return';
+                return;
             }
-        } catch (error) {
-            console.error('Error processing return request:', error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: `An error occurred while processing the return request: ${error.message}`,
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true
+
+            const policyResult = await Swal.fire({
+                title: `Return Item`,
+                html: `
+                    <p>Do you want to proceed with the return request?</p>
+                `,
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonColor: '#6b7280',
+                cancelButtonColor: '#9ca3af',
+                confirmButtonText: 'Proceed',
+                cancelButtonText: 'Cancel'
             });
+
+            if (!policyResult.isConfirmed) {
+                button.classList.remove('btn-loading');
+                button.innerHTML = '<i class="fas fa-undo me-1"></i> Return';
+                return;
+            }
+
+            const result = await Swal.fire({
+                title: `Return Item`,
+                input: 'textarea',
+                inputLabel: 'Reason for Return',
+                inputPlaceholder: 'Type your reason here...',
+                inputAttributes: {
+                    'aria-label': 'Reason for return'
+                },
+                showCancelButton: true,
+                confirmButtonText: 'Submit Return Request',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#6b7280',
+                cancelButtonColor: '#9ca3af',
+                inputValidator: (value) => {
+                    if (!value) {
+                        return 'You need to write a reason!';
+                    }
+                    if (value.length < 10) {
+                        return 'Reason must be at least 10 characters long!';
+                    }
+                }
+            });
+
+            if (result.isConfirmed) {
+                const returnReason = result.value;
+                try {
+                    const response = await fetch(`/orders/return/${orderId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ itemId, reason: returnReason })
+                    });
+                    const data = await response.json();
+
+                    if (data.success) {
+                        const row = button.closest('tr');
+                        const statusCell = row.querySelector('.item-status');
+                        const actionsCell = row.querySelector('.item-actions');
+
+                        statusCell.textContent = 'Return Requested';
+                        statusCell.classList.remove('hidden');
+                        statusCell.classList.add('text-warning');
+                        actionsCell.innerHTML = '';
+
+                        const orderStatusBadge = document.querySelector('.status-badge');
+                        if (!orderStatusBadge.textContent.includes('Return')) {
+                            orderStatusBadge.textContent = 'Return Request';
+                            orderStatusBadge.className = 'status-badge status-ReturnRequest';
+                        }
+
+                        const timelineContainer = document.querySelector('.tracking-timeline');
+                        timelineContainer.innerHTML += `
+                            <div class="timeline-item">
+                                <div class="timeline-dot timeline-dot-ReturnRequest"></div>
+                                <div class="timeline-content">
+                                    <h5 class="mb-1">Return Request</h5>
+                                    <p class="text-muted mb-0">Return request submitted for ${itemName}</p>
+                                </div>
+                            </div>
+                        `;
+
+                        const allItems = document.querySelectorAll('#order-items .item-status');
+                        const allReturned = Array.from(allItems).every(status => status.textContent === 'Return Requested' || status.textContent === 'Returned' || status.textContent === 'Cancelled');
+                        if (allReturned) {
+                            const returnOrderBtn = document.getElementById('returnOrderBtn');
+                            if (returnOrderBtn) returnOrderBtn.remove();
+                        }
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Return Request Submitted',
+                            text: 'Your return request has been submitted successfully. You will be notified once it is processed.',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: data.message || 'Failed to submit return request.',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error processing return request:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'An error occurred while processing the return request.',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                }
+            }
+
+            button.classList.remove('btn-loading');
+            button.innerHTML = '<i class="fas fa-undo me-1"></i> Return';
         }
-    }
 
-    button.classList.remove('btn-loading');
-    button.innerHTML = '<i class="fas fa-undo me-1"></i> Return';
-}
-
-// Similar updates for returnEntireOrder can be applied
         async function returnEntireOrder(orderId) {
             const button = document.getElementById('returnOrderBtn');
             button.classList.add('btn-loading');

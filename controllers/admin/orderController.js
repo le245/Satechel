@@ -67,7 +67,7 @@ const getOrderDetailsPage = async (req, res) => {
 const updateStatus = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const { status, action, returnReason, itemId } = req.body
+    const { status, action, returnReason, itemId } = req.body;
 
     const order = await Order.findOne({ _id: orderId });
     if (!order) {
@@ -103,7 +103,6 @@ const updateStatus = async (req, res) => {
       order.status = 'Return Request';
       let updatedItems = false;
       if (itemId) {
-        
         const item = order.items.id(itemId);
         if (item && item.returnStatus === 'Not Requested') {
           item.returnStatus = 'Requested';
@@ -112,7 +111,6 @@ const updateStatus = async (req, res) => {
           updatedItems = true;
         }
       } else {
-   
         order.items.forEach(item => {
           if (item.returnStatus === 'Not Requested') {
             item.returnStatus = 'Requested';
@@ -126,9 +124,14 @@ const updateStatus = async (req, res) => {
         console.log('No items updated for return request');
       }
     } else {
-    
       if (status) {
-  
+        if (status === 'Delivered' && ['Return Request', 'Returned'].includes(currentStatus)) {
+          return res.status(400).json({
+            success: false,
+            message: 'Cannot move Return Request or Returned orders back to Delivered',
+          });
+        }
+
         order.status = status;
 
         if (status === 'Delivered') {
@@ -143,18 +146,15 @@ const updateStatus = async (req, res) => {
     }
 
     await order.save();
-    
 
     res.json({
       success: true,
       message: 'Order status updated successfully',
     });
   } catch (error) {
-   
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
-
 
 const approveReturn = async (req, res) => {
   try {
