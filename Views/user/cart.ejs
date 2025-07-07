@@ -284,13 +284,13 @@
                 const quantity = parseInt(input.value);
                 const itemTotal = price * quantity;
                 subtotal += itemTotal;
-
+         
                 const totalCell = input.closest('tr').querySelector('.product-price');
                 if (totalCell) {
                     totalCell.textContent = `₹${itemTotal.toFixed(2)}`;
                 }
             });
-
+        
             const discount = <%= discount %>;
             const total = subtotal - discount;
 

@@ -153,7 +153,7 @@ const placeOrder = async (req, res) => {
 
     const newOrder = new Order({
       userId,
-      orderId: require('uuid').v4(), // Use uuidv4 as per schema
+      orderId: require('uuid').v4(), 
       items: orderItems,
       address: userAddress._id,
       paymentMethod,

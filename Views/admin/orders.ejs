@@ -1,4 +1,3 @@
-<!-- Keep header unchanged -->
 <%- include('../../views/partials/admin/header') %>
 <section class="main-content">
     <div class="content-header">
@@ -12,6 +11,8 @@
                 <option value="Shipped">Shipped</option>
                 <option value="Delivered">Delivered</option>
                 <option value="Cancelled">Cancelled</option>
+                <option value="Return Request">Return Request</option>
+                <option value="Returned">Returned</option>
             </select>
         </div>
     </div>
@@ -46,13 +47,15 @@
                                     </td>
                                     <td>₹<%= order.finalAmount ? order.finalAmount.toFixed(2) : '0.00' %></td>
                                     <td>
-                                        <select onchange="updateOrderStatus(this, '<%= order._id %>')" class="status-select <%= order.status ? order.status.toLowerCase() : 'pending' %>" data-previous-status="<%= order.status || 'Pending' %>">
-                                            <option value="Pending" <%= order.status === 'Pending' ? 'selected' : '' %>>Pending</option>
-                                            <option value="Processing" <%= order.status === 'Processing' ? 'selected' : '' %>>Processing</option>
-                                            <option value="Shipped" <%= order.status === 'Shipped' ? 'selected' : '' %>>Shipped</option>
-                                            <option value="Delivered" <%= order.status === 'Delivered' ? 'selected' : '' %>>Delivered</option>
-                                            <option value="Cancelled" <%= order.status === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
-                                        </select>
+                                        <select onchange="updateOrderStatus(this, '<%= order._id %>')" class="status-select <%= order.status ? order.status.toLowerCase().replace(/\s+/g, '') : 'pending' %>" data-previous-status="<%= order.status || 'Pending' %>">
+  <option value="Pending" <%= order.status === 'Pending' ? 'selected' : '' %>>Pending</option>
+  <option value="Processing" <%= order.status === 'Processing' ? 'selected' : '' %>>Processing</option>
+  <option value="Shipped" <%= order.status === 'Shipped' ? 'selected' : '' %>>Shipped</option>
+  <option value="Delivered" <%= order.status === 'Delivered' ? 'selected' : '' %>>Delivered</option>
+  <option value="Cancelled" <%= order.status === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
+  <option value="Return Requested" <%= order.status === 'Return Requested' ? 'selected' : '' %>>Return Requested</option>
+  <option value="Returned" <%= order.status === 'Returned' ? 'selected' : '' %>>Returned</option>
+</select>
                                         <span class="loading-spinner" style="display: none;"></span>
                                     </td>
                                     <td class="text-end">
@@ -226,6 +229,18 @@
         color: #721c24;
     }
 
+    .status-select.returnrequest {
+        background-color: #ffeeba;
+        border-color: #ffeeba;
+        color: #856404;
+    }
+
+    .status-select.returned {
+        background-color: #d6d8d9;
+        border-color: #d6d8d9;
+        color: #1b1e21;
+    }
+
     .loading-spinner {
         width: 20px;
         height: 20px;
@@ -322,7 +337,7 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                selectElement.className = `status-select ${newStatus.toLowerCase()}`;
+                selectElement.className = `status-select ${newStatus.toLowerCase().replace(/\s+/g, '')}`;
                 selectElement.dataset.previousStatus = newStatus;
                 Swal.fire({
                     icon: 'success',
@@ -370,7 +385,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         const statusSelects = document.querySelectorAll('.status-select');
         statusSelects.forEach(select => {
-            select.classList.add(select.value.toLowerCase());
+            select.classList.add(select.value.toLowerCase().replace(/\s+/g, ''));
             select.dataset.previousStatus = select.value;
         });
 
@@ -383,7 +398,7 @@
             const selectedStatus = statusFilter.value;
 
             tableRows.forEach(row => {
-                const orderId = row.cells[0].textContent.toLowerCase();
+                const orderId = row.cells[0].textContent.toLowerCase().replace('#', '');
                 const customerName = row.cells[1].textContent.toLowerCase();
                 const status = row.cells[4].querySelector('.status-select').value;
 
@@ -394,7 +409,6 @@
             });
         }
 
-    
         let debounceTimeout;
         searchInput.addEventListener('input', () => {
             clearTimeout(debounceTimeout);

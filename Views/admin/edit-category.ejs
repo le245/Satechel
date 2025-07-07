@@ -157,95 +157,10 @@
         clearErrorMessages();
         updateCategoryBtn.disabled = true;
 
-        if (typeof Swal === 'undefined') {
-            console.error('SweetAlert2 is not loaded');
-            alert('SweetAlert2 is not loaded. Please contact support.');
-            updateCategoryBtn.disabled = false;
-            return;
-        }
-
         const name = categoryNameInput.value.trim();
         const description = descriptionInput.value.trim();
 
-        if (!name) {
-            showError('name-error', 'Category name is required');
-            Swal.fire({
-                icon: 'warning',
-                title: 'Missing Field',
-                text: 'Category name is required'
-            });
-            updateCategoryBtn.disabled = false;
-            return;
-        }
-
-        if (name.length < 2 || name.length > 50) {
-            showError('name-error', 'Category name must be between 2 and 50 characters');
-            Swal.fire({
-                icon: 'warning',
-                title: 'Invalid Input',
-                text: 'Category name must be between 2 and 50 characters'
-            });
-            updateCategoryBtn.disabled = false;
-            return;
-        }
-
-        const nameRegex = /^[a-zA-Z0-9\s\-'&]+$/;
-        if (!nameRegex.test(name)) {
-            showError('name-error', 'Category name can only contain letters, numbers, spaces, hyphens, and ampersands');
-            Swal.fire({
-                icon: 'warning',
-                title: 'Invalid Input',
-                text: 'Category name can only contain letters, numbers, spaces, hyphens, and ampersands'
-            });
-            updateCategoryBtn.disabled = false;
-            return;
-        }
-
-        if (!description) {
-            showError('description-error', 'Description is required');
-            Swal.fire({
-                icon: 'warning',
-                title: 'Missing Field',
-                text: 'Description is required'
-            });
-            updateCategoryBtn.disabled = false;
-            return;
-        }
-
-        if (description.length < 10 || description.length > 500) {
-            showError('description-error', 'Description must be between 10 and 500 characters');
-            Swal.fire({
-                icon: 'warning',
-                title: 'Invalid Input',
-                text: 'Description must be between 10 and 500 characters'
-            });
-            updateCategoryBtn.disabled = false;
-            return;
-        }
-
-        const descriptionRegex = /^[a-zA-Z0-9\s.,!?'"\-()]+$/;
-        if (!descriptionRegex.test(description)) {
-            showError('description-error', 'Description contains invalid characters');
-            Swal.fire({
-                icon: 'warning',
-                title: 'Invalid Input',
-                text: 'Description contains invalid characters'
-            });
-            updateCategoryBtn.disabled = false;
-            return;
-        }
-
         try {
-            Swal.fire({
-                title: 'Updating...',
-                text: 'Please wait while the category is being updated.',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-
-            console.log('Sending request to /admin/editCategory/<%= category._id %> with:', { name, description });
             const response = await fetch('/admin/editCategory/<%= category._id %>', {
                 method: 'POST',
                 headers: {
@@ -254,21 +169,23 @@
                 body: JSON.stringify({ categoryName: name, description })
             });
 
-            const data = await response.json().catch(() => ({}));
-            console.log('Server response:', data);
+            const data = await response.json();
 
             if (!response.ok) {
-                Swal.close();
-                if (data.error && /already exists/i.test(data.error)) {
-                    showError('name-error', 'A category with this name already exists');
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Duplicate Category',
-                        text: 'A category with this name already exists'
-                    });
-                    return;
+                if (data.error === 'Category name is required' || 
+                    data.error === 'Category name must be between 2 and 50 characters' || 
+                    data.error === 'Category name can only contain letters, numbers, spaces, hyphens, and ampersands' || 
+                    data.error === 'A category with this name already exists') {
+                    showError('name-error', data.error);
+                } else if (data.error === 'Description is required' || 
+                           data.error === 'Description must be between 10 and 500 characters' || 
+                           data.error === 'Description contains invalid characters') {
+                    showError('description-error', data.error);
+                } else {
+                    console.error('Error updating category:', data.error);
                 }
-                throw new Error(data.error || 'Failed to update category');
+                updateCategoryBtn.disabled = false;
+                return;
             }
 
             Swal.fire({
@@ -281,13 +198,7 @@
                 window.location.href = '/admin/category';
             });
         } catch (error) {
-            console.error('Error updating category:', error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: error.message || 'An error occurred while updating the category'
-            });
-        } finally {
+            
             updateCategoryBtn.disabled = false;
         }
     });

@@ -61,7 +61,7 @@
         }
         .card:hover {
             transform: translateY(-6px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 160px rgba(0, 0, 0, 0.1);
         }
         .product-item {
             padding: 1.25rem 0;
@@ -273,7 +273,9 @@
                     <div class="card">
                         <div class="card-body">
                             <h5 class="card-title"><i class="fas fa-money-bill-wave me-2"></i>Total Amount</h5>
-                            <p class="card-text" id="total-amount">₹<%= order.finalAmount ? order.finalAmount.toFixed(2) : '0.00' %></p>
+                            <p class="card-text" id="total-amount">
+                                ₹<%= order.status === 'Cancelled' ? (order.originalFinalAmount ? order.originalFinalAmount.toFixed(2) : '0.00') : (order.finalAmount ? order.finalAmount.toFixed(2) : '0.00') %>
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -328,8 +330,6 @@
                                                 <td class="item-quantity"><%= item.quantity %></td>
                                                 <td class="text-end item-subtotal">₹<%= item.price && item.quantity ? (item.price * item.quantity).toFixed(2) : '0.00' %></td>
                                                 <td class="text-end item-actions">
-                                                    <!-- Debug logging for button visibility -->
-                                                  
                                                     <% if (order.status !== 'Payment Failed' && ['Pending', 'Processing'].includes(order.status) && item.cancelStatus !== 'Cancelled') { %>
                                                         <button class="btn btn-danger btn-sm cancel-item-btn" 
                                                                 data-order-id="<%= order.orderId || '' %>" 
@@ -359,62 +359,70 @@
 
             <!-- Shipping Address & Payment Summary -->
             <div class="row mb-4">
-  <div class="col-md-6 mb-3">
-    <h4 class="section-title">Shipping Address</h4>
-    <div class="card">
-      <div class="card-body">
-        <% if (selectedAddress) { %>
-          <h6 class="fw-bold"><%= selectedAddress.name || 'N/A' %></h6>
-          <p class="mb-1"><%= selectedAddress.landMark || 'N/A' %></p>
-          <p class="mb-1">
-            <%= selectedAddress.city || 'N/A' %>, <%= selectedAddress.state || 'N/A' %> - <%= selectedAddress.pincode || 'N/A' %>
-          </p>
-          <p class="mb-1"><%= selectedAddress.country || 'India' %></p>
-          <p class="mb-0">Phone: <%= selectedAddress.phone || 'N/A' %></p>
-          <% if (selectedAddress.altPhone) { %>
-            <p class="mb-0">Alternate Phone: <%= selectedAddress.altPhone %></p>
-          <% } %>
-        <% } else { %>
-          <p class="mb-0 text-muted">Address information not available</p>
-        <% } %>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-6 mb-3">
-    <h4 class="section-title">Payment Summary</h4>
-    <div class="card price-details">
-      <div class="card-body">
-        <div class="d-flex justify-content-between mb-2">
-          <span>Subtotal</span>
-          <span id="subtotal-amount">₹<%= order.subTotal ? order.subTotal.toFixed(2) : '0.00' %></span>
-        </div>
-        <% if (order.discount > 0) { %>
-        <div class="d-flex justify-content-between mb-2">
-          <span>Discount</span>
-          <span id="discount-amount">₹<%= order.discount.toFixed(2) %></span>
-        </div>
-        <% } %>
-        <% if (order.couponApplied) { %>
-        <div class="d-flex justify-content-between mb-2">
-          <span>Coupon Applied</span>
-          <span><i class="fas fa-check-circle me-1" style="color: #6b7280;"></i> Yes</span>
-        </div>
-        <% } %>
-        <hr class="my-2">
-        <div class="d-flex justify-content-between fw-bold">
-          <span>Total</span>
-          <span id="final-amount">₹<%= order.finalAmount ? order.finalAmount.toFixed(2) : '0.00' %></span>
-        </div>
-        <% if (order.status === 'Payment Failed') { %>
-        <div class="d-flex justify-content-between mt-2">
-          <span>Payment Status</span>
-          <span class="text-danger">Failed</span>
-        </div>
-        <% } %>
-      </div>
-    </div>
-  </div>
-</div>
+                <div class="col-md-6 mb-3">
+                    <h4 class="section-title">Shipping Address</h4>
+                    <div class="card">
+                        <div class="card-body">
+                            <% if (selectedAddress) { %>
+                                <h6 class="fw-bold"><%= selectedAddress.name || 'N/A' %></h6>
+                                <p class="mb-1"><%= selectedAddress.landMark || 'N/A' %></p>
+                                <p class="mb-1">
+                                    <%= selectedAddress.city || 'N/A' %>, <%= selectedAddress.state || 'N/A' %> - <%= selectedAddress.pincode || 'N/A' %>
+                                </p>
+                                <p class="mb-1"><%= selectedAddress.country || 'India' %></p>
+                                <p class="mb-0">Phone: <%= selectedAddress.phone || 'N/A' %></p>
+                                <% if (selectedAddress.altPhone) { %>
+                                    <p class="mb-0">Alternate Phone: <%= selectedAddress.altPhone %></p>
+                                <% } %>
+                            <% } else { %>
+                                <p class="mb-0 text-muted">Address information not available</p>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <h4 class="section-title">Payment Summary</h4>
+                    <div class="card price-details">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Subtotal</span>
+                                <span id="subtotal-amount">₹<%= order.subTotal %></span>
+                            </div>
+                            <% if (order.discount > 0) { %>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Discount</span>
+                                <span id="discount-amount">₹<%= order.discount.toFixed(2) %></span>
+                            </div>
+                            <% } %>
+                            <% if (order.couponApplied) { %>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Coupon Applied</span>
+                                <span><i class="fas fa-check-circle me-1" style="color: #6b7280;"></i> Yes</span>
+                            </div>
+                            <% } %>
+                            <hr class="my-2">
+                            <div class="d-flex justify-content-between fw-bold">
+                                <span>Total</span>
+                                <span id="final-amount">
+                                    ₹<%= order.status === 'Cancelled' ? (order.originalFinalAmount ? order.originalFinalAmount.toFixed(2) : '0.00') : (order.finalAmount ? order.finalAmount.toFixed(2) : '0.00') %>
+                                </span>
+                            </div>
+                            <div class="d-flex justify-content-between mt-2">
+                                <span>Payment Status</span>
+                                <span class="<%= order.status === 'Payment Failed' ? 'text-danger' : 'text-success' %>">
+                                    <%= order.status === 'Payment Failed' ? 'Failed' : 'Completed' %>
+                                </span>
+                            </div>
+                            <% if (order.status === 'Cancelled' && order.originalFinalAmount > 0) { %>
+                            <div class="d-flex justify-content-between mt-2 text-success">
+                                <span>Refunded to Wallet</span>
+                                <span>₹<%= order.originalFinalAmount.toFixed(2) %></span>
+                            </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- Order Status Timeline -->
             <div class="row mb-4">
@@ -491,13 +499,16 @@
                             <i class="fas fa-undo me-1"></i> Return Entire Order
                         </button>
                     <% } %>
-   <% if (order.status === 'delivered' || order.status === 'Delivered') { %>
-  <a href="/download-invoice/<%= order._id %>" class="btn btn-sm" style="background-color: grey; color: #fff; border-radius: 5px; padding: 6px 12px;">
-    <i class="material-icons" style="vertical-align: middle;"></i> Download Invoice
-  </a>
-<% } %>
-
-
+                    <% if (order.status === 'Payment Failed' && order.paymentMethod === 'razorpay') { %>
+                        <button class="btn btn-warning me-2" onclick="retryPayment('<%= order.orderId %>', <%= order.finalAmount %>)">
+                            <i class="fas fa-redo me-1"></i> Retry Payment
+                        </button>
+                    <% } %>
+                    <% if (order.status.toLowerCase() === 'delivered') { %>
+                        <a href="/download-invoice/<%= order._id %>" class="btn btn-sm me-2" style="background-color: grey; color: #fff; border-radius: 5px; padding: 6px 12px;">
+                            <i class="fas fa-download me-1"></i> Download Invoice
+                        </a>
+                    <% } %>
                     <a onclick="window.history.back();" class="btn btn-outline-secondary">
                         <i class="fas fa-arrow-left me-1"></i> Back to Orders
                     </a>
@@ -731,155 +742,148 @@
             }
         }
 
-        async function returnItem(button, orderId, itemId, itemName) {
-            button.classList.add('btn-loading');
-            button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Processing...';
+       async function returnItem(button, orderId, itemId, itemName) {
+    button.classList.add('btn-loading');
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Processing...';
 
-            if (!orderId || !itemId) {
+    if (!orderId || !itemId) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Invalid Input',
+            text: 'Order ID or Item ID is missing.',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+        button.classList.remove('btn-loading');
+        button.innerHTML = '<i class="fas fa-undo me-1"></i> Return';
+        return;
+    }
+
+    const policyResult = await Swal.fire({
+        title: `Return Item`,
+        html: `<p>Do you want to proceed with the return request for ${itemName}?</p>`,
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonColor: '#6b7280',
+        cancelButtonColor: '#9ca3af',
+        confirmButtonText: 'Proceed',
+        cancelButtonText: 'Cancel'
+    });
+
+    if (!policyResult.isConfirmed) {
+        button.classList.remove('btn-loading');
+        button.innerHTML = '<i class="fas fa-undo me-1"></i> Return';
+        return;
+    }
+
+    const result = await Swal.fire({
+        title: `Return Item`,
+        input: 'textarea',
+        inputLabel: 'Reason for Return',
+        inputPlaceholder: 'Type your reason here...',
+        inputAttributes: { 'aria-label': 'Reason for return' },
+        showCancelButton: true,
+        confirmButtonText: 'Submit Return Request',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#6b7280',
+        cancelButtonColor: '#9ca3af',
+        inputValidator: (value) => {
+            if (!value) return 'You need to write a reason!';
+            if (value.length < 10) return 'Reason must be at least 10 characters long!';
+        }
+    });
+
+    if (result.isConfirmed) {
+        const returnReason = result.value;
+        try {
+            const response = await fetch(`/orders/return/${orderId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ itemId, reason: returnReason })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                const row = button.closest('tr');
+                const statusCell = row.querySelector('.item-status');
+                const actionsCell = row.querySelector('.item-actions');
+
+                statusCell.textContent = 'Return Requested';
+                statusCell.classList.remove('hidden');
+                statusCell.classList.add('text-warning');
+                actionsCell.innerHTML = '';
+
+                const orderStatusBadge = document.querySelector('.status-badge');
+                if (!orderStatusBadge.textContent.includes('Return')) {
+                    orderStatusBadge.textContent = 'Return Request';
+                    orderStatusBadge.className = 'status-badge status-ReturnRequest';
+                }
+
+                const timelineContainer = document.querySelector('.tracking-timeline');
+                timelineContainer.innerHTML += `
+                    <div class="timeline-item">
+                        <div class="timeline-dot timeline-dot-ReturnRequest"></div>
+                        <div class="timeline-content">
+                            <h5 class="mb-1">Return Request</h5>
+                            <p class="text-muted mb-0">Return request submitted for ${itemName}</p>
+                        </div>
+                    </div>
+                `;
+
+                const allItems = document.querySelectorAll('#order-items .item-status');
+                const allReturned = Array.from(allItems).every(status =>
+                    status.textContent === 'Return Requested' || status.textContent === 'Returned' || status.textContent === 'Cancelled'
+                );
+                if (allReturned) {
+                    const returnOrderBtn = document.getElementById('returnOrderBtn');
+                    if (returnOrderBtn) returnOrderBtn.remove();
+                }
+
                 Swal.fire({
-                    icon: 'error',
-                    title: 'Invalid Input',
-                    text: 'Order ID or Item ID is missing.',
+                    icon: 'success',
+                    title: 'Return Request Submitted',
+                    text: 'Your return request has been submitted successfully. You will be notified once it is processed.',
                     toast: true,
                     position: 'top-end',
                     showConfirmButton: false,
                     timer: 3000,
                     timerProgressBar: true
                 });
-                button.classList.remove('btn-loading');
-                button.innerHTML = '<i class="fas fa-undo me-1"></i> Return';
-                return;
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: data.message || 'Failed to submit return request.',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
+                });
             }
-
-            const policyResult = await Swal.fire({
-                title: `Return Item`,
-                html: `
-                    <p>Do you want to proceed with the return request?</p>
-                `,
-                icon: 'info',
-                showCancelButton: true,
-                confirmButtonColor: '#6b7280',
-                cancelButtonColor: '#9ca3af',
-                confirmButtonText: 'Proceed',
-                cancelButtonText: 'Cancel'
+        } catch (error) {
+            console.error('Error processing return request:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: `An error occurred while processing the return request: ${error.message}`,
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
             });
-
-            if (!policyResult.isConfirmed) {
-                button.classList.remove('btn-loading');
-                button.innerHTML = '<i class="fas fa-undo me-1"></i> Return';
-                return;
-            }
-
-            const result = await Swal.fire({
-                title: `Return Item`,
-                input: 'textarea',
-                inputLabel: 'Reason for Return',
-                inputPlaceholder: 'Type your reason here...',
-                inputAttributes: {
-                    'aria-label': 'Reason for return'
-                },
-                showCancelButton: true,
-                confirmButtonText: 'Submit Return Request',
-                cancelButtonText: 'Cancel',
-                confirmButtonColor: '#6b7280',
-                cancelButtonColor: '#9ca3af',
-                inputValidator: (value) => {
-                    if (!value) {
-                        return 'You need to write a reason!';
-                    }
-                    if (value.length < 10) {
-                        return 'Reason must be at least 10 characters long!';
-                    }
-                }
-            });
-
-            if (result.isConfirmed) {
-                const returnReason = result.value;
-                try {
-                    const response = await fetch(`/orders/return/${orderId}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ itemId, reason: returnReason })
-                    });
-                    const data = await response.json();
-
-                    if (data.success) {
-                        const row = button.closest('tr');
-                        const statusCell = row.querySelector('.item-status');
-                        const actionsCell = row.querySelector('.item-actions');
-
-                        statusCell.textContent = 'Return Requested';
-                        statusCell.classList.remove('hidden');
-                        statusCell.classList.add('text-warning');
-                        actionsCell.innerHTML = '';
-
-                        const orderStatusBadge = document.querySelector('.status-badge');
-                        if (!orderStatusBadge.textContent.includes('Return')) {
-                            orderStatusBadge.textContent = 'Return Request';
-                            orderStatusBadge.className = 'status-badge status-ReturnRequest';
-                        }
-
-                        const timelineContainer = document.querySelector('.tracking-timeline');
-                        timelineContainer.innerHTML += `
-                            <div class="timeline-item">
-                                <div class="timeline-dot timeline-dot-ReturnRequest"></div>
-                                <div class="timeline-content">
-                                    <h5 class="mb-1">Return Request</h5>
-                                    <p class="text-muted mb-0">Return request submitted for ${itemName}</p>
-                                </div>
-                            </div>
-                        `;
-
-                        const allItems = document.querySelectorAll('#order-items .item-status');
-                        const allReturned = Array.from(allItems).every(status => status.textContent === 'Return Requested' || status.textContent === 'Returned' || status.textContent === 'Cancelled');
-                        if (allReturned) {
-                            const returnOrderBtn = document.getElementById('returnOrderBtn');
-                            if (returnOrderBtn) returnOrderBtn.remove();
-                        }
-
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Return Request Submitted',
-                            text: 'Your return request has been submitted successfully. You will be notified once it is processed.',
-                            toast: true,
-                            position: 'top-end',
-                            showConfirmButton: false,
-                            timer: 3000,
-                            timerProgressBar: true
-                        });
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: data.message || 'Failed to submit return request.',
-                            toast: true,
-                            position: 'top-end',
-                            showConfirmButton: false,
-                            timer: 3000,
-                            timerProgressBar: true
-                        });
-                    }
-                } catch (error) {
-                    console.error('Error processing return request:', error);
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'An error occurred while processing the return request.',
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 3000,
-                        timerProgressBar: true
-                    });
-                }
-            }
-
-            button.classList.remove('btn-loading');
-            button.innerHTML = '<i class="fas fa-undo me-1"></i> Return';
         }
+    }
 
+    button.classList.remove('btn-loading');
+    button.innerHTML = '<i class="fas fa-undo me-1"></i> Return';
+}
+
+// Similar updates for returnEntireOrder can be applied
         async function returnEntireOrder(orderId) {
             const button = document.getElementById('returnOrderBtn');
             button.classList.add('btn-loading');
@@ -1025,8 +1029,103 @@
             button.innerHTML = '<i class="fas fa-undo me-1"></i> Return Entire Order';
         }
 
-      
-            
+        async function retryPayment(orderId, amount) {
+            try {
+                console.log('Initiating retry payment for orderId:', orderId, 'Amount:', amount);
+                if (!orderId || typeof orderId !== 'string' || isNaN(amount) || amount <= 0) {
+                    throw new Error('Invalid order ID or amount');
+                }
+
+                const response = await fetch('/retry-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderId, amount })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('Response data:', data);
+
+                if (data.success && data.paymentMethod === 'razorpay') {
+                    const rzp = new Razorpay({
+                        ...data.razorpayOptions,
+                        handler: async (response) => {
+                            console.log('Razorpay payment response:', response);
+                            const verifyResponse = await fetch('/verify-razorpay-payment', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    orderId,
+                                    razorpayOrderId: response.razorpay_order_id,
+                                    razorpayPaymentId: response.razorpay_payment_id,
+                                    razorpaySignature: response.razorpay_signature
+                                })
+                            });
+                            const verifyData = await verifyResponse.json();
+                            console.log('Verification response:', verifyData);
+                            if (verifyData.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Payment Successful',
+                                    text: 'Redirecting to order success page...'
+                                }).then(() => {
+                                    console.log('Redirecting to order-success page with orderId:', orderId);
+                                    window.location.href = `/order-success/${orderId}`;
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Payment Verification Failed',
+                                    text: verifyData.message || 'Unable to verify payment. Please try again.'
+                                }).then(() => {
+                                    window.location.reload();
+                                });
+                            }
+                        }
+                    });
+
+                    rzp.on('payment.failed', async (response) => {
+                        console.log('Payment failed:', response);
+                        await fetch('/handle-payment-failure', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                orderId,
+                                failureReason: response.error.description || 'Payment failed'
+                            })
+                        });
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Payment Failed Again',
+                            text: 'Please try again or use a different payment method.'
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    });
+
+                    console.log('Opening Razorpay payment modal');
+                    rzp.open();
+                } else {
+                    console.log('Retry payment failed:', data.message);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message || 'Failed to initiate retry payment.'
+                    });
+                }
+            } catch (error) {
+                console.error('Error in retryPayment:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An error occurred while retrying payment: ' + error.message
+                });
+            }
+        }
     </script>
 </body>
 </html>

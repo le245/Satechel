@@ -5,8 +5,8 @@ const { v4: uuidv4 } = require('uuid');
 const orderSchema = new Schema({
     orderId: {
         type: String,
-        default: () => uuidv4(),
-        unique: true
+       required: true,
+       unique: true
     },
     userId: {
         type: Schema.Types.ObjectId,
@@ -50,6 +50,15 @@ const orderSchema = new Schema({
     finalAmount: {
         type: Number,
         required: true
+    },originalSubTotal: {
+        type: Number,
+        required: true,
+        default: 0 
+    },
+    originalFinalAmount: {
+        type: Number,
+        required: true,
+        default: 0 
     },
   
    address: { type: Schema.Types.ObjectId, ref: 'Address' }, 
@@ -61,9 +70,19 @@ const orderSchema = new Schema({
         type: Date
     },
     status: {
-        type: String,
-        required: true,
-        enum: ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled', 'Return Request', 'Returned']
+      type: String,
+      required: true,
+      enum: [
+        'Pending',
+        'Payment Pending',
+        'Processing',
+        'Shipped',
+        'Delivered',
+        'Cancelled',
+        'Return Requested',
+        'Returned',
+      ],
+      default: 'Pending'
     },
     createOn: {
         type: Date,

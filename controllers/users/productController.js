@@ -58,7 +58,7 @@ const getProductDetailPage=async(req,res)=>{
 
 
   } catch (error) {
-    console.log("Error in product detail page:", err.message);
+  
     res.status(500).json({ success: false, message: "Something went wrong" });
   }
 }

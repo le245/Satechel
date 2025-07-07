@@ -457,7 +457,7 @@ const addAddress=async(req,res)=>{
 }
 const postAddAddress=async(req,res)=>{
     try{
-const userId = req.session.user;
+ const userId = req.session.user;
     const userData = await User.findById(userId);
     const { addressType, name, city, landMark, state, pincode, phone, altPhone } = req.body;
 

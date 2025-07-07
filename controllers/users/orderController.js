@@ -21,6 +21,9 @@ const cancelOrder = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Cannot cancel this order now' });
     }
 
+    const originalFinalAmount = order.finalAmount;
+    const originalSubTotal = order.subTotal;
+
     let refundAmount = 0;
     let cancelledItems = [];
 
@@ -38,7 +41,6 @@ const cancelOrder = async (req, res) => {
 
       item.cancelStatus = 'Rejected';
 
-    
       const itemTotal = item.price * item.quantity;
       const discountedItemTotal = itemTotal * discountFactor;
       refundAmount = discountedItemTotal;
@@ -84,9 +86,14 @@ const cancelOrder = async (req, res) => {
         }
       }
 
-      order.subTotal = 0;
-      order.discount = 0;
-      order.finalAmount = 0;
+    
+    }
+
+    if (!order.originalFinalAmount) {
+      order.originalFinalAmount = originalFinalAmount;
+    }
+    if (!order.originalSubTotal) {
+      order.originalSubTotal = originalSubTotal;
     }
 
     await order.save();
@@ -114,13 +121,14 @@ const cancelOrder = async (req, res) => {
       message: itemId ? 'Item cancelled successfully' : 'Order cancelled successfully',
       updatedOrder: {
         subTotal: order.subTotal,
+        originalSubTotal: order.originalSubTotal,
         discount: order.discount,
         finalAmount: order.finalAmount,
+        originalFinalAmount: order.originalFinalAmount,
         status: order.status,
         cancelledItems
       }
     });
-
   } catch (err) {
     console.error('Error cancelling order:', err.message);
     res.status(500).json({ success: false, message: 'Something went wrong' });
@@ -133,67 +141,81 @@ const returnOrder = async (req, res) => {
         const { orderId } = req.params;
         const { itemId, reason } = req.body;
 
-    
-        if (!reason || reason.length < 10) {
-            return res.status(400).json({ success: false, message: 'Return reason is required and must be at least 10 characters long.' });
+       
+
+        if (!reason || reason.trim().length < 10) {
+            return res.status(400).json({
+                success: false,
+                message: 'Return reason is required and must be at least 10 characters long.'
+            });
         }
 
-       
-        const order = await Order.findOne({ orderId });
-
+        const order = await Order.findOne({ orderId }); 
         if (!order) {
             return res.status(404).json({ success: false, message: 'Order not found' });
         }
 
+    
         if (order.status.toLowerCase() !== 'delivered') {
-            return res.status(400).json({ success: false, message: 'Return not allowed. Order is not delivered yet.' });
+            return res.status(400).json({
+                success: false,
+                message: 'Return not allowed. Order is not delivered yet.'
+            });
         }
 
         if (itemId) {
-            const item = order.items.find(item => item.productId.toString() === itemId);
+            const item = order.items.find(item => item.productId && item.productId._id?.toString() === itemId);
             if (!item) {
                 return res.status(404).json({ success: false, message: 'Item not found in order' });
             }
 
-          
             if (item.returnStatus !== 'Not Requested') {
-                return res.status(400).json({ success: false, message: 'Return request for this item has already been submitted.' });
+                return res.status(400).json({
+                    success: false,
+                    message: 'Return request for this item has already been submitted.'
+                });
             }
 
-        
             item.returnStatus = 'Requested';
-            item.returnReason = reason;
+            item.returnReason = reason.trim();
             item.returnRequestedAt = new Date();
         } else {
             
-            const hasReturnableItems = order.items.some(item => item.returnStatus === 'Not Requested' && item.cancelStatus !== 'Rejected');
+            const hasReturnableItems = order.items.some(
+                item => item.returnStatus === 'Not Requested' && item.cancelStatus !== 'Rejected'
+            );
             if (!hasReturnableItems) {
-                return res.status(400).json({ success: false, message: 'No items are eligible for return in this order.' });
+                return res.status(400).json({
+                    success: false,
+                    message: 'No items are eligible for return in this order.'
+                });
             }
 
+       
             order.items.forEach(item => {
                 if (item.returnStatus === 'Not Requested' && item.cancelStatus !== 'Rejected') {
                     item.returnStatus = 'Requested';
-                    item.returnReason = reason;
+                    item.returnReason = reason.trim();
                     item.returnRequestedAt = new Date();
                 }
             });
         }
-
-      
         if (order.items.some(item => item.returnStatus === 'Requested') && !order.status.includes('Return')) {
-            order.status = 'Return Request';
+            order.status = 'Return Requested'; 
         }
 
         await order.save();
+    
 
-        res.status(200).json({ success: true, message: 'Return request submitted successfully' });
+        res.status(200).json({
+            success: true,
+            message: 'Return request submitted successfully'
+        });
     } catch (error) {
-        console.error('Error returning order:', error);
+    
         res.status(500).json({ success: false, message: 'Server error' });
     }
 };
-
 
 
 module.exports = { cancelOrder ,

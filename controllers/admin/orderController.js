@@ -50,7 +50,7 @@ const getOrderDetailsPage = async (req, res) => {
 
   
     if (!order) {
-      return res.status(404).render('not-found', { message: 'Order not found' });
+      return res.status(404).render('pageerror', { message: 'Order not found' });
     }
 
    
@@ -64,29 +64,28 @@ const getOrderDetailsPage = async (req, res) => {
 
 
 
-
 const updateStatus = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const { status } = req.body;
+    const { status, action, returnReason, itemId } = req.body
 
     const order = await Order.findOne({ _id: orderId });
     if (!order) {
-      return res
-        .status(404)
-        .json({ success: false, message: 'Order not found' });
+      return res.status(404).json({ success: false, message: 'Order not found' });
     }
 
     const currentStatus = order.status;
 
     if (currentStatus === 'Delivered') {
-      return res.status(400).json({
-        success: false,
-        message: 'Delivered orders cannot be changed to another status',
-      });
+      if (status && !['Return Request', 'Returned'].includes(status)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Delivered orders can only be changed to Return Request or Returned',
+        });
+      }
     }
 
-    if (currentStatus === 'Shipped' &&(status === 'Pending' || status === 'Processing')) {
+    if (currentStatus === 'Shipped' && (status === 'Pending' || status === 'Processing')) {
       return res.status(400).json({
         success: false,
         message: 'Shipped orders cannot be changed to Pending or Processing',
@@ -100,13 +99,51 @@ const updateStatus = async (req, res) => {
       });
     }
 
-    order.status = status;
+    if (action === 'initiateReturn' && currentStatus === 'Delivered') {
+      order.status = 'Return Request';
+      let updatedItems = false;
+      if (itemId) {
+        
+        const item = order.items.id(itemId);
+        if (item && item.returnStatus === 'Not Requested') {
+          item.returnStatus = 'Requested';
+          item.returnRequestedAt = new Date();
+          item.returnReason = returnReason || 'No reason provided';
+          updatedItems = true;
+        }
+      } else {
+   
+        order.items.forEach(item => {
+          if (item.returnStatus === 'Not Requested') {
+            item.returnStatus = 'Requested';
+            item.returnRequestedAt = new Date();
+            item.returnReason = returnReason || 'No reason provided';
+            updatedItems = true;
+          }
+        });
+      }
+      if (!updatedItems) {
+        console.log('No items updated for return request');
+      }
+    } else {
+    
+      if (status) {
+  
+        order.status = status;
 
-    if (status === 'Delivered') {
-      order.invoiceData = new Date();
+        if (status === 'Delivered') {
+          order.invoiceDate = new Date();
+        } else if (status === 'Return Request' && currentStatus !== 'Delivered') {
+          return res.status(400).json({
+            success: false,
+            message: 'Return Request can only be set from Delivered status',
+          });
+        }
+      }
     }
 
     await order.save();
+    
 
     res.json({
       success: true,

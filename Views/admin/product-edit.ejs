@@ -277,11 +277,11 @@
                                     <input type="number" value="<%= product.regularPrice %>" name="regularPrice" class="form-control" id="regularPrice" placeholder="$" >
                                     <div id="regularPrice-error" class="error-message"></div>
                                 </div>
-                                <!-- <div class="mb-4">
+                                <div class="mb-4">
                                     <label class="form-label">Sale Price</label>
                                     <input type="number" value="<%= product.salesPrice || '' %>" name="salesPrice" class="form-control" id="salesPrice" placeholder="$">
                                     <div id="salesPrice-error" class="error-message"></div>
-                                </div> -->
+                                </div>
                             </div>
 
                             <!-- Right column - Image Upload -->
@@ -694,7 +694,7 @@
             category: document.getElementById('category'),
             quantity: document.getElementById('quantity'),
             regularPrice: document.getElementById('regularPrice'),
-            // salesPrice: document.getElementById('salesPrice')
+            salesPrice: document.getElementById('salesPrice')
         };
 
         
@@ -703,7 +703,7 @@
         inputs.category.addEventListener('change', validateCategory);
         inputs.quantity.addEventListener('input', validateQuantity);
         inputs.regularPrice.addEventListener('input', validateRegularPrice);
-        // inputs.salesPrice.addEventListener('input', validateSalesPrice);
+        inputs.salesPrice.addEventListener('input', validateSalesPrice);
 
         function validateProductName() {
             const value = inputs.productName.value.trim();
@@ -772,21 +772,21 @@
             return true;
         }
 
-        // function validateSalesPrice() {
-        //     const value = parseFloat(inputs.salesPrice.value);
-        //     const regularPrice = parseFloat(inputs.regularPrice.value);
-        //     const errorElement = document.getElementById('salesPrice-error');
-        //     if (value && (isNaN(value) || value < 0)) {
-        //         errorElement.textContent = 'Sale price cannot be negative';
-        //         return false;
-        //     }
-        //     if (value && value >= regularPrice) {
-        //         errorElement.textContent = 'Sale price must be less than regular price';
-        //         return false;
-        //     }
-        //     errorElement.textContent = '';
-        //     return true;
-        // }
+        function validateSalesPrice() {
+            const value = parseFloat(inputs.salesPrice.value);
+            const regularPrice = parseFloat(inputs.regularPrice.value);
+            const errorElement = document.getElementById('salesPrice-error');
+            if (value && (isNaN(value) || value < 0)) {
+                errorElement.textContent = 'Sale price cannot be negative';
+                return false;
+            }
+            if (value && value >= regularPrice) {
+                errorElement.textContent = 'Sale price must be less than regular price';
+                return false;
+            }
+            errorElement.textContent = '';
+            return true;
+        }
 
         function validateImages() {
             const errorElement = document.createElement('div');

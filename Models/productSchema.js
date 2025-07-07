@@ -19,9 +19,8 @@ const productSchema = new Schema(
     productImage: {
       type: [String],
       required: false,
-      default: []
+      default: [],
     },
-  
     isBlocked: {
       type: Boolean,
       default: false,
@@ -36,26 +35,36 @@ const productSchema = new Schema(
       required: true,
       default: 'Available',
     },
- 
-  quantity: {
-    type: Number,
-   
-    min: 0,
-  },
-  regularPrice: {
-    type: Number,
-    
-  },
- 
-  productOffer: {
+    quantity: {
       type: Number,
-      default: 0, 
+      required: true,
+      min: 0,
+    },
+    regularPrice: {
+      type: Number,
+      required: true,
+      min: 0.01, 
+    },
+salesPrice: {    
+      type: Number,
+
+      min: 0.01,
+      validate: {
+        validator: function (value) {
+          return value <= this.regularPrice; 
+        },
+        message: 'Sales price cannot be greater than regular price',
+      },
+    },
+    productOffer: {
+      type: Number,
+      default: 0,
       min: 0,
       max: 100,
     },
     categoryOffer: {
       type: Number,
-      default: 0, 
+      default: 0,
       min: 0,
       max: 100,
     },

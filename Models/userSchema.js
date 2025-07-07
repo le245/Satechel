@@ -49,29 +49,34 @@ const userSchema = new Schema({
     type: Number,
     default: 0,
   },
-  walletHistory: [
-    {
-      transactionId: String,
-      date: {
-        type: Date,
-        default: Date.now,
-      },
-      type: {
-        type: String,
-        enum: ['credit', 'debit'],
-        required: true,
-      },
-      amount: {
-        type: Number,
-        required: true,
-      },
-      status: {
-        type: String,
-        enum: ['Completed', 'Pending'],
-        default: 'Completed',
-      },
+ walletHistory: [
+  {
+    transactionId: String,
+    date: {
+      type: Date,
+      default: Date.now,
     },
-  ],
+    type: {
+      type: String,
+      enum: ['credit', 'debit'],
+      required: true,
+    },
+    amount: {
+      type: Number,
+      required: true,
+    },
+    status: {
+      type: String,
+      enum: ['Completed', 'Pending'],
+      default: 'Completed',
+    },
+    description: {     // ✅ New field
+      type: String,
+      default: '',      // Optional but good for clarity
+    }
+  },
+],
+
     orderHistory: [{
         type: Schema.Types.ObjectId,
         ref: "Order",

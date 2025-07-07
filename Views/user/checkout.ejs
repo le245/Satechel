@@ -481,7 +481,7 @@
         if (response.ok) {
           console.log('Order placed successfully. Redirecting to order-success:', result.orderId);
 
-          // Clear coupon if instructed by backend
+   
           if (result.clearCoupon) {
             const couponInput = document.getElementById('couponCode');
             const applyCouponBtn = document.getElementById('applyCouponBtn');
@@ -524,190 +524,190 @@
     }
   }
 
-  async function handleRazorpayPayment(addressId, amount, paymentMethod, couponCode) {
-    try {
-      const amountInPaise = Math.round(amount * 100);
-      console.log('Initiating Razorpay payment with:', { addressId, amountInPaise, paymentMethod, couponCode });
+ async function handleRazorpayPayment(addressId, amount, paymentMethod, couponCode) {
+  try {
+    const amountInPaise = Math.round(amount * 100);
+    console.log('Initiating Razorpay payment with:', { addressId, amountInPaise, paymentMethod, couponCode });
 
-      const res = await fetch(`/create-razorpay-order`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          addressId,
-          amount: amountInPaise,
-          paymentMethod,
-          couponCode
-        })
-      });
+    const res = await fetch(`/create-razorpay-order`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({
+        addressId,
+        amount: amountInPaise,
+        paymentMethod,
+        couponCode,
+      }),
+    });
 
-      const data = await res.json();
-      console.log('Response from /create-razorpay-order:', data);
+    const data = await res.json();
+    console.log('Response from /create-razorpay-order:', data);
 
-      if (!data.success || !data.razorpayOrderId || !data.razorpaykeyId) {
-        console.error('Failed to create Razorpay order:', data.message);
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: data.message || 'Failed to create Razorpay order.'
-        });
-        return false;
-      }
-
-      return new Promise((resolve) => {
-        const options = {
-          key: data.razorpaykeyId,
-          amount: data.amount,
-          currency: 'INR',
-          name: 'Satchel',
-          description: 'Order Payment',
-          order_id: data.razorpayOrderId,
-          handler: async (response) => {
-            try {
-              console.log('Verifying payment:', response);
-              const verifyRes = await fetch('/verify-razorpay-payment', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                  orderId: data.orderId,
-                  razorpayOrderId: response.razorpay_order_id,
-                  razorpayPaymentId: response.razorpay_payment_id,
-                  razorpaySignature: response.razorpay_signature
-                })
-              });
-
-              const verifyData = await verifyRes.json();
-              console.log('Response from /verify-razorpay-payment:', verifyData);
-
-              if (verifyData.success) {
-                console.log('Payment verified successfully. Redirecting to order-success:', verifyData.orderId);
-                await Swal.fire({
-                  icon: 'success',
-                  title: 'Success',
-                  text: 'Your order has been placed!'
-                });
-                window.location.href = `/order-success/${verifyData.orderId}`;
-                resolve(true);
-              } else {
-                console.error('Payment verification failed:', verifyData.message);
-                Swal.fire({
-                  icon: 'error',
-                  title: 'Payment Error',
-                  text: verifyData.message || 'Failed to verify payment.'
-                });
-                resolve(false);
-              }
-            } catch (error) {
-              console.error('Payment verification error:', error);
-              Swal.fire({
-                icon: 'error',
-                title: 'Payment Error',
-                text: error.message || 'Failed to verify payment.'
-              });
-              resolve(false);
-            }
-          },
-          prefill: {
-            name: document.querySelector('input[name="userName"]')?.value || 'Customer',
-            email: document.querySelector('input[name="userEmail"]')?.value || ''
-          },
-          theme: {
-            color: '#7971ea'
-          },
-          modal: {
-            ondismiss: async () => {
-              console.log('Razorpay modal closed without completing payment');
-              try {
-                await fetch('/handle-payment-dismissal', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ orderId: data.orderId })
-                });
-                Swal.fire({
-                  icon: 'info',
-                  title: 'Payment Cancelled',
-                  text: 'Payment was not completed. Redirecting to transaction failure page.'
-                }).then(() => {
-                  window.location.href = `/transaction-failure?orderId=${data.orderId}`;
-                });
-                resolve(false);
-              } catch (error) {
-                console.error('Error handling payment dismissal:', error);
-                Swal.fire({
-                  icon: 'error',
-                  title: 'Error',
-                  text: 'Failed to handle payment dismissal.'
-                });
-                resolve(false);
-              }
-            }
-          }
-        };
-
-        options.handler.payment = {
-          failed: async (response) => {
-            console.log('Payment failed:', response);
-            try {
-              const failureRes = await fetch('/handle-payment-failure', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  orderId: data.orderId,
-                  failureReason: response.error.description || 'Payment failed'
-                })
-              });
-              const failureData = await failureRes.json();
-              console.log('Response from /handle-payment-failure:', failureData);
-              Swal.fire({
-                icon: 'error',
-                title: 'Payment Failed',
-                text: response.error.description || 'Payment failed. Redirecting to transaction failure page.'
-              }).then(() => {
-                window.location.href = `/transaction-failure?orderId=${data.orderId}`;
-              });
-              resolve(false);
-            } catch (error) {
-              console.error('Error handling payment failure:', error);
-              Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Failed to handle payment failure.'
-              });
-              resolve(false);
-            }
-          }
-        };
-
-        try {
-          console.log('Opening Razorpay modal with options:', options);
-          const razorpayObject = new Razorpay(options);
-          razorpayObject.on('payment.failed', options.handler.payment.failed);
-          razorpayObject.open();
-        } catch (error) {
-          console.error('Razorpay SDK error:', error);
-          Swal.fire({
-            icon: 'error',
-            title: 'Payment Error',
-            text: 'Failed to initialize Razorpay payment. Please try again.'
-          });
-          resolve(false);
-        }
-      });
-    } catch (error) {
-      console.error('Razorpay payment error:', error);
+    if (!data.success || !data.razorpayOrderId || !data.razorpaykeyId) {
+      console.error('Failed to create Razorpay order:', data.message);
       Swal.fire({
         icon: 'error',
-        title: 'Payment Error',
-        text: error.message || 'Failed to initiate Razorpay payment.'
+        title: 'Error',
+        text: data.message || 'Failed to create Razorpay order.',
       });
       return false;
     }
+
+    return new Promise((resolve) => {
+      const options = {
+        key: data.razorpaykeyId,
+        amount: data.amount,
+        currency: 'INR',
+        name: 'Satchel',
+        description: 'Order Payment',
+        order_id: data.razorpayOrderId,
+        handler: async (response) => {
+          try {
+            console.log('Verifying payment:', response);
+            const verifyRes = await fetch('/verify-razorpay-payment', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+              },
+              body: JSON.stringify({
+                orderId: data.orderId,
+                razorpayOrderId: response.razorpay_order_id,
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpaySignature: response.razorpay_signature,
+              }),
+            });
+
+            const verifyData = await verifyRes.json();
+            console.log('Response from /verify-razorpay-payment:', verifyData);
+
+            if (verifyData.success) {
+              console.log('Payment verified successfully. Redirecting to order-success:', verifyData.orderId);
+              await Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: 'Your order has been placed!',
+              });
+              window.location.href = `/order-success/${verifyData.orderId}`;
+              resolve(true);
+            } else {
+              console.error('Payment verification failed:', verifyData.message);
+              Swal.fire({
+                icon: 'error',
+                title: 'Payment Error',
+                text: verifyData.message || 'Failed to verify payment. Please try again or contact support.',
+              });
+              resolve(false);
+            }
+          } catch (error) {
+            console.error('Payment verification error:', error.message);
+            Swal.fire({
+              icon: 'error',
+              title: 'Payment Error',
+              text: error.message || 'Failed to verify payment. Please try again or contact support.',
+            });
+            resolve(false);
+          }
+        },
+        prefill: {
+          name: document.querySelector('input[name="userName"]')?.value || 'Customer',
+          email: document.querySelector('input[name="userEmail"]')?.value || '',
+        },
+        theme: {
+          color: '#7971ea',
+        },
+        modal: {
+          ondismiss: async () => {
+            console.log('Razorpay modal closed without completing payment');
+            try {
+              const dismissalRes = await fetch('/handle-payment-dismissal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId: data.orderId }),
+              });
+              const dismissalData = await dismissalRes.json();
+              console.log('Response from /handle-payment-dismissal:', dismissalData);
+              Swal.fire({
+                icon: 'info',
+                title: 'Payment Cancelled',
+                text: 'Payment was not completed. You can retry the payment from your order history.',
+              });
+              resolve(false);
+            } catch (error) {
+              console.error('Error handling payment dismissal:', error);
+              Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Failed to handle payment dismissal. Please try again.',
+              });
+              resolve(false);
+            }
+          },
+        },
+      };
+
+      // Handle payment failure
+      options.handler.payment = {
+        failed: async (response) => {
+          console.log('Payment failed:', response);
+          try {
+            const failureRes = await fetch('/handle-payment-failure', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                orderId: data.orderId,
+                failureReason: response.error.description || 'Payment failed',
+              }),
+            });
+            const failureData = await failureRes.json();
+            console.log('Response from /handle-payment-failure:', failureData);
+            Swal.fire({
+              icon: 'error',
+              title: 'Payment Failed',
+              text: response.error.description || 'Payment failed. You can retry the payment from your order history.',
+            });
+            window.location.href = `/transaction-failure?orderId=${data.orderId}`;
+            resolve(false);
+          } catch (error) {
+            console.error('Error handling payment failure:', error);
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'Failed to handle payment failure. Please try again.',
+            });
+            resolve(false);
+          }
+        },
+      };
+
+      try {
+        console.log('Opening Razorpay modal with options:', options);
+        const razorpayObject = new Razorpay(options);
+        razorpayObject.on('payment.failed', options.handler.payment.failed);
+        razorpayObject.open();
+      } catch (error) {
+        console.error('Razorpay SDK error:', error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Payment Error',
+          text: 'Failed to initialize Razorpay payment. Please try again.',
+        });
+        resolve(false);
+      }
+    });
+  } catch (error) {
+    console.error('Razorpay payment error:', error);
+    Swal.fire({
+      icon: 'error',
+      title: 'Payment Error',
+      text: error.message || 'Failed to initiate Razorpay payment. Please try again.',
+    });
+    return false;
   }
+}
 </script>
 </body>
 </html>

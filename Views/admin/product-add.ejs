@@ -246,7 +246,7 @@
                                 <div class="col-md-6">
                                     <div class="mb-4">
                                         <label for="product_name" class="form-label">Product Name</label>
-                                        <input type="text" placeholder="Enter product name" value="nameeeee" name="productName" class="form-control" id="product_name" >
+                                        <input type="text" placeholder="Enter product name"  name="productName" class="form-control" id="product_name" >
                                         <div id="productName-error" class="error-message"></div>
                                     </div>
 
@@ -322,20 +322,22 @@
                            
                                                     <div class="col-md-6 mb-2">
                                                         <label class="form-label">Quantity</label>
-                                                        <input name="quantity" type="number" value="12121" class="form-control variant-quantity" placeholder="Quantity" min="0" id="quantity" >
+                                                        <input name="quantity" type="number"  class="form-control variant-quantity" placeholder="Quantity" min="0" id="quantity" >
                                                           <div id="quantity-error" class="error-message"></div>
                                                         
                                                     </div>
+
+
                                                     <div class="col-md-6 mb-2">
                                                         <label class="form-label">Regular Price</label>
-                                                        <input name="regularPrice" type="number" value="121221212" class="form-control variant-regular-price" placeholder="$" id="regularPrice">
+                                                        <input name="regularPrice" type="number" class="form-control variant-regular-price" placeholder="$" id="regularPrice">
                                                           <div id="regularPrice-error" class="error-message"></div>
                                                     </div>
-                                                    <!-- <div class="col-md-6 mb-2">
+                                                    <div class="col-md-6 mb-2">
                                                         <label class="form-label">Sale Price</label>
-                                                        <input name="salesPrice" type="number" value="1212" class="form-control variant-sales-price" placeholder="$" id="salesPrice">
+                                                        <input name="salesPrice" type="number"class="form-control variant-sales-price" placeholder="$" id="salesPrice">
                                                           <div id="salesPrice-error" class="error-message"></div>
-                                                    </div> -->
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -677,14 +679,14 @@ if (selectedProductImages.length < 3) {
                 
                 const quantity = parseInt(item.querySelector('.variant-quantity').value) || 0;
                 const regularPrice = parseFloat(item.querySelector('.variant-regular-price').value) || 0;
-                // const salesPrice = parseFloat(item.querySelector('.variant-sales-price').value) || 0;
+                const salesPrice = parseFloat(item.querySelector('.variant-sales-price').value) || 0;
 
                 if (size) {
                     variants.push({
                     
                         quantity,
                         regularPrice,
-                        // salesPrice,
+                        salesPrice,
                     });
                 }
             });
@@ -858,7 +860,7 @@ if (selectedProductImages.length < 3) {
             category: document.getElementById('category'),
             quantity:document.getElementById('quantity'),
             regularPrice:document.getElementById('regularPrice'),
-            // salesPrice:document.getElementById('salesPrice')
+            salesPrice:document.getElementById('salesPrice')
         };
 
         inputs.productName.addEventListener('input', validateProductName);

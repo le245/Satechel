@@ -87,11 +87,11 @@ const addoffer = async (req, res) => {
     const { name, type, discount, productId, categoryId } = req.body;
 
     
-    if (!discount || discount <= 0 || discount > 100) {
-      return res.status(400).json({ success: false, message: 'Discount must be between 1% and 100%' });
+    if (!discount || discount <= 0 || discount > 90) {
+      return res.status(400).json({ success: false, message: 'Discount is not correct ' });
     }
 
-    let offerData = new Offer({
+    const  offerData = new Offer({
       name,
       type,
       discount,
@@ -118,8 +118,7 @@ const addoffer = async (req, res) => {
 
       const newOffer = await offerData.save();
 
-  
-      product.salesPrice = Number(discountedPrice.toFixed(2));
+
       product.productOffer = discount; 
       await product.save();
 
@@ -149,7 +148,7 @@ const addoffer = async (req, res) => {
         }
 
         const discountedPrice = regularPrice - (regularPrice * discount) / 100;
-        product.salesPrice = Number(discountedPrice.toFixed(2));
+        
         product.categoryOffer = discount;
         await product.save();
       }
@@ -208,7 +207,6 @@ const updateOffer = async (req, res) => {
 
       const newPrice = regularPrice - (regularPrice * discount) / 100;
       product.productOffer = discount;
-      product.salesPrice = Number(newPrice.toFixed(2));
       await product.save();
     } else if (offer.type === 'category') {
       const category = await Category.findById(offer.categoryId);
@@ -228,7 +226,6 @@ const updateOffer = async (req, res) => {
         product.categoryOffer = discount;
         const bestDiscount = Math.max(product.productOffer || 0, discount);
         const newPrice = regularPrice - (regularPrice * bestDiscount) / 100;
-        product.salesPrice = Number(newPrice.toFixed(2));
         await product.save();
       }
     }
@@ -237,7 +234,7 @@ const updateOffer = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: `${offer.type} offer updated successfully`,
+      message: `offer updated successfully`,
       offer,
     });
   } catch (error) {
@@ -252,28 +249,15 @@ const updateOffer = async (req, res) => {
 const removeOffer = async (req, res) => {
   try {
     const offerId = req.params.offerId;
-
     const offer = await Offer.findById(offerId);
     if (!offer) {
-      return res.status(404).json({
-        success: false,
-        message: 'Offer not found',
-      });
+      return res.status(404).json({ success: false, message: 'Offer not found' });
     }
 
     if (offer.type === 'product') {
       const product = await Product.findById(offer.productId);
       if (product) {
         product.productOffer = 0;
-
-        const regularPrice = product.regularPrice;
-        if (!regularPrice || isNaN(regularPrice) || regularPrice <= 0) {
-        
-        }
-
-        const discount = product.categoryOffer || 0;
-        const newPrice = regularPrice - (regularPrice * discount) / 100;
-        product.salesPrice = discount > 0 ? Number(newPrice.toFixed(2)) : regularPrice;
         await product.save();
       }
     } else if (offer.type === 'category') {
@@ -286,34 +270,20 @@ const removeOffer = async (req, res) => {
       const products = await Product.find({ category: offer.categoryId });
       for (let product of products) {
         product.categoryOffer = 0;
-
-        const regularPrice = product.regularPrice;
-        if (!regularPrice || isNaN(regularPrice) || regularPrice <= 0) {
-          
-          continue;
-        }
-
-        const discount = product.productOffer || 0;
-        const newPrice = regularPrice - (regularPrice * discount) / 100;
-        product.salesPrice = discount > 0 ? Number(newPrice.toFixed(2)) : regularPrice;
         await product.save();
       }
     }
 
     await Offer.findByIdAndDelete(offerId);
 
-    return res.status(200).json({
-      success: true,
-      message: 'Offer removed successfully',
-    });
+    return res.status(200).json({ success: true, message: 'Offer removed successfully' });
+
   } catch (error) {
-    
-    return res.status(500).json({
-      success: false,
-      message: 'Server error while removing offer',
-    });
+    return res.status(500).json({ success: false, message: 'Server error while removing offer' });
   }
 };
+
+
 
 
 module.exports={

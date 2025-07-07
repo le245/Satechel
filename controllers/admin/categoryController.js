@@ -87,8 +87,8 @@ const addCategory = async (req, res) => {
 
 const getListCategory = async (req, res) => {
     try {
-        const id = req.query.id;
-        await Category.updateOne({ _id: id }, { $set: { isListed: false } });
+        const categoryid = req.query.id;
+        await Category.updateOne({ _id: categoryid }, { $set: { isListed: false } });
         res.redirect("/admin/category");
     } catch (error) {
         res.redirect("/admin/pageerror");
@@ -98,8 +98,8 @@ const getListCategory = async (req, res) => {
 
 const getUnlistCategory = async (req, res) => {
     try {
-        const  id = req.query.id;
-        await Category.updateOne({ _id: id }, { $set: { isListed: true } });
+        const  categoryid = req.query.id;
+        await Category.updateOne({ _id: categoryid }, { $set: { isListed: true } });
         res.redirect("/admin/category");
     } catch (error) {
         res.redirect("/admin/pageerror");
@@ -185,4 +185,5 @@ module.exports = {
     getEditCategory,
     editCategory
 };
+
 
