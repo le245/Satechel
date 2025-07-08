@@ -207,6 +207,8 @@ const placeOrder = async (req, res) => {
       selectedAddressId: addressId,
     });
 
+    
+
     await newOrder.save();
 
     if (req.session.coupon) {
