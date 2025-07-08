@@ -82,7 +82,7 @@ const orderSchema = new Schema({
         'Return Requested',
         'Returned',
       ],
-      default: 'Pending'
+      
     },
     createOn: {
         type: Date,
