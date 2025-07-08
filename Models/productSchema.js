@@ -106,6 +106,7 @@ salesPrice: {
       },
     ],
   },
+  
   { timestamps: true }
 );
 

@@ -4,6 +4,8 @@ const User = require("../../Models/userSchema");
 const Order=require("../../Models/orderSchema")
 const Cart=require("../../Models/cartSchema")
 const Address=require("../../Models/addressSchema")
+const STATUS_SERVER_ERROR=parseInt(process.env.STATUS_SERVER_ERROR)
+const STATUS_NOT_FOUND=parseInt(process.env.STATUS_NOT_FOUND)
 
 const getListOfOrders = async (req, res) => {
   try {
@@ -50,7 +52,7 @@ const getOrderDetailsPage = async (req, res) => {
 
   
     if (!order) {
-      return res.status(404).render('pageerror', { message: 'Order not found' });
+      return res.status(STATUS_NOT_FOUND).render('pageerror', { message: 'Order not found' });
     }
 
    
@@ -71,7 +73,7 @@ const updateStatus = async (req, res) => {
 
     const order = await Order.findOne({ _id: orderId });
     if (!order) {
-      return res.status(404).json({ success: false, message: 'Order not found' });
+      return res.status(STATUS_NOT_FOUND).json({ success: false, message: 'Order not found' });
     }
 
     const currentStatus = order.status;
@@ -152,7 +154,7 @@ const updateStatus = async (req, res) => {
       message: 'Order status updated successfully',
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(STATUS_SERVER_ERROR).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -168,7 +170,7 @@ const approveReturn = async (req, res) => {
 
     const item = order.items.find(item => item._id.toString() === productId);
     if (!item) {
-      return res.status(404).json({ success: false, message: 'Product not found in order' });
+      return res.status(STATUS_NOT_FOUND).json({ success: false, message: 'Product not found in order' });
     }
 
   
@@ -188,13 +190,14 @@ const approveReturn = async (req, res) => {
     if (order.paymentMethod !== 'cod') {
       const user = await User.findById(order.userId);
       if (!user) {
-        return res.status(404).json({ success: false, message: 'User not found' });
+        return res.status(STATUS_NOT_FOUND).json({ success: false, message: 'User not found' });
       }
 
       const refundAmount = item.price * item.quantity;
 
-   
+      
       user.wallet = (user.wallet || 0) + refundAmount;
+      
 
       user.walletHistory.push({
         transactionId: `TXN${Date.now()}`,
@@ -229,7 +232,7 @@ const approveReturn = async (req, res) => {
     });
 
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Server error' });
+    return res.status(STATUS_SERVER_ERROR).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -247,7 +250,7 @@ const rejectReturn = async (req, res) => {
     
     const item = order.items.find(item => item._id.toString() === productId);
     if (!item) {
-      return res.status(404).json({ success: false, message: 'Product not found in order' });
+      return res.status(STATUS_NOT_FOUND).json({ success: false, message: 'Product not found in order' });
     }
 
   
@@ -277,7 +280,7 @@ const rejectReturn = async (req, res) => {
     });
 
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Server error' });
+    return res.status(STATUS_SERVER_ERROR).json({ success: false, message: 'Server error' });
   }
 };
 

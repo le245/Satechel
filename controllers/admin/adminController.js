@@ -7,6 +7,8 @@ const bcrypt = require("bcrypt");
 const ExcelJS = require('exceljs');
 const { format } = require('date-fns');
 const PDFDocument = require('pdfkit-table');
+const STATUS_SERVER_ERROR=parseInt(process.env.STATUS_SERVER_ERROR)
+
 
 
 const loadLogin = async (req, res) => {
@@ -55,7 +57,7 @@ const pageerror = async (req, res) => {
     } catch (error) {
        
 
-        res.status(500).send("Internal Server Error");
+     res.status(STATUS_SERVER_ERROR).send("Internal Server Error");
     }
 };
 
@@ -644,7 +646,7 @@ const getAnalyticsData = async (req, res) => {
     res.json({ bestSellingProducts, bestCategories, salesData });
   } catch (error) {
     console.error('Error fetching analytics:', error);
-    res.status(500).json({ error: error.message });
+    res.status(STATUS_SERVER_ERROR).json({ error: error.message });
   }
 };
 const getTopPerformers = async (req, res) => {
@@ -660,7 +662,7 @@ const getTopPerformers = async (req, res) => {
     res.json({ products, categories });
   } catch (error) {
     console.error('Error fetching top performers:', error);
-    res.status(500).json({ error: error.message });
+    res.status(STATUS_SERVER_ERROR).json({ error: error.message });
   }
 };
 

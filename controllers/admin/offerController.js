@@ -1,7 +1,8 @@
 const Category=require('../../Models/categorySchema.js')
 const Offer= require('../../Models/offerSchema.js');
 const Product= require('../../Models/productSchema.js')
-
+const STATUS_SERVER_ERROR=parseInt(process.env.STATUS_SERVER_ERROR)
+const STATUS_NOT_FOUND=parseInt(process.env.STATUS_NOT_FOUND)
 
 const loadOffer= async(req,res)=>{
       try {
@@ -24,7 +25,7 @@ const loadOffer= async(req,res)=>{
         
       } catch (error) {
 
-     res.status(500).json({
+     res.status(STATUS_SERVER_ERROR).json({
       success: false,
       message: 'Server Error',
     });
@@ -78,7 +79,7 @@ const offerList = async (req, res) => {
 
   } catch (error) {
  
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(STATUS_SERVER_ERROR).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -101,7 +102,7 @@ const addoffer = async (req, res) => {
     if (type === 'product' && productId) {
       const product = await Product.findById(productId);
       if (!product) {
-        return res.status(404).json({ success: false, message: 'Product not found' });
+        return res.status(STATUS_NOT_FOUND).json({ success: false, message: 'Product not found' });
       }
 
      
@@ -132,7 +133,7 @@ const addoffer = async (req, res) => {
     if (type === 'category' && categoryId) {
       const category = await Category.findById(categoryId);
       if (!category) {
-        return res.status(404).json({ success: false, message: 'Category not found' });
+        return res.status(STATUS_NOT_FOUND).json({ success: false, message: 'Category not found' });
       }
 
       offerData.categoryId = categoryId;
@@ -162,7 +163,7 @@ const addoffer = async (req, res) => {
 
     return res.status(400).json({ success: false, message: 'Invalid offer type or missing ID' });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Server Error' });
+    return res.status(STATUS_SERVER_ERROR).json({ success: false, message: 'Server Error' });
   }
 };
 
@@ -183,7 +184,7 @@ const updateOffer = async (req, res) => {
 
     const offer = await Offer.findById(offerId);
     if (!offer) {
-      return res.status(404).json({
+      return res.status(STATUS_NOT_FOUND).json({
         success: false,
         message: 'Offer not found',
       });
@@ -196,7 +197,7 @@ const updateOffer = async (req, res) => {
     if (offer.type === 'product') {
       const product = await Product.findById(offer.productId);
       if (!product) {
-        return res.status(404).json({ success: false, message: 'Product not found' });
+        return res.status( STATUS_NOT_FOUND).json({ success: false, message: 'Product not found' });
       }
 
      
@@ -211,7 +212,7 @@ const updateOffer = async (req, res) => {
     } else if (offer.type === 'category') {
       const category = await Category.findById(offer.categoryId);
       if (!category) {
-        return res.status(404).json({ success: false, message: 'Category not found' });
+        return res.status(STATUS_NOT_FOUND).json({ success: false, message: 'Category not found' });
       }
 
       const products = await Product.find({ category: offer.categoryId });
@@ -239,7 +240,7 @@ const updateOffer = async (req, res) => {
     });
   } catch (error) {
   
-    return res.status(500).json({
+    return res.status(STATUS_SERVER_ERROR).json({
       success: false,
       message: 'Server Error',
     });
@@ -251,7 +252,7 @@ const removeOffer = async (req, res) => {
     const offerId = req.params.offerId;
     const offer = await Offer.findById(offerId);
     if (!offer) {
-      return res.status(404).json({ success: false, message: 'Offer not found' });
+      return res.status(STATUS_NOT_FOUND).json({ success: false, message: 'Offer not found' });
     }
 
     if (offer.type === 'product') {
@@ -279,7 +280,7 @@ const removeOffer = async (req, res) => {
     return res.status(200).json({ success: true, message: 'Offer removed successfully' });
 
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Server error while removing offer' });
+    return res.status(STATUS_SERVER_ERROR).json({ success: false, message: 'Server error while removing offer' });
   }
 };
 

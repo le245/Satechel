@@ -1,4 +1,5 @@
 const Category = require("../../Models/categorySchema");
+const Product = require("../../Models/productSchema")
 
 const categoryInfo = async (req, res) => {
     try {
@@ -40,7 +41,6 @@ const categoryInfo = async (req, res) => {
         res.redirect("/admin/pageerror");
     }
 };
- 
 
 
 const addCategory = async (req, res) => {
@@ -65,7 +65,7 @@ const addCategory = async (req, res) => {
       }
   
              const existingCategory = await Category.findOne({
-        name: { $regex: `^${name}$`, $options: 'i' },
+                 name: { $regex: `^${name}$`, $options: 'i' },
       });
       if (existingCategory) {
         return res.status(400).json({ error: 'Category already exists' });
@@ -80,7 +80,7 @@ const addCategory = async (req, res) => {
       return res.status(200)
         .json({ success: true, message: 'Category added successfully' });
     } catch (error) {
-      return res.status(500).json({ error: 'Internal Server Error' });
+      return res.status(STATUS_SERVER_ERROR).json({ error: 'Internal Server Error' });
     }
   };
   
@@ -109,8 +109,8 @@ const getUnlistCategory = async (req, res) => {
 
 const getEditCategory = async (req, res) => {
     try{
-        const id = req.query.id;
-        const category = await Category.findOne({ _id: id });
+        const categoryid = req.query.id;
+        const category = await Category.findOne({ _id:categoryid });
         
         if (!category) {
             return res.redirect("/admin/category");
@@ -124,7 +124,7 @@ const getEditCategory = async (req, res) => {
 
 const editCategory = async (req, res) => {
     try {
-        const id = req.params.id;
+        const categoryid = req.params.id;
         const { categoryName, description } = req.body;
 
       
@@ -149,17 +149,19 @@ const editCategory = async (req, res) => {
             return res.status(400).json({ error: 'Description contains invalid characters' });
         }
 
-      
+    
+
+
         const existingCategory = await Category.findOne({
             name: categoryName,
-            _id: { $ne: id }
+            _id: { $ne: categoryid  }
         });
         if (existingCategory) {
             return res.status(400).json({ error: 'A category with this name already exists' });
         }
 
         const updateCategory = await Category.findByIdAndUpdate(
-            id,
+           categoryid ,
             {
                 name: categoryName,
                 description: description
@@ -168,12 +170,12 @@ const editCategory = async (req, res) => {
         );
 
         if (!updateCategory) {
-            return res.status(404).json({ error: 'Category not found' });
+            return res.status(STATUS_NOT_FOUND).json({ error: 'Category not found' });
         }
 
         return res.status(200).json({ message: 'Category updated successfully' });
     } catch (error) {
-        return res.status(500).json({ error: 'Internal server error' });
+        return res.status(STATUS_SERVER_ERROR).json({ error: 'Internal server error' });
     }
 };
 

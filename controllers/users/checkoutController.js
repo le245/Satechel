@@ -150,10 +150,16 @@ const placeOrder = async (req, res) => {
       quantity: item.quantity,
       price: item.price,
     }));
+     
+  function generateTenDigitNumber() {
+  return Math.floor(1000000000 + Math.random() * 9000000000);
+}
+
+
 
     const newOrder = new Order({
       userId,
-      orderId: require('uuid').v4(), 
+      orderId:generateTenDigitNumber(),
       items: orderItems,
       address: userAddress._id,
       paymentMethod,
@@ -164,6 +170,9 @@ const placeOrder = async (req, res) => {
       couponApplied: !!couponCode,
       selectedAddressId: addressId,
     });
+
+  
+    
 
     await newOrder.save();
 
@@ -200,7 +209,7 @@ const placeOrder = async (req, res) => {
 
     await Cart.findOneAndDelete({ userId });
 
-    return res.status(200).json({ success: true, message: 'Order placed successfully', orderId: newOrder._id });
+    return res.status(200).json({ success: true, message: 'Order placed successfully', orderId:generateTenDigitNumber() });
   } catch (error) {
     console.error('Error placing order:', error.message, error.stack);
     return res.status(500).json({ success: false, message: error.message || 'Server error' });
@@ -370,10 +379,14 @@ const createRazorpayOrder = async (req, res) => {
     if (Math.abs(amount - expectedAmountInPaise) > 1) {
       return res.status(400).json({ success: false, message: 'Amount mismatch' });
     }
+function generateTenDigitNumber() {
+  return Math.floor(1000000000 + Math.random() * 9000000000);
+}
+
 
     const newOrder = new Order({
       userId,
-      orderId: require('uuid').v4(),
+      orderId: generateTenDigitNumber(),
       items: cart.items.map(item => ({
         productId: item.productId._id,
         quantity: item.quantity,
@@ -489,6 +502,8 @@ const orderSuccess = async (req, res) => {
     if (!order) {
       return res.status(404).json({ success: false, message: 'Order not found!' });
     }
+    console.log(order);
+    
 
     res.render('order-success', { order, user });
   } catch (error) {

@@ -34,7 +34,7 @@
                         <% if (orders && orders.length > 0) { %>
                             <% orders.forEach(order => { %>
                                 <tr>
-                                    <td>#<%= order.orderId || 'N/A' %></td>
+                                    <td>ORD<%= order.orderId || 'N/A' %></td>
                                     <td>
                                         <%= order.userId && order.userId.name ? order.userId.name : 'Unknown' %>
                                         <br>
@@ -48,13 +48,13 @@
                                     <td>₹<%= order.finalAmount ? order.finalAmount.toFixed(2) : '0.00' %></td>
                                     <td>
                                         <select onchange="updateOrderStatus(this, '<%= order._id %>')" class="status-select <%= order.status ? order.status.toLowerCase().replace(/\s+/g, '') : 'pending' %>" data-previous-status="<%= order.status || 'Pending' %>">
-  <option value="Pending" <%= order.status === 'Pending' ? 'selected' : '' %>>Pending</option>
-  <option value="Processing" <%= order.status === 'Processing' ? 'selected' : '' %>>Processing</option>
-  <option value="Shipped" <%= order.status === 'Shipped' ? 'selected' : '' %>>Shipped</option>
-  <option value="Delivered" <%= order.status === 'Delivered' ? 'selected' : '' %>>Delivered</option>
-  <option value="Cancelled" <%= order.status === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
-  <option value="Return Requested" <%= order.status === 'Return Requested' ? 'selected' : '' %>>Return Requested</option>
-  <option value="Returned" <%= order.status === 'Returned' ? 'selected' : '' %>>Returned</option>
+                                               <option value="Pending" <%= order.status === 'Pending' ? 'selected' : '' %>>Pending</option>
+                                               <option value="Processing" <%= order.status === 'Processing' ? 'selected' : '' %>>Processing</option>
+                                               <option value="Shipped" <%= order.status === 'Shipped' ? 'selected' : '' %>>Shipped</option>
+                                               <option value="Delivered" <%= order.status === 'Delivered' ? 'selected' : '' %>>Delivered</option>
+                                               <option value="Cancelled" <%= order.status === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
+                                                <option value="Return Requested" <%= order.status === 'Return Requested' ? 'selected' : '' %>>Return Requested</option>
+                                                <option value="Returned" <%= order.status === 'Returned' ? 'selected' : '' %>>Returned</option>
 </select>
                                         <span class="loading-spinner" style="display: none;"></span>
                                     </td>

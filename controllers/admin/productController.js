@@ -1,8 +1,9 @@
 const Product = require("../../Models/productSchema");
 const Category = require("../../Models/categorySchema");
 const User = require("../../Models/userSchema");
-
 const { handleUpload } = require("../../config/cloudinary");
+const STATUS_SERVER_ERROR=parseInt(process.env.STATUS_SERVER_ERROR)
+const STATUS_NOT_FOUND=parseInt(process.env.STATUS_NOT_FOUND)
 
 const getProductAddPage = async (req, res) => {
   try {
@@ -155,7 +156,7 @@ const addproducts = async (req, res) => {
       redirectUrl: "/admin/product",
     });
   } catch (error) {
-    return res.status(500).json({
+    return res.status(STATUS_SERVER_ERROR).json({
       success: false,
       error: error.message || "Server error while saving product",
     });
@@ -378,13 +379,13 @@ const editProduct = async (req, res) => {
         redirectUrl: "/admin/products",
       });
     } else {
-      return res.status(404).json({
+      return res.status( STATUS_NOT_FOUND).json({
         success: false,
         error: "Product not found",
       });
     }
   } catch (error) {
-    return res.status(500).json({
+    return res.status(STATUS_SERVER_ERROR).json({
       success: false,
       error: error.message || "Internal server error",
     });

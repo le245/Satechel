@@ -3,6 +3,9 @@ const Category = require("../../Models/categorySchema");
 const User = require("../../Models/userSchema");
 const Order=require("../../Models/orderSchema")
 const Coupon=require("../../Models/couponSchema")
+const STATUS_SERVER_ERROR=parseInt(process.env.STATUS_SERVER_ERROR)
+const STATUS_NOT_FOUND=parseInt(process.env.STATUS_NOT_FOUND)
+
 
 
 const loadCoupon=async(req,res)=>{
@@ -39,7 +42,7 @@ const loadCoupon=async(req,res)=>{
            })
     } catch (error) {
 
-    return res.status(500).json({
+    return res.status(STATUS_SERVER_ERROR).json({
       success: false,
       message: 'Can’t access coupon page',
       error: error.message,
@@ -128,7 +131,7 @@ const createCoupon = async (req, res) => {
       coupon: newCoupon,
     });
   } catch (error) {
-    return res.status(500).json({
+    return res.status(STATUS_SERVER_ERROR).json({
       status: false,
       message: 'An error occurred while creating the coupon',
       error: error.message,
@@ -210,7 +213,7 @@ const editCoupon= async(req,res)=>{
 
     } catch (error) {
         
-    res.status(404).json({
+    res.status( STATUS_NOT_FOUND).json({
       status: false,
       message: 'There is an error in updating Coupon',
       error: error.message,
@@ -236,7 +239,7 @@ const deleteCoupon = async (req, res) => {
     });
   } catch (error) {;
     
-    res.status(404).json({
+    res.status(STATUS_NOT_FOUND).json({
       status: false,
       message: 'Error in Deleting the Coupon',
     });
