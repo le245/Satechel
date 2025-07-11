@@ -4,7 +4,9 @@ const Product = require("../../Models/productSchema");
 const Category = require("../../Models/categorySchema");
 const Wishlist = require("../../Models/wishlistSchema");
 const Offer = require("../../Models/offerSchema");
-  
+
+ 
+
 
 const calculateDiscountedPrice = async (product) => {
   try {
@@ -141,7 +143,7 @@ const addToCart = async (req, res) => {
 
     const product = await Product.findById(productId);
     if (!product) {
-      return res.status(404).json({
+      return res.status(STATUS_NOT_FOUND).json({
         success: false,
         message: 'Product not found',
       });
@@ -226,17 +228,17 @@ const updateCart = async (req, res) => {
 
     const cart = await Cart.findOne({ userId });
     if (!cart) {
-      return res.status(404).json({ success: false, message: 'Cart not found' });
+      return res.status(STATUS_NOT_FOUND).json({ success: false, message: 'Cart not found' });
     }
 
     const item = cart.items.find((item) => item._id.toString() === itemId);
     if (!item) {
-      return res.status(404).json({ success: false, message: 'Item not found' });
+      return res.status(STATUS_NOT_FOUND).json({ success: false, message: 'Item not found' });
     }
 
     const product = await Product.findById(item.productId);
     if (!product) {
-      return res.status(404).json({ success: false, message: 'Product not found' });
+      return res.status(STATUS_NOT_FOUND).json({ success: false, message: 'Product not found' });
     }
 
     if (quantity < 1) {
@@ -279,10 +281,10 @@ const deleteItemFromCart = async (req, res) => {
     const cart = await Cart.findOne({ userId: userId });
 
     if (!cart) {
-      return res.status(404).json({ success: false, message: 'Cart not found' });
+      return res.status(STATUS_NOT_FOUND).json({ success: false, message: 'Cart not found' });
     }
 
-    cart.items = cart.items.filter((item) => item.productId.toString() !== productId);
+    cart.items = cart.items.filter((item) => item.productId !== productId);
 
     await cart.save();
 

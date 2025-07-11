@@ -1,8 +1,7 @@
 const Category=require('../../Models/categorySchema.js')
 const Offer= require('../../Models/offerSchema.js');
 const Product= require('../../Models/productSchema.js')
-const STATUS_SERVER_ERROR=parseInt(process.env.STATUS_SERVER_ERROR)
-const STATUS_NOT_FOUND=parseInt(process.env.STATUS_NOT_FOUND)
+const STATUS_CODES= require("../../Models/status")
 
 const loadOffer= async(req,res)=>{
       try {
@@ -25,7 +24,7 @@ const loadOffer= async(req,res)=>{
         
       } catch (error) {
 
-     res.status(STATUS_SERVER_ERROR).json({
+     res.status(STATUS_CODES.SERVER_ERROR).json({
       success: false,
       message: 'Server Error',
     });
@@ -79,7 +78,7 @@ const offerList = async (req, res) => {
 
   } catch (error) {
  
-    res.status(STATUS_SERVER_ERROR).json({ success: false, message: 'Server error' });
+    res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -163,7 +162,7 @@ const addoffer = async (req, res) => {
 
     return res.status(400).json({ success: false, message: 'Invalid offer type or missing ID' });
   } catch (error) {
-    return res.status(STATUS_SERVER_ERROR).json({ success: false, message: 'Server Error' });
+    return res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, message: 'Server Error' });
   }
 };
 
@@ -240,7 +239,7 @@ const updateOffer = async (req, res) => {
     });
   } catch (error) {
   
-    return res.status(STATUS_SERVER_ERROR).json({
+    return res.status(STATUS_CODES.SERVER_ERROR).json({
       success: false,
       message: 'Server Error',
     });
@@ -280,7 +279,7 @@ const removeOffer = async (req, res) => {
     return res.status(200).json({ success: true, message: 'Offer removed successfully' });
 
   } catch (error) {
-    return res.status(STATUS_SERVER_ERROR).json({ success: false, message: 'Server error while removing offer' });
+    return res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, message: 'Server error while removing offer' });
   }
 };
 
@@ -294,3 +293,4 @@ module.exports={
     updateOffer,
     removeOffer
 }
+

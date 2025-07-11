@@ -221,23 +221,19 @@ const userProfile = async (req, res) => {
   try {
     const userId = req.session.user;
 
-    const userData = await User.findById(userId);
+    const userData = await User.findById(userId)
+     await User.populate(userData, {
+  path: 'walletHistory.productId',
+  select: 'productName',
+});
+
     if (!userData) {
       console.log("User not found");
       return res.redirect("/pageNotFound");
     }
 
-
-    if (userData.wallet === undefined) {
-      userData.wallet = 0;
-    }
-
-  
     const addressData = await Address.findOne({ userId });
 
-   
-
-    
     const walletPage = parseInt(req.query.walletPage) || 1;
     const walletLimit = 5;
     const walletSkip = (walletPage - 1) * walletLimit;
@@ -250,7 +246,7 @@ const userProfile = async (req, res) => {
       .populate({
         path: 'items.productId',
         model: 'Product',
-        select: 'productName salesPrice regularPrice',
+        select: 'productName regularPrice',
       })
       .sort({ createOn: -1 })
       .skip(orderSkip)
@@ -261,10 +257,8 @@ const userProfile = async (req, res) => {
 
     const history = userData.walletHistory || [];
 
-  
+    // Sort and paginate
     const sortedHistory = [...history].sort((a, b) => new Date(b.date) - new Date(a.date));
-
-
     const paginatedHistory = sortedHistory.slice(walletSkip, walletSkip + walletLimit);
     const totalWalletPages = Math.ceil(history.length / walletLimit);
 
@@ -291,6 +285,7 @@ const userProfile = async (req, res) => {
     res.redirect("/pageNotFound");
   }
 };
+
 
 
 const changeEmail=async(req,res)=>{

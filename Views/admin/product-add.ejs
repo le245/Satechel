@@ -333,11 +333,11 @@
                                                         <input name="regularPrice" type="number" class="form-control variant-regular-price" placeholder="$" id="regularPrice">
                                                           <div id="regularPrice-error" class="error-message"></div>
                                                     </div>
-                                                    <div class="col-md-6 mb-2">
+                                                    <!-- <div class="col-md-6 mb-2">
                                                         <label class="form-label">Sale Price</label>
                                                         <input name="salesPrice" type="number"class="form-control variant-sales-price" placeholder="$" id="salesPrice">
                                                           <div id="salesPrice-error" class="error-message"></div>
-                                                    </div>
+                                                    </div> -->
                                                 </div>
                                             </div>
                                         </div>
@@ -679,14 +679,14 @@ if (selectedProductImages.length < 3) {
                 
                 const quantity = parseInt(item.querySelector('.variant-quantity').value) || 0;
                 const regularPrice = parseFloat(item.querySelector('.variant-regular-price').value) || 0;
-                const salesPrice = parseFloat(item.querySelector('.variant-sales-price').value) || 0;
+                // const salesPrice = parseFloat(item.querySelector('.variant-sales-price').value) || 0;
 
                 if (size) {
                     variants.push({
                     
                         quantity,
                         regularPrice,
-                        salesPrice,
+                        // salesPrice,
                     });
                 }
             });
@@ -860,7 +860,7 @@ if (selectedProductImages.length < 3) {
             category: document.getElementById('category'),
             quantity:document.getElementById('quantity'),
             regularPrice:document.getElementById('regularPrice'),
-            salesPrice:document.getElementById('salesPrice')
+            // salesPrice:document.getElementById('salesPrice')
         };
 
         inputs.productName.addEventListener('input', validateProductName);

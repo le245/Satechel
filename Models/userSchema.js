@@ -65,16 +65,13 @@ const userSchema = new Schema({
       type: Number,
       required: true,
     },
-    status: {
-      type: String,
-      enum: ['Completed', 'Pending'],
-      default: 'Completed',
-    },
+    
     productId: {
             type: Schema.Types.ObjectId,
             ref: 'Product',
             
         },
+
    
   },
 ],

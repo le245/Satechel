@@ -46,6 +46,7 @@
             transition: all 0.3s ease;
         }
         .status-Pending { background-color: #e5e7eb; color: #6b7280; }
+        .status-PaymentPending { background-color: #d1d5db; color: #374151; }
         .status-Processing { background-color: #d1d5db; color: #374151; }
         .status-Shipped { background-color: #9ca3af; color: #ffffff; }
         .status-Delivered { background-color: #28a745; color: #ffffff; }
@@ -107,6 +108,7 @@
             transition: background-color 0.3s ease;
         }
         .timeline-dot-Pending { background-color: #6b7280; }
+        .timeline-dot-PaymentPending { background-color: #9ca3af; }
         .timeline-dot-Processing { background-color: #9ca3af; }
         .timeline-dot-Shipped { background-color: #9ca3af; }
         .timeline-dot-Delivered { background-color: #28a745; }
@@ -330,7 +332,7 @@
                                                 <td class="item-quantity"><%= item.quantity %></td>
                                                 <td class="text-end item-subtotal">₹<%= item.price && item.quantity ? (item.price * item.quantity).toFixed(2) : '0.00' %></td>
                                                 <td class="text-end item-actions">
-                                                    <% if (order.status !== 'Payment Failed' && ['Pending', 'Processing'].includes(order.status) && item.cancelStatus !== 'Cancelled') { %>
+                                                    <% if (order.status !== 'PaymentFailed' && ['Pending', 'Processing'].includes(order.status) && item.cancelStatus !== 'Cancelled') { %>
                                                         <button class="btn btn-danger btn-sm cancel-item-btn" 
                                                                 data-order-id="<%= order.orderId || '' %>" 
                                                                 data-item-id="<%= item.productId._id || '' %>" 
@@ -386,7 +388,7 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Subtotal</span>
-                                <span id="subtotal-amount">₹<%= order.subTotal %></span>
+                                <span id="subtotal-amount">₹<%= order.subTotal ? order.subTotal.toFixed(2) : '0.00' %></span>
                             </div>
                             <% if (order.discount > 0) { %>
                             <div class="d-flex justify-content-between mb-2">
@@ -409,14 +411,14 @@
                             </div>
                             <div class="d-flex justify-content-between mt-2">
                                 <span>Payment Status</span>
-                                <span class="<%= order.status === 'Payment Failed' ? 'text-danger' : 'text-success' %>">
-                                    <%= order.status === 'Payment Failed' ? 'Failed' : 'Completed' %>
+                                <span class="<%= order.status === 'PaymentFailed' ? 'text-danger' : 'text-success' %>">
+                                    <%= order.status === 'PaymentFailed' ? 'Failed' : 'Completed' %>
                                 </span>
                             </div>
                             <% if (order.status === 'Cancelled' && order.originalFinalAmount > 0) { %>
                             <div class="d-flex justify-content-between mt-2 text-success">
                                 <span>Refunded to Wallet</span>
-                                <span>₹<%= order.originalFinalAmount.toFixed(2) %></span>
+                                <span>₹<%= order.originalFinalAmount ? order.originalFinalAmount.toFixed(2) : '0.00' %></span>
                             </div>
                             <% } %>
                         </div>
@@ -432,10 +434,11 @@
                         <div class="card-body">
                             <div class="tracking-timeline">
                                 <% 
-                                const allStatuses = ['Payment Pending', 'Payment Failed', 'Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled', 'ReturnRequest', 'Returned'];
+                                // Declare allStatuses and currentStatusIndex only once
+                                const allStatuses = ['PaymentPending', 'PaymentFailed', 'Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled', 'ReturnRequest', 'Returned'];
                                 const currentStatusIndex = allStatuses.indexOf(order.status);
                                 %>
-                                <% if (order.status === 'Payment Failed') { %>
+                                <% if (order.status === 'PaymentFailed') { %>
                                     <div class="timeline-item">
                                         <div class="timeline-dot timeline-dot-PaymentFailed"></div>
                                         <div class="timeline-content">
@@ -453,9 +456,9 @@
                                     </div>
                                 <% } else if (order.status === 'ReturnRequest' || order.status === 'Returned') { %>
                                     <% allStatuses.forEach((status, index) => { %>
-                                        <% if (index <= currentStatusIndex && status !== 'Cancelled' && status !== 'Payment Failed' && status !== 'Payment Pending') { %>
+                                        <% if (index <= currentStatusIndex && status !== 'Cancelled' && status !== 'PaymentFailed' && status !== 'PaymentPending') { %>
                                             <div class="timeline-item">
-                                                <div class="timeline-dot timeline-dot-<%= status.replace(/\s+/g, '') %>"></div>
+                                                <div class="timeline-dot timeline-dot-<%= status %>"></div>
                                                 <div class="timeline-content">
                                                     <h5 class="mb-1"><%= status %></h5>
                                                     <p class="text-muted mb-0">
@@ -467,9 +470,9 @@
                                     <% }); %>
                                 <% } else { %>
                                     <% allStatuses.forEach((status, index) => { %>
-                                        <% if (index <= currentStatusIndex && status !== 'Cancelled' && status !== 'ReturnRequest' && status !== 'Returned' && status !== 'Payment Failed') { %>
+                                        <% if (index <= currentStatusIndex && status !== 'Cancelled' && status !== 'ReturnRequest' && status !== 'Returned' && status !== 'PaymentFailed') { %>
                                             <div class="timeline-item">
-                                                <div class="timeline-dot timeline-dot-<%= status.replace(/\s+/g, '') %>"></div>
+                                                <div class="timeline-dot timeline-dot-<%= status %>"></div>
                                                 <div class="timeline-content">
                                                     <h5 class="mb-1"><%= status %></h5>
                                                     <p class="text-muted mb-0">
@@ -489,7 +492,7 @@
             <!-- Action Buttons -->
             <div class="row">
                 <div class="col-12 text-center action-buttons">
-                    <% if (['Pending', 'Processing'].includes(order.status)) { %>
+                    <% if (['Pending', 'Processing'].includes(order.status) && order.items.some(item => item.cancelStatus !== 'Cancelled')) { %>
                         <button id="cancelOrderBtn" class="btn btn-danger me-2" onclick="cancelOrder('<%= order.orderId %>', '<%= order.status %>')">
                             <i class="fas fa-times me-1"></i> Cancel Entire Order
                         </button>
@@ -499,12 +502,11 @@
                             <i class="fas fa-undo me-1"></i> Return Entire Order
                         </button>
                     <% } %>
-                   <% if (order.status === 'Payment Failed' && order.paymentMethod === 'razorpay') { %>
-    <button class="btn btn-warning me-2" onclick="retryPayment('<%= order._id.toString() %>', <%= order.finalAmount %>)">
-        <i class="fas fa-redo me-1"></i> Retry Payment
-    </button>
-<% } %>
-
+                    <% if (order.status === 'PaymentFailed' && order.paymentMethod === 'razorpay') { %>
+                        <button class="btn btn-warning me-2" onclick="retryPayment('<%= order._id.toString() %>', <%= order.finalAmount %>)">
+                            <i class="fas fa-redo me-1"></i> Retry Payment
+                        </button>
+                    <% } %>
                     <% if (order.status.toLowerCase() === 'delivered') { %>
                         <a href="/download-invoice/<%= order._id %>" class="btn btn-sm me-2" style="background-color: grey; color: #fff; border-radius: 5px; padding: 6px 12px;">
                             <i class="fas fa-download me-1"></i> Download Invoice
@@ -624,6 +626,9 @@
         }
 
         async function cancelItem(button, orderId, itemId, currentStatus) {
+            button.classList.add('btn-loading');
+            button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Cancelling...';
+
             if (!orderId || !itemId) {
                 Swal.fire({
                     icon: 'error',
@@ -635,6 +640,8 @@
                     timer: 3000,
                     timerProgressBar: true
                 });
+                button.classList.remove('btn-loading');
+                button.innerHTML = '<i class="fas fa-times me-1"></i> Cancel';
                 return;
             }
 
@@ -649,6 +656,8 @@
                     timer: 3000,
                     timerProgressBar: true
                 });
+                button.classList.remove('btn-loading');
+                button.innerHTML = '<i class="fas fa-times me-1"></i> Cancel';
                 return;
             }
 
@@ -676,35 +685,48 @@
                         const row = button.closest('tr');
                         const statusCell = row.querySelector('.item-status');
                         const actionsCell = row.querySelector('.item-actions');
-                        const price = parseFloat(row.querySelector('.item-price').textContent.replace('₹', ''));
-                        const quantity = parseInt(row.querySelector('.item-quantity').textContent);
-                        const subtotal = price * quantity;
 
+                        // Update item status to Cancelled
                         statusCell.textContent = 'Cancelled';
                         statusCell.classList.remove('hidden');
                         statusCell.classList.add('text-danger');
-                        actionsCell.innerHTML = '';
+                        actionsCell.innerHTML = ''; // Remove all action buttons for this item
 
+                        // Update order summary amounts
                         const subtotalElement = document.getElementById('subtotal-amount');
-                        const finalAmountElement = document.getElementById('final-amount');
-                        const totalAmountElement = document.getElementById('total-amount');
-                        let currentSubtotal = parseFloat(subtotalElement.textContent.replace('₹', ''));
-                        let currentFinalAmount = parseFloat(finalAmountElement.textContent.replace('₹', ''));
+                        const totalElement = document.getElementById('final-amount');
+                        subtotalElement.textContent = `₹${data.updatedOrder.subTotal.toFixed(2)}`;
+                        totalElement.textContent = `₹${data.updatedOrder.finalAmount.toFixed(2)}`;
 
-                        currentSubtotal -= subtotal;
-                        currentFinalAmount -= subtotal;
+                        // Update total items count
+                        const totalItemsElement = document.querySelector('.card-body p.card-text');
+                        const remainingItems = Array.from(document.querySelectorAll('#order-items .product-item'))
+                            .filter(row => row.querySelector('.item-status').textContent !== 'Cancelled').length;
+                        totalItemsElement.textContent = `${remainingItems} items`;
 
-                        subtotalElement.textContent = `₹${currentSubtotal.toFixed(2)}`;
-                        finalAmountElement.textContent = `₹${currentFinalAmount.toFixed(2)}`;
-                        totalAmountElement.textContent = `₹${currentFinalAmount.toFixed(2)}`;
+                        // Update order status badge and timeline if all items are cancelled
+                        if (data.updatedOrder.status === 'Cancelled') {
+                            const orderStatusBadge = document.querySelector('.status-badge');
+                            orderStatusBadge.textContent = 'Cancelled';
+                            orderStatusBadge.className = 'status-badge status-Cancelled';
 
-                        const allItems = document.querySelectorAll('#order-items .item-status');
-                        const allCancelled = Array.from(allItems).every(status => status.textContent === 'Cancelled');
-                        if (allCancelled) {
-                            document.querySelector('.status-badge').textContent = 'Cancelled';
-                            document.querySelector('.status-badge').className = 'status-badge status-Cancelled';
+                            const timelineContainer = document.querySelector('.tracking-timeline');
+                            timelineContainer.innerHTML = `
+                                <div class="timeline-item">
+                                    <div class="timeline-dot timeline-dot-Cancelled"></div>
+                                    <div class="timeline-content">
+                                        <h5 class="mb-1">Cancelled</h5>
+                                        <p class="text-muted mb-0">Order was cancelled</p>
+                                    </div>
+                                </div>
+                            `;
+
+                            // Remove Cancel Entire Order button
                             const cancelOrderBtn = document.getElementById('cancelOrderBtn');
                             if (cancelOrderBtn) cancelOrderBtn.remove();
+
+                            // Remove all remaining Cancel buttons
+                            document.querySelectorAll('.cancel-item-btn').forEach(btn => btn.remove());
                         }
 
                         Swal.fire({
@@ -741,7 +763,13 @@
                         timer: 3000,
                         timerProgressBar: true
                     });
+                } finally {
+                    button.classList.remove('btn-loading');
+                    button.innerHTML = '<i class="fas fa-times me-1"></i> Cancel';
                 }
+            } else {
+                button.classList.remove('btn-loading');
+                button.innerHTML = '<i class="fas fa-times me-1"></i> Cancel';
             }
         }
 
@@ -767,9 +795,7 @@
 
             const policyResult = await Swal.fire({
                 title: `Return Item`,
-                html: `
-                    <p>Do you want to proceed with the return request?</p>
-                `,
+                html: `<p>Do you want to proceed with the return request?</p>`,
                 icon: 'info',
                 showCancelButton: true,
                 confirmButtonColor: '#6b7280',
@@ -831,7 +857,7 @@
 
                         const orderStatusBadge = document.querySelector('.status-badge');
                         if (!orderStatusBadge.textContent.includes('Return')) {
-                            orderStatusBadge.textContent = 'Return Request';
+                            orderStatusBadge.textContent = 'ReturnRequest';
                             orderStatusBadge.className = 'status-badge status-ReturnRequest';
                         }
 
@@ -847,8 +873,8 @@
                         `;
 
                         const allItems = document.querySelectorAll('#order-items .item-status');
-                        const allReturned = Array.from(allItems).every(status => status.textContent === 'Return Requested' || status.textContent === 'Returned' || status.textContent === 'Cancelled');
-                        if (allReturned) {
+                        const allReturnedOrCancelled = Array.from(allItems).every(status => status.textContent === 'Return Requested' || status.textContent === 'Returned' || status.textContent === 'Cancelled');
+                        if (allReturnedOrCancelled) {
                             const returnOrderBtn = document.getElementById('returnOrderBtn');
                             if (returnOrderBtn) returnOrderBtn.remove();
                         }
@@ -917,9 +943,7 @@
 
             const policyResult = await Swal.fire({
                 title: 'Return Entire Order',
-                html: `
-                    <p>Do you want to proceed with the return request for the entire order?</p>
-                `,
+                html: `<p>Do you want to proceed with the return request for the entire order?</p>`,
                 icon: 'info',
                 showCancelButton: true,
                 confirmButtonColor: '#6b7280',
@@ -982,7 +1006,7 @@
                         });
 
                         const orderStatusBadge = document.querySelector('.status-badge');
-                        orderStatusBadge.textContent = 'Return Request';
+                        orderStatusBadge.textContent = 'ReturnRequest';
                         orderStatusBadge.className = 'status-badge status-ReturnRequest';
 
                         const timelineContainer = document.querySelector('.tracking-timeline');

@@ -13,6 +13,8 @@ const mongoose = require("mongoose");
 const easyinvoice = require("easyinvoice");
 const moment = require("moment");
 
+
+
 const razorpayInstance = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET,
@@ -49,7 +51,7 @@ const getCheckOut = async (req, res) => {
   } catch (error) {
     console.error("Error loading checkout:", error.message, error.stack);
     res
-      .status(500)
+      .status(STATUS_SERVER_ERROR)
       .render("pageNotFound", {
         message: "Server error, please try again later",
       });
@@ -59,8 +61,7 @@ const getCheckOut = async (req, res) => {
 const placeOrder = async (req, res) => {
   try {
     const userId = req.session.user;
-    const { addressId, subTotal, orderTotal, paymentMethod, couponCode } =
-      req.body;
+    const { addressId, subTotal, orderTotal, paymentMethod, couponCode } =req.body;
 
     if (!addressId || !paymentMethod) {
       return res
@@ -178,8 +179,7 @@ const placeOrder = async (req, res) => {
 
     for (const item of cart.items) {
       item.productId.quantity -= item.quantity;
-      item.productId.totalSold =
-        (item.productId.totalSold || 0) + item.quantity;
+      item.productId.totalSold =(item.productId.totalSold || 0) + item.quantity;
       await item.productId.save();
     }
 
@@ -256,7 +256,7 @@ const placeOrder = async (req, res) => {
   } catch (error) {
     console.error("Error placing order:", error.message, error.stack);
     return res
-      .status(500)
+      .status(STATUS_SERVER_ERROR)
       .json({ success: false, message: error.message || "Server error" });
   }
 };
@@ -533,7 +533,7 @@ const createRazorpayOrder = async (req, res) => {
   } catch (error) {
     console.error("Error creating Razorpay order:", error.message, error.stack);
     res
-      .status(500)
+      .status(STATUS_SERVER_ERROR)
       .json({
         success: false,
         message: error.message || "Failed to create Razorpay order",
@@ -606,7 +606,7 @@ const verifyRazorPayment = async (req, res) => {
   } catch (error) {
     console.error("Payment verification error:", error.message, error.stack);
     res
-      .status(500)
+      .status(STATUS_SERVER_ERROR)
       .json({
         success: false,
         message: error.message || "Failed to verify payment",
@@ -631,7 +631,7 @@ const orderSuccess = async (req, res) => {
         .lean();
       if (!order) {
         return res
-          .status(404)
+          .status(STATUS_NOT_FOUND)
           .json({ success: false, message: "Order not found!" });
       }
 
@@ -642,27 +642,18 @@ const orderSuccess = async (req, res) => {
      
       if (!order) {
         return res
-          .status(404)
+          .status(STATUS_NOT_FOUND)
           .json({ success: false, message: "Order not found!" });
       }
     res.render("order-success", { order, user });
 
     }
-
-    // const order = await Order.findById(orderId)
-    //   .populate("items.productId")
-    //   .lean();
-    // if (!order) {
-    //   return res
-    //     .status(404)
-    //     .json({ success: false, message: "Order not found!" });
-    // }
    
 
   } catch (error) {
     console.error("Error in orderSuccess:", error.message, error.stack);
     return res
-      .status(500)
+      .status(STATUS_SERVER_ERROR)
       .json({ success: false, message: "Internal server error" });
   }
 };
@@ -682,7 +673,7 @@ const handlePaymentDismissal = async (req, res) => {
 
     if (!order) {
       return res
-        .status(404)
+        .status(STATUS_NOT_FOUND)
         .json({ success: false, message: "Order not found" });
     }
 
@@ -694,7 +685,7 @@ const handlePaymentDismissal = async (req, res) => {
   } catch (error) {
     console.error("Error in handlePaymentDismissal:", error);
     res
-      .status(500)
+      .status(STATUS_SERVER_ERROR)
       .json({ success: false, message: "Failed to handle payment dismissal" });
   }
 };
@@ -721,7 +712,7 @@ const handlePaymentFailure = async (req, res) => {
 
     if (!order) {
       return res
-        .status(404)
+        .status(STATUS_NOT_FOUND)
         .json({ success: false, message: "Order not found" });
     }
 
@@ -731,7 +722,7 @@ const handlePaymentFailure = async (req, res) => {
   } catch (error) {
     console.error("Error in handlePaymentFailure:", error.message, error.stack);
     res
-      .status(500)
+      .status(STATUS_SERVER_ERROR)
       .json({ success: false, message: "Failed to handle payment failure" });
   }
 };
@@ -752,7 +743,7 @@ const retryPayment = async (req, res) => {
     const order = await Order.findById(orderId);
     if (!order) {
       return res
-        .status(404)
+        .status(STATUS_NOT_FOUND)
         .json({ success: false, message: "Order not found" });
     }
 
@@ -798,7 +789,7 @@ const retryPayment = async (req, res) => {
   } catch (error) {
     console.error("Error in retryPayment:", error.message, error.stack);
     res
-      .status(500)
+      .status(STATUS_SERVER_ERROR)
       .json({ success: false, message: "Server error: " + error.message });
   }
 };
@@ -818,7 +809,7 @@ const loadTransactionFailurePage = async (req, res) => {
       .lean();
 
     if (!order) {
-      return res.status(404).render("error", {
+      return res.status(STATUS_NOT_FOUND).render("error", {
         message: "Order not found",
         user: req.session.user,
       });
@@ -842,7 +833,7 @@ const loadTransactionFailurePage = async (req, res) => {
       error.message,
       error.stack
     );
-    res.status(500).render("error", {
+    res.status(STATUS_SERVER_ERROR).render("error", {
       message: "Server error",
       user: req.session.user,
     });
@@ -858,22 +849,20 @@ const downloadInvoice = async (req, res) => {
 
     if (!order) {
       return res
-        .status(404)
+        .status(STATUS_NOT_FOUND)
         .json({ success: false, message: "Order not found" });
     }
 
     const allowedStatuses = [
-      "Processing",
-      "Shipped",
+      
       "Delivered",
-      "ReturnRequest",
-      "Returned",
+     
     ];
     if (!allowedStatuses.includes(order.status)) {
       return res.status(400).json({
         success: false,
         message:
-          "Invoice can only be downloaded for orders in Processing, Shipped, Delivered, Return Request, or Returned status",
+          "Invoice can only be downloaded for orders in  Delivered"
       });
     }
 
@@ -942,7 +931,7 @@ const downloadInvoice = async (req, res) => {
       if (err) {
         console.error("Error downloading the file:", err);
         res
-          .status(500)
+          .status(STATUS_SERVER_ERROR)
           .json({ success: false, message: "Error downloading the invoice" });
       }
       try {
@@ -954,7 +943,7 @@ const downloadInvoice = async (req, res) => {
   } catch (error) {
     console.error("Error generating invoice:", error);
     res
-      .status(500)
+      .status(STATUS_SERVER_ERROR)
       .json({
         success: false,
         message: "An error occurred while generating the invoice",

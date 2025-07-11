@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const Cart = require('./cartSchema');
 const { Schema } = mongoose;
 
 const couponSchema = new Schema(
@@ -43,3 +44,4 @@ const couponSchema = new Schema(
 
 const Coupon = mongoose.model('Coupon', couponSchema);
 module.exports = Coupon;
+

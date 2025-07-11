@@ -293,6 +293,7 @@
             </div>
         </form>
     </header>
+    
  
     <div class="right mt-5">
         <table class="table table-striped">
@@ -301,7 +302,7 @@
                     <th scope="col"><b>Image</b></th>
                     <th scope="col"><b>Product Name</b></th>
                     <th scope="col"><b>Category</b></th>
-                    <th scope="col"><br>Sales Price</b></th>
+                  
                     <th scope="col"><b>Regular Price</b></th>
                     <th scope="col"><b>Quantity</b></th>
                     <th scope="col"><b>Action</b></th>
@@ -320,7 +321,6 @@
                         </td>
                         <td><%= product.productName %></td>
                         <td><%= product.category ? product.category.name : "No Category" %></td>
-                        <td><%= product.salesPrice || "N/A" %></td>
                         <td><%= product.regularPrice || "N/A" %></td>
                         <td><%= product.quantity || "N/A" %></td>
                         <td>

@@ -299,19 +299,16 @@ const getShop = async (req, res) => {
         }
 
         if (minPrice || maxPrice !== Infinity) {
-            query.$or = [
-                { salesPrice: { $gte: minPrice, $lte: maxPrice } },
-                { regularPrice: { $gte: minPrice, $lte: maxPrice } },
-            ];
+            query.regularPrice = { $gte: minPrice, $lte: maxPrice };
         }
 
         let sortOption = {};
         switch (sortBy) {
             case 'price-low-to-high':
-                sortOption = { salesPrice: 1, regularPrice: 1 };
+                sortOption = { regularPrice: 1 };
                 break;
             case 'price-high-to-low':
-                sortOption = { salesPrice: -1, regularPrice: -1 };
+                sortOption = { regularPrice: -1 };
                 break;
             case 'aA-zZ':
                 sortOption = { productName: 1 };

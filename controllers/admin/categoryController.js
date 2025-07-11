@@ -1,5 +1,5 @@
 const Category = require("../../Models/categorySchema");
-const Product = require("../../Models/productSchema")
+const STATUS_CODES= require("../../Models/status")
 
 const categoryInfo = async (req, res) => {
     try {
@@ -51,14 +51,14 @@ const addCategory = async (req, res) => {
 
       if (!name || !description) {
         return res
-          .status(400)
+          .status(STATUS_CODES)
           .json({ error: 'Name and description are required' });
       }
   
         const nameRegex = /^[a-zA-Z0-9\s]+$/;
       if (!nameRegex.test(name)) {
              return res
-          .status(400)
+          .status(STATUS_CODES.BAD_REQUEST)
           .json({
             error: 'Category name can only contain letters numbers and spaces',
           });
@@ -68,7 +68,7 @@ const addCategory = async (req, res) => {
                  name: { $regex: `^${name}$`, $options: 'i' },
       });
       if (existingCategory) {
-        return res.status(400).json({ error: 'Category already exists' });
+        return res.status(STATUS_CODES.BAD_REQUEST).json({ error: 'Category already exists' });
       }
   
       const newCategory = new Category({
@@ -77,10 +77,10 @@ const addCategory = async (req, res) => {
                      });
       await newCategory.save();
   
-      return res.status(200)
+      return res.status(STATUS_CODES.OK)
         .json({ success: true, message: 'Category added successfully' });
     } catch (error) {
-      return res.status(STATUS_SERVER_ERROR).json({ error: 'Internal Server Error' });
+      return res.status(STATUS_CODES.SERVER_ERROR).json({ error: 'Internal Server Error' });
     }
   };
   
@@ -129,24 +129,24 @@ const editCategory = async (req, res) => {
 
       
         if (!categoryName) {
-            return res.status(400).json({ error: 'Category name is required' });
+            return res.status(STATUS_CODES.BAD_REQUEST).json({ error: 'Category name is required' });
         }
         if (categoryName.length < 2 || categoryName.length > 50) {
-            return res.status(400).json({ error: 'Category name must be between 2 and 50 characters' });
+            return res.status(STATUS_CODES.BAD_REQUEST).json({ error: 'Category name must be between 2 and 50 characters' });
         }
         const nameRegex = /^[a-zA-Z0-9\s\-'&]+$/;
         if (!nameRegex.test(categoryName)) {
-            return res.status(400).json({ error: 'Category name can only contain letters, numbers, spaces, hyphens, and ampersands' });
+            return res.status(STATUS_CODES.BAD_REQUEST).json({ error: 'Category name can only contain letters, numbers, spaces, hyphens, and ampersands' });
         }
         if (!description) {
-            return res.status(400).json({ error: 'Description is required' });
+            return res.status(STATUS_CODES.BAD_REQUEST).json({ error: 'Description is required' });
         }
         if (description.length < 10 || description.length > 500) {
-            return res.status(400).json({ error: 'Description must be between 10 and 500 characters' });
+            return res.status(STATUS_CODES.BAD_REQUEST).json({ error: 'Description must be between 10 and 500 characters' });
         }
         const descriptionRegex = /^[a-zA-Z0-9\s.,!?'"\-()]+$/;
         if (!descriptionRegex.test(description)) {
-            return res.status(400).json({ error: 'Description contains invalid characters' });
+            return res.status(STATUS_CODES.BAD_REQUEST).json({ error: 'Description contains invalid characters' });
         }
 
     
@@ -170,12 +170,12 @@ const editCategory = async (req, res) => {
         );
 
         if (!updateCategory) {
-            return res.status(STATUS_NOT_FOUND).json({ error: 'Category not found' });
+            return res.status(STATUS_CODES.NOT_FOUND).json({ error: 'Category not found' });
         }
 
-        return res.status(200).json({ message: 'Category updated successfully' });
+        return res.status(STATUS_CODES.OK).json({ message: 'Category updated successfully' });
     } catch (error) {
-        return res.status(STATUS_SERVER_ERROR).json({ error: 'Internal server error' });
+        return res.status(STATUS_CODES.SERVER_ERROR).json({ error: 'Internal server error' });
     }
 };
 
@@ -187,5 +187,6 @@ module.exports = {
     getEditCategory,
     editCategory
 };
+
 
 

@@ -286,9 +286,9 @@
         <thead>
           <tr class="border-b font-semibold text-gray-700">
             <th class="p-2">Date</th>
-            <th class="p-2">Type</th>
-            <th class="p-2">Status</th>
+            <th class="p-2">Type</th>   
             <th class="p-2">Amount</th>
+            <th class="p-2">Product</th>
           </tr>
         </thead>
         <tbody>
@@ -296,11 +296,13 @@
             <% user.walletHistory.forEach(transaction => { %>
               <tr class="border-b">
                 <td class="p-2"><%= new Date(transaction.date).toLocaleDateString() %></td>
-                <td class="p-2 capitalize"><%= transaction.type %></td>
-                <td class="p-2"><%= transaction.status %></td>
+                <td class="p-2 capitalize"><%= transaction.type %></td> 
                 <td class="p-2 font-semibold <%= transaction.type === 'credit' ? 'text-green-600' : 'text-red-600' %>">
                   ₹<%= transaction.amount.toFixed(2) %>
                 </td>
+   <td class="p-2">
+  <%= transaction.productId?.productName || '—' %>
+</td>
               </tr>
             <% }) %>
           <% } else { %>

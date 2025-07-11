@@ -11,11 +11,12 @@
                 <option value="Shipped">Shipped</option>
                 <option value="Delivered">Delivered</option>
                 <option value="Cancelled">Cancelled</option>
-                <option value="Return Request">Return Request</option>
+                <option value="ReturnRequest">Return Request</option>
                 <option value="Returned">Returned</option>
             </select>
         </div>
     </div>
+
     <div class="card mb-4">
         <div class="card-body">
             <div class="table-responsive">
@@ -47,25 +48,25 @@
                                     </td>
                                     <td>₹<%= order.finalAmount ? order.finalAmount.toFixed(2) : '0.00' %></td>
                                     <td>
-                                        <select onchange="updateOrderStatus(this, '<%= order._id %>')" class="status-select <%= order.status ? order.status.toLowerCase().replace(/\s+/g, '') : 'pending' %>" data-previous-status="<%= order.status || 'Pending' %>">
-                                               <option value="Pending" <%= order.status === 'Pending' ? 'selected' : '' %>>Pending</option>
-                                               <option value="Processing" <%= order.status === 'Processing' ? 'selected' : '' %>>Processing</option>
-                                               <option value="Shipped" <%= order.status === 'Shipped' ? 'selected' : '' %>>Shipped</option>
-                                               <option value="Delivered" <%= order.status === 'Delivered' ? 'selected' : '' %>>Delivered</option>
-                                               <option value="Cancelled" <%= order.status === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
-                                                <option value="Return Requested" <%= order.status === 'Return Requested' ? 'selected' : '' %>>Return Requested</option>
-                                                <option value="Returned" <%= order.status === 'Returned' ? 'selected' : '' %>>Returned</option>
-</select>
+                                        <select onchange="updateOrderStatus(this, '<%= order.orderId %>')" class="status-select <%= order.status ? order.status.toLowerCase().replace(/\s+/g, '') : 'pending' %>" data-previous-status="<%= order.status || 'Pending' %>">
+                                            <option value="Pending" <%= order.status === 'Pending' ? 'selected' : '' %>>Pending</option>
+                                            <option value="Processing" <%= order.status === 'Processing' ? 'selected' : '' %>>Processing</option>
+                                            <option value="Shipped" <%= order.status === 'Shipped' ? 'selected' : '' %>>Shipped</option>
+                                            <option value="Delivered" <%= order.status === 'Delivered' ? 'selected' : '' %>>Delivered</option>
+                                            <option value="Cancelled" <%= order.status === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
+                                            <option value="ReturnRequest" <%= order.status === 'ReturnRequest' ? 'selected' : '' %>>Return Request</option>
+                                            <option value="Returned" <%= order.status === 'Returned' ? 'selected' : '' %>>Returned</option>
+                                        </select>
                                         <span class="loading-spinner" style="display: none;"></span>
                                     </td>
                                     <td class="text-end">
                                         <div class="dropdown">
-                                            <a href="/admin/orders/orderDetails/<%= order?.orderId || '' %>" data-bs-toggle="dropdown" class="btn btn-light rounded btn-sm font-sm">
+                                            <a href="/admin/orders/orderDetails/<%= order.orderId || '' %>" data-bs-toggle="dropdown" class="btn btn-light rounded btn-sm font-sm">
                                                 <i class="fas fa-ellipsis-h"></i>
                                             </a>
                                             <div class="dropdown-menu">
-                                                <a class="dropdown-item" href="/admin/orders/orderDetails/<%= order?.orderId || '' %>">View Details</a>
-                                                <a class="dropdown-item text-danger" href="#" onclick="confirmCancel('<%= order._id %>')">Cancel Order</a>
+                                                <a class="dropdown-item" href="/admin/orders/orderDetails/<%= order.orderId || '' %>">View Details</a>
+                                                <a class="dropdown-item text-danger" href="#" onclick="confirmCancel('<%= order.orderId %>')">Cancel Order</a>
                                             </div>
                                         </div>
                                     </td>
@@ -205,6 +206,12 @@
         color: #856404;
     }
 
+    .status-select.paymentpending {
+        background-color: #e2e3e5;
+        border-color: #d6d8db;
+        color: #383d41;
+    }
+
     .status-select.processing {
         background-color: #cce5ff;
         border-color: #b8daff;
@@ -321,65 +328,75 @@
         });
     }
 
-    function updateOrderStatus(selectElement, orderId) {
+    function updateOrderStatus(selectElement, orderId, itemId = null) {
         const newStatus = selectElement.value;
         const loadingSpinner = selectElement.closest('tr').querySelector('.loading-spinner');
         selectElement.disabled = true;
         loadingSpinner.style.display = 'inline-block';
 
-        fetch(`/admin/updateOrderStatus/${orderId}`, {
+        const body = { status: newStatus };
+        if (itemId) body.itemId = itemId;
+
+        // Normalize orderId (remove 'ORD' prefix if present)
+        const cleanOrderId = orderId.startsWith('ORD') ? orderId.replace('ORD', '') : orderId;
+
+        console.log('Sending orderId:', cleanOrderId, 'Status:', newStatus); // Debug log
+
+        fetch(`/admin/updateOrderStatus/${cleanOrderId}`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ status: newStatus })
+            body: JSON.stringify(body),
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                selectElement.className = `status-select ${newStatus.toLowerCase().replace(/\s+/g, '')}`;
-                selectElement.dataset.previousStatus = newStatus;
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Status Updated',
-                    text: data.message,
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000,
-                    timerProgressBar: true
-                });
-            } else {
+            .then(response => response.json())
+            .then(data => {
+                console.log('Response:', data); // Debug log
+                if (data.success) {
+                    selectElement.className = `status-select ${newStatus.toLowerCase().replace(/\s+/g, '')}`;
+                    selectElement.dataset.previousStatus = newStatus;
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Status Updated',
+                        text: data.message,
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true,
+                    });
+                } else {
+                    selectElement.value = selectElement.dataset.previousStatus;
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Update Failed',
+                        text: data.message || 'Failed to update order status',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true,
+                    });
+                }
+            })
+            .catch(error => {
+                console.log('Error:', error); // Debug log
                 selectElement.value = selectElement.dataset.previousStatus;
                 Swal.fire({
                     icon: 'error',
-                    title: 'Update Failed',
-                    text: data.message || 'Failed to update order status',
+                    title: 'Network Error',
+                    text: 'Could not update order status. Please try again.',
                     toast: true,
                     position: 'top-end',
                     showConfirmButton: false,
                     timer: 3000,
-                    timerProgressBar: true
+                    timerProgressBar: true,
                 });
-            }
-        })
-        .catch(error => {
-            selectElement.value = selectElement.dataset.previousStatus;
-            Swal.fire({
-                icon: 'error',
-                title: 'Network Error',
-                text: 'Could not update order status. Please try again.',
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true
+            })
+            .finally(() => {
+                loadingSpinner.style.display = 'none';
+                selectElement.disabled = false;
             });
-        })
-        .finally(() => {
-            loadingSpinner.style.display = 'none';
-            selectElement.disabled = false;
-        });
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -398,7 +415,7 @@
             const selectedStatus = statusFilter.value;
 
             tableRows.forEach(row => {
-                const orderId = row.cells[0].textContent.toLowerCase().replace('#', '');
+                const orderId = row.cells[0].textContent.toLowerCase().replace('ord', '');
                 const customerName = row.cells[1].textContent.toLowerCase();
                 const status = row.cells[4].querySelector('.status-select').value;
 

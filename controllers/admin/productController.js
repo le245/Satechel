@@ -2,8 +2,7 @@ const Product = require("../../Models/productSchema");
 const Category = require("../../Models/categorySchema");
 const User = require("../../Models/userSchema");
 const { handleUpload } = require("../../config/cloudinary");
-const STATUS_SERVER_ERROR=parseInt(process.env.STATUS_SERVER_ERROR)
-const STATUS_NOT_FOUND=parseInt(process.env.STATUS_NOT_FOUND)
+
 
 const getProductAddPage = async (req, res) => {
   try {
@@ -25,7 +24,6 @@ const addproducts = async (req, res) => {
       productImages,
       quantity,
       regularPrice,
-      salesPrice,
     } = req.body;
 
     if (
@@ -38,9 +36,7 @@ const addproducts = async (req, res) => {
       !quantity ||
       quantity.toString().trim() === "" ||
       !regularPrice ||
-      regularPrice.toString().trim() === "" ||
-      !salesPrice ||
-      salesPrice.toString().trim() === ""
+      regularPrice.toString().trim() === ""
     ) {
       return res.status(400).json({
         success: false,
@@ -48,7 +44,6 @@ const addproducts = async (req, res) => {
       });
     }
 
-  
     if (!/^[a-zA-Z0-9\s]{3,100}$/.test(productName?.trim())) {
       return res.status(400).json({
         success: false,
@@ -57,7 +52,6 @@ const addproducts = async (req, res) => {
       });
     }
 
-    
     if (description.trim().length < 10 || description.trim().length > 1000) {
       return res.status(400).json({
         success: false,
@@ -65,7 +59,6 @@ const addproducts = async (req, res) => {
       });
     }
 
-  
     const categoryId = await Category.findOne({ name: category });
     if (!categoryId) {
       return res.status(400).json({
@@ -89,7 +82,6 @@ const addproducts = async (req, res) => {
       });
     }
 
-
     const parsedRegularPrice = parseFloat(regularPrice);
     if (isNaN(parsedRegularPrice) || parsedRegularPrice <= 0) {
       return res.status(400).json({
@@ -98,22 +90,6 @@ const addproducts = async (req, res) => {
       });
     }
 
-
-    const parsedSalesPrice = parseFloat(salesPrice);
-    if (isNaN(parsedSalesPrice) || parsedSalesPrice <= 0) {
-      return res.status(400).json({
-        success: false,
-        error: "Sales price must be greater than 0",
-      });
-    }
-    if (parsedSalesPrice > parsedRegularPrice) {
-      return res.status(400).json({
-        success: false,
-        error: "Sales price cannot be greater than regular price",
-      });
-    }
-
-  
     const productExists = await Product.findOne({
       productName: productName.trim(),
     });
@@ -137,7 +113,6 @@ const addproducts = async (req, res) => {
       }
     }
 
-   
     const newProduct = new Product({
       productName: productName.trim(),
       description: description.trim(),
@@ -145,7 +120,6 @@ const addproducts = async (req, res) => {
       productImage: imagePaths,
       quantity: parsedQuantity,
       regularPrice: parsedRegularPrice,
-      salesPrice: parsedSalesPrice,
     });
 
     await newProduct.save();
@@ -156,7 +130,7 @@ const addproducts = async (req, res) => {
       redirectUrl: "/admin/product",
     });
   } catch (error) {
-    return res.status(STATUS_SERVER_ERROR).json({
+    return res.status(500).json({
       success: false,
       error: error.message || "Server error while saving product",
     });
@@ -248,7 +222,6 @@ const editProduct = async (req, res) => {
       category,
       quantity,
       regularPrice,
-      salesPrice,
       productImages,
     } = req.body;
 
@@ -262,9 +235,7 @@ const editProduct = async (req, res) => {
       !quantity ||
       quantity.toString().trim() === "" ||
       !regularPrice ||
-      regularPrice.toString().trim() === "" ||
-      !salesPrice ||
-      salesPrice.toString().trim() === ""
+      regularPrice.toString().trim() === ""
     ) {
       return res.status(400).json({
         success: false,
@@ -280,7 +251,6 @@ const editProduct = async (req, res) => {
       });
     }
 
-  
     const existingProduct = await Product.findOne({
       productName: productName.trim(),
       _id: { $ne: id },
@@ -292,7 +262,6 @@ const editProduct = async (req, res) => {
       });
     }
 
-   
     const categoryId = await Category.findById(category);
     if (!categoryId) {
       return res.status(400).json({ success: false, error: "Invalid category" });
@@ -313,7 +282,6 @@ const editProduct = async (req, res) => {
       });
     }
 
-    
     const parsedRegularPrice = parseFloat(regularPrice);
     if (isNaN(parsedRegularPrice) || parsedRegularPrice <= 0) {
       return res.status(400).json({
@@ -322,28 +290,12 @@ const editProduct = async (req, res) => {
       });
     }
 
-    const parsedSalesPrice = parseFloat(salesPrice);
-    if (isNaN(parsedSalesPrice) || parsedSalesPrice <= 0) {
-      return res.status(400).json({
-        success: false,
-        error: "Sales price must be greater than 0",
-      });
-    }
-    if (parsedSalesPrice > parsedRegularPrice) {
-      return res.status(400).json({
-        success: false,
-        error: "Sales price cannot be greater than regular price",
-      });
-    }
-
- 
     if (!productImages || !Array.isArray(productImages) || productImages.length < 3) {
       return res.status(400).json({
         success: false,
         error: "At least 3 product images are required",
       });
     }
-
 
     const imagePaths = [];
     for (const base64Image of productImages) {
@@ -366,7 +318,6 @@ const editProduct = async (req, res) => {
         category: categoryId._id,
         quantity: parsedQuantity,
         regularPrice: parsedRegularPrice,
-        salesPrice: parsedSalesPrice,
         productImage: imagePaths,
       },
       { new: true }
@@ -379,13 +330,13 @@ const editProduct = async (req, res) => {
         redirectUrl: "/admin/products",
       });
     } else {
-      return res.status( STATUS_NOT_FOUND).json({
+      return res.status(404).json({
         success: false,
         error: "Product not found",
       });
     }
   } catch (error) {
-    return res.status(STATUS_SERVER_ERROR).json({
+    return res.status(500).json({
       success: false,
       error: error.message || "Internal server error",
     });

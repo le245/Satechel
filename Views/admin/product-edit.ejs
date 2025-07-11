@@ -1,5 +1,3 @@
-
-
 <!-- Load Bootstrap CSS -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
 
@@ -222,7 +220,6 @@
     }
 </style>
 
-
 <section class="content-main" style="margin-left: var(--sidebar-width); padding: 25px;">
     <div class="row">
         <div class="col-12">
@@ -251,52 +248,43 @@
                                 </div>
 
                                 <!-- Category Selection -->
-                               <div class="mb-4">
-                                   <label class="form-label">Category</label>
-                                   <select class="form-select" id="category" name="category" required>
-                                   <option value="">Select Category</option>
+                                <div class="mb-4">
+                                    <label class="form-label">Category</label>
+                                    <select class="form-select" id="category" name="category" required>
+                                        <option value="">Select Category</option>
                                         <% cat.forEach(category => { %>
-                                         <option value="<%= category._id %>" 
-                                         <%= category._id.toString() === product.category.toString() ? 'selected' : '' %>>
-                                              <%= category.name %>
-                                  </option>
-                                    <% }) %>
-                                 </select>
-                           <div id="category-error" class="error-message"></div>
+                                            <option value="<%= category._id %>" 
+                                                <%= category._id.toString() === product.category.toString() ? 'selected' : '' %>>
+                                                <%= category.name %>
+                                            </option>
+                                        <% }) %>
+                                    </select>
+                                    <div id="category-error" class="error-message"></div>
                                 </div>
 
-
-                                <!-- Quantity, Regular Price, Sale Price -->
+                                <!-- Quantity, Regular Price -->
                                 <div class="mb-4">
                                     <label class="form-label">Quantity</label>
-                                    <input type="number" value="<%= product.quantity %>" name="quantity" class="form-control" id="quantity" placeholder="Quantity" min="0" >
+                                    <input type="number" value="<%= product.quantity %>" name="quantity" class="form-control" id="quantity" placeholder="Quantity" min="0">
                                     <div id="quantity-error" class="error-message"></div>
                                 </div>
                                 <div class="mb-4">
                                     <label class="form-label">Regular Price</label>
-                                    <input type="number" value="<%= product.regularPrice %>" name="regularPrice" class="form-control" id="regularPrice" placeholder="$" >
+                                    <input type="number" value="<%= product.regularPrice %>" name="regularPrice" class="form-control" id="regularPrice" placeholder="$">
                                     <div id="regularPrice-error" class="error-message"></div>
-                                </div>
-                                <div class="mb-4">
-                                    <label class="form-label">Sale Price</label>
-                                    <input type="number" value="<%= product.salesPrice || '' %>" name="salesPrice" class="form-control" id="salesPrice" placeholder="$">
-                                    <div id="salesPrice-error" class="error-message"></div>
                                 </div>
                             </div>
 
                             <!-- Right column - Image Upload -->
-                                 <div id="fileReadError" class="error-message" style="color: red; margin-top: 10px;"></div>
+                            <div id="fileReadError" class="error-message" style="color: red; margin-top: 10px;"></div>
                             <div class="col-md-6">
                                 <div class="mb-4">
-                                
-
                                     <label class="form-label">Upload Product Images</label>
                                     <div class="image-upload-container">
                                         <div id="imagesPreviewContainer" class="d-flex flex-wrap mb-2"></div>
                                         <input class="form-control" type="file" name="productImages" id="productImagesInput" accept="image/png, image/jpeg, image/jpg" multiple onchange="handleImageUpload(event)" />
                                         <small class="text-muted">Please select 3-4 images</small>
                                         <div id="productImagesError" style="color: red; margin-top: 8px;"></div>
-
                                     </div>
                                 </div>
                             </div>
@@ -319,7 +307,6 @@
                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                                         <button type="button" class="btn btn-primary" id="cropButton">Crop & Save</button>
                                         <div id="cropError" class="error-message" style="color: red; margin-top: 10px;"></div>
-
                                     </div>
                                 </div>
                             </div>
@@ -330,8 +317,6 @@
                             <button type="button" class="btn btn-danger me-2" id="removeProduct">Remove Product</button>
                             <button class="btn btn-primary" type="submit">Update Product</button>
                             <div id="formError" class="error-message" style="color: red; margin-top: 10px;"></div>
-
-
                         </div>
                     </form>
                 </div>
@@ -352,7 +337,6 @@
     let currentImageIndex = null;
     let selectedProductImages = [];
 
-
     const existingImages = <%- JSON.stringify(product.productImage || []) %>;
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -364,13 +348,13 @@
         if (form) {
             form.addEventListener('submit', async function (event) {
                 event.preventDefault();
-         const productImagesError = document.getElementById('productImagesError');
-           productImagesError.textContent = ''; 
+                const productImagesError = document.getElementById('productImagesError');
+                productImagesError.textContent = '';
 
-           if (selectedProductImages.length < 3) {
-            productImagesError.textContent = 'Please select at least 3 product images.';
-            return;
-}
+                if (selectedProductImages.length < 3) {
+                    productImagesError.textContent = 'Please select at least 3 product images.';
+                    return;
+                }
 
                 const formElements = this.elements;
                 const payload = {};
@@ -382,7 +366,6 @@
                     }
                 }
 
-              
                 const toBase64 = (file) =>
                     new Promise((resolve, reject) => {
                         const reader = new FileReader();
@@ -396,7 +379,7 @@
                         selectedProductImages.map((file) => toBase64(file))
                     );
 
-                    payload.productImages = base64Images; 
+                    payload.productImages = base64Images;
 
                     const submitBtn = this.querySelector('button[type="submit"]');
                     const originalText = submitBtn.innerHTML;
@@ -420,26 +403,24 @@
                             return response.json();
                         })
                         .then((data) => {
-
-                              const formError = document.getElementById('formError');
-                               formError.textContent = '';
+                            const formError = document.getElementById('formError');
+                            formError.textContent = '';
                             if (data.success) {
                                 window.location.href = '/admin/products';
                             } else {
-                          formError.textContent = data.error || 'An error occurred while saving the product';
+                                formError.textContent = data.error || 'An error occurred while saving the product';
                             }
                         })
                         .catch((error) => {
                             const formError = document.getElementById('formError');
                             formError.textContent = error.message || 'Something went wrong. Please try again.';
                             console.error('Error:', error);
-                     
                             submitBtn.disabled = false;
                             submitBtn.innerHTML = originalText;
                         });
                 } catch (error) {
                     console.error('Image conversion failed:', error);
-                       formError.textContent = 'Failed to convert images. Please try again with different files '
+                    formError.textContent = 'Failed to convert images. Please try again with different files';
                 }
             });
         }
@@ -452,14 +433,12 @@
             }
         });
 
-       
-
         const cropError = document.getElementById('cropError');
         cropError.textContent = '';
         document.getElementById('cropButton').addEventListener('click', function () {
             if (!cropper || currentImageIndex === null) {
                 console.error('Cropper or image index not initialized');
-                  cropError.textContent = 'Image cropper not initialized. Please select an image and try again.';
+                cropError.textContent = 'Image cropper not initialized. Please select an image and try again.';
                 return;
             }
 
@@ -495,7 +474,7 @@
                 );
             } else {
                 console.error('Failed to get cropped canvas');
-                cropError.textContent='Failed to crop image. Please adjust the crop area and try again.';
+                cropError.textContent = 'Failed to crop image. Please adjust the crop area and try again.';
             }
         });
 
@@ -621,7 +600,7 @@
                     };
                     cropImage.onerror = function () {
                         console.error('Failed to load image for cropping');
-                        cropError.textContent='Failed to load image for cropping. Please try another image.';
+                        cropError.textContent = 'Failed to load image for cropping. Please try another image.';
                     };
                 });
 
@@ -646,10 +625,10 @@
             reader.readAsDataURL(file);
             reader.onerror = function () {
                 console.error('Failed to read file:', file.name);
-               const fileReadError = document.getElementById('fileReadError');
+                const fileReadError = document.getElementById('fileReadError');
                 if (fileReadError) {
-                 fileReadError.textContent = 'Failed to read file: ' + file.name + '. Please try another file.';
-                 }
+                    fileReadError.textContent = 'Failed to read file: ' + file.name + '. Please try another file.';
+                }
             };
         });
     }
@@ -693,17 +672,14 @@
             description: document.getElementById('descriptionid'),
             category: document.getElementById('category'),
             quantity: document.getElementById('quantity'),
-            regularPrice: document.getElementById('regularPrice'),
-            salesPrice: document.getElementById('salesPrice')
+            regularPrice: document.getElementById('regularPrice')
         };
 
-        
         inputs.productName.addEventListener('input', validateProductName);
         inputs.description.addEventListener('input', validateDescription);
         inputs.category.addEventListener('change', validateCategory);
         inputs.quantity.addEventListener('input', validateQuantity);
         inputs.regularPrice.addEventListener('input', validateRegularPrice);
-        inputs.salesPrice.addEventListener('input', validateSalesPrice);
 
         function validateProductName() {
             const value = inputs.productName.value.trim();
@@ -766,22 +742,6 @@
             const errorElement = document.getElementById('regularPrice-error');
             if (isNaN(value) || value <= 0) {
                 errorElement.textContent = 'Regular price must be greater than 0';
-                return false;
-            }
-            errorElement.textContent = '';
-            return true;
-        }
-
-        function validateSalesPrice() {
-            const value = parseFloat(inputs.salesPrice.value);
-            const regularPrice = parseFloat(inputs.regularPrice.value);
-            const errorElement = document.getElementById('salesPrice-error');
-            if (value && (isNaN(value) || value < 0)) {
-                errorElement.textContent = 'Sale price cannot be negative';
-                return false;
-            }
-            if (value && value >= regularPrice) {
-                errorElement.textContent = 'Sale price must be less than regular price';
                 return false;
             }
             errorElement.textContent = '';

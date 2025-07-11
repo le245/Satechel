@@ -4,8 +4,7 @@ const User = require("../../Models/userSchema");
 const Order=require("../../Models/orderSchema")
 const Cart=require("../../Models/cartSchema")
 const Address=require("../../Models/addressSchema")
-const STATUS_SERVER_ERROR=parseInt(process.env.STATUS_SERVER_ERROR)
-const STATUS_NOT_FOUND=parseInt(process.env.STATUS_NOT_FOUND)
+
 
 const getListOfOrders = async (req, res) => {
   try {
@@ -20,10 +19,6 @@ const getListOfOrders = async (req, res) => {
       .skip(skip)
       .limit(limit)
       .lean();
-
-  
-
-
     const totalOrders = await Order.countDocuments();
     const totalPages = Math.ceil(totalOrders / limit);
 
@@ -66,28 +61,40 @@ const getOrderDetailsPage = async (req, res) => {
 
 
 
+
+
 const updateStatus = async (req, res) => {
   try {
     const { orderId } = req.params;
     const { status, action, returnReason, itemId } = req.body;
 
-    const order = await Order.findOne({ _id: orderId });
+    
+    if (!orderId || typeof orderId !== 'string') {
+      return res.status(400).json({ success: false, message: 'Invalid order ID format' });
+    }
+
+  
+    const order = await Order.findOne({ orderId });
     if (!order) {
-      return res.status(STATUS_NOT_FOUND).json({ success: false, message: 'Order not found' });
+      return res.status(404).json({ success: false, message: 'Order not found' });
     }
 
     const currentStatus = order.status;
+    const validStatuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled', 'ReturnRequest', 'Returned'];
 
-    if (currentStatus === 'Delivered') {
-      if (status && !['Return Request', 'Returned'].includes(status)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Delivered orders can only be changed to Return Request or Returned',
-        });
-      }
+    if (status && !validStatuses.includes(status)) {
+      return res.status(400).json({ success: false, message: `Invalid status. Must be one of: ${validStatuses.join(', ')}` });
     }
 
-    if (currentStatus === 'Shipped' && (status === 'Pending' || status === 'Processing')) {
+    
+    if (currentStatus === 'Delivered' && status && !['ReturnRequest', 'Returned'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Delivered orders can only be changed to ReturnRequest or Returned',
+      });
+    }
+
+    if (currentStatus === 'Shipped' && status && (status === 'Pending' || status === 'Processing')) {
       return res.status(400).json({
         success: false,
         message: 'Shipped orders cannot be changed to Pending or Processing',
@@ -101,20 +108,74 @@ const updateStatus = async (req, res) => {
       });
     }
 
-    if (action === 'initiateReturn' && currentStatus === 'Delivered') {
-      order.status = 'Return Request';
+    
+    const determineOrderStatus = (items) => {
+      const activeItems = items.filter(item => item.cancelStatus !== 'Cancelled');
+      if (activeItems.length === 0) return 'Cancelled';
+      if (activeItems.every(item => item.returnStatus === 'Requested')) return 'ReturnRequest';
+      if (activeItems.every(item => item.returnStatus === 'Approved' || item.returnStatus === 'Rejected')) return 'Returned';
+      if (activeItems.every(item => item.cancelStatus === 'Completed' && item.returnStatus === 'Not Requested')) {
+        return status || currentStatus; 
+      }
+      return currentStatus; 
+    };
+
+    
+    if (action === 'cancelItem' && itemId) {
+      if (!mongoose.Types.ObjectId.isValid(itemId)) {
+        return res.status(400).json({ success: false, message: 'Invalid item ID format' });
+      }
+
+      const item = order.items.id(itemId);
+      if (!item) {
+        return res.status(404).json({ success: false, message: 'Item not found in order' });
+      }
+
+      if (item.cancelStatus === 'Cancelled') {
+        return res.status(400).json({ success: false, message: 'Item is already cancelled' });
+      }
+
+      if (item.returnStatus !== 'Not Requested') {
+        return res.status(400).json({ success: false, message: 'Cannot cancel an item with an active return request' });
+      }
+
+      item.cancelStatus = 'Cancelled';
+      order.status = determineOrderStatus(order.items);
+    }
+  
+    else if (action === 'initiateReturn' && currentStatus === 'Delivered') {
+      if (!itemId && order.items.length > 1) {
+        return res.status(400).json({
+          success: false,
+          message: 'Item ID is required for orders with multiple items',
+        });
+      }
+
       let updatedItems = false;
       if (itemId) {
+        if (!mongoose.Types.ObjectId.isValid(itemId)) {
+          return res.status(400).json({ success: false, message: 'Invalid item ID format' });
+        }
+
         const item = order.items.id(itemId);
-        if (item && item.returnStatus === 'Not Requested') {
+        if (!item) {
+          return res.status(404).json({ success: false, message: 'Item not found in order' });
+        }
+
+        if (item.returnStatus === 'Not Requested' && item.cancelStatus !== 'Cancelled') {
           item.returnStatus = 'Requested';
           item.returnRequestedAt = new Date();
           item.returnReason = returnReason || 'No reason provided';
           updatedItems = true;
+        } else {
+          return res.status(400).json({
+            success: false,
+            message: 'Item is not eligible for return request (already requested or cancelled)',
+          });
         }
       } else {
         order.items.forEach(item => {
-          if (item.returnStatus === 'Not Requested') {
+          if (item.returnStatus === 'Not Requested' && item.cancelStatus !== 'Cancelled') {
             item.returnStatus = 'Requested';
             item.returnRequestedAt = new Date();
             item.returnReason = returnReason || 'No reason provided';
@@ -122,95 +183,148 @@ const updateStatus = async (req, res) => {
           }
         });
       }
+
       if (!updatedItems) {
-        console.log('No items updated for return request');
+        return res.status(400).json({ success: false, message: 'No eligible items updated for return request' });
       }
-    } else {
-      if (status) {
-        if (status === 'Delivered' && ['Return Request', 'Returned'].includes(currentStatus)) {
-          return res.status(400).json({
-            success: false,
-            message: 'Cannot move Return Request or Returned orders back to Delivered',
-          });
-        }
 
-        order.status = status;
+      order.status = determineOrderStatus(order.items);
+    }
+ 
+    else if (itemId && status) {
+      if (!mongoose.Types.ObjectId.isValid(itemId)) {
+        return res.status(400).json({ success: false, message: 'Invalid item ID format' });
+      }
 
-        if (status === 'Delivered') {
-          order.invoiceDate = new Date();
-        } else if (status === 'Return Request' && currentStatus !== 'Delivered') {
-          return res.status(400).json({
-            success: false,
-            message: 'Return Request can only be set from Delivered status',
-          });
-        }
+      const item = order.items.id(itemId);
+      if (!item) {
+        return res.status(404).json({ success: false, message: 'Item not found in order' });
+      }
+
+      if (item.cancelStatus === 'Cancelled') {
+        return res.status(400).json({ success: false, message: 'Cannot update status of a cancelled item' });
+      }
+
+      if (item.returnStatus !== 'Not Requested') {
+        return res.status(400).json({ success: false, message: 'Cannot update status of an item with an active return request' });
+      }
+
+    
+      item.cancelStatus = status === 'Delivered' ? 'Completed' : item.cancelStatus;
+
+      order.status = determineOrderStatus(order.items);
+
+      if (status === 'Delivered') {
+        order.invoiceDate = new Date();
       }
     }
+  
+    else if (status) {
+    
+      if (status === 'Delivered' && ['ReturnRequest', 'Returned'].includes(currentStatus)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Cannot move ReturnRequest or Returned orders back to Delivered',
+        });
+      }
+
+      if (status === 'ReturnRequest' && currentStatus !== 'Delivered') {
+        return res.status(400).json({
+          success: false,
+          message: 'ReturnRequest can only be set from Delivered status',
+        });
+      }
+
+
+      order.items.forEach(item => {
+        if (item.cancelStatus !== 'Cancelled') {
+          item.cancelStatus = status === 'Delivered' ? 'Completed' : item.cancelStatus;
+        }
+      });
+
+      order.status = status;
+
+      if (status === 'Delivered') {
+        order.invoiceDate = new Date();
+      }
+    } else {
+      return res.status(400).json({ success: false, message: 'No valid status or action provided' });
+    }
+
 
     await order.save();
 
     res.json({
       success: true,
       message: 'Order status updated successfully',
+      updatedStatus: order.status,
     });
   } catch (error) {
-    res.status(STATUS_SERVER_ERROR).json({ success: false, message: 'Server error' });
+    console.error('Error updating order status:', {
+      error: error.message,
+      stack: error.stack,
+      orderId,
+      body: req.body,
+    });
+    res.status(500).json({ success: false, message: `Server error: ${error.message}` });
   }
 };
+
 
 const approveReturn = async (req, res) => {
   try {
     const { orderId, productId } = req.body;
 
+    const order = await Order.findOne({ orderId }).populate("items.productId");
 
-    const order = await Order.findOne({ orderId });
     if (!order) {
-      return res.status(400).json({ success: false, message: 'Order not found' });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Order not found' });
     }
 
     const item = order.items.find(item => item._id.toString() === productId);
+
     if (!item) {
-      return res.status(STATUS_NOT_FOUND).json({ success: false, message: 'Product not found in order' });
+      return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: 'Product not found in order' });
     }
 
-  
     if (item.returnStatus !== 'Requested') {
-      return res.status(400).json({ success: false, message: 'No return request found' });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'No return request found' });
     }
 
-
+    // Update return status
     item.returnStatus = 'Approved';
 
-    
-    await Product.findByIdAndUpdate(item.productId, {
+    // Restock product quantity
+    await Product.findByIdAndUpdate(item.productId._id || item.productId, {
       $inc: { quantity: item.quantity }
     });
 
-    
+    // Wallet refund for prepaid orders
     if (order.paymentMethod !== 'cod') {
       const user = await User.findById(order.userId);
       if (!user) {
-        return res.status(STATUS_NOT_FOUND).json({ success: false, message: 'User not found' });
+        return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: 'User not found' });
       }
 
-      const refundAmount = item.price * item.quantity;
+      const discountFactor = order.subTotal > 0 ? order.finalAmount / order.subTotal : 1;
+      const itemTotal = item.price * item.quantity;
+      const refundAmount = itemTotal * discountFactor;
 
-      
       user.wallet = (user.wallet || 0) + refundAmount;
-      
 
       user.walletHistory.push({
-        transactionId: `TXN${Date.now()}`,
+        transactionId: `TXN${Date.now()}-${item.productId._id || item.productId}`,
         type: 'credit',
         amount: refundAmount,
         date: new Date(),
-        status: 'Completed'
+        productId: item.productId._id || item.productId,
+        productName: item.productId?.productName || 'Product'
       });
 
       await user.save();
     }
 
-
+    // Update order status if all items are returned/cancelled
     const allItemsProcessed = order.items.every(item =>
       item.returnStatus === 'Approved' ||
       item.returnStatus === 'Rejected' ||
@@ -222,17 +336,20 @@ const approveReturn = async (req, res) => {
       order.status = 'Returned';
     }
 
-  
     await order.save();
 
-    return res.status(200).json({
+    return res.status(STATUS_CODES.OK).json({
       success: true,
       message: 'Return approved successfully',
       updatedStatus: order.status
     });
 
   } catch (error) {
-    return res.status(STATUS_SERVER_ERROR).json({ success: false, message: 'Server error' });
+    console.error("Error in approveReturn:", error.message, error.stack);
+    return res.status(STATUS_CODES.SERVER_ERROR).json({
+      success: false,
+      message: 'An error occurred while processing your request.'
+    });
   }
 };
 
@@ -280,7 +397,7 @@ const rejectReturn = async (req, res) => {
     });
 
   } catch (error) {
-    return res.status(STATUS_SERVER_ERROR).json({ success: false, message: 'Server error' });
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 

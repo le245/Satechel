@@ -371,13 +371,24 @@
         });
     }
 
-    function showError(elementId, message) {
-        const errorElement = document.getElementById(elementId);
-        errorElement.innerHTML = message;
-        errorElement.style.display = 'block';
-        const inputElement = document.getElementById(elementId.replace('-error', ''));
+  function showError(elementId, message) {
+    const errorElement = document.getElementById(elementId);
+    errorElement.innerHTML = message;
+    errorElement.style.display = 'block';
+
+    // Mapping error ID to input ID manually
+    let inputId = '';
+    if (elementId === 'name-error') inputId = 'category-name';
+    else if (elementId === 'description-error') inputId = 'category-description';
+
+    const inputElement = document.getElementById(inputId);
+    if (inputElement) {
         inputElement.classList.add('error');
+    } else {
+        console.warn(`No input element found for error ID: ${elementId}`);
     }
+}
+
 
     categoryForm.addEventListener('submit', async (event) => {
         event.preventDefault();
