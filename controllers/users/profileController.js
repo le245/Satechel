@@ -6,6 +6,7 @@ const nodemailer = require("nodemailer");
 const env=require("dotenv").config();
 const session =require("express-session");
 const Product = require("../../Models/productSchema");
+const STATUS_CODES= require("../../Models/status")
 
 
 
@@ -124,7 +125,7 @@ const verifyForgotPassOtp = async (req, res) => {
         }
     } catch (error) {
         console.error("Error in verifyForgotPassOtp:", error);
-        res.status(500).json({ success: false, message: "An error occurred. Please try again." });
+        res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, message: "An error occurred. Please try again." });
     }
 };
 
@@ -147,12 +148,12 @@ const resendOtp=async(req,res)=>{
        const emailSent=await sendVerificationEmail(email,otp);
        if(emailSent){
         console.log("Resend OTP:",otp);
-        res.status(200).json({success:true,message:"Resnd OTP succesfull"})
+        res.status(STATUS_CODES.OK).json({success:true,message:"Resnd OTP succesfull"})
 
        }
     } catch (error) {
         console.error("Error in resend otp",error)
-        res.status(500).json({success:false,message:'Internal ServerError'})
+        res.status(STATUS_CODES.SERVER_ERROR).json({success:false,message:'Internal ServerError'})
     }
 }
 
@@ -371,7 +372,7 @@ const changePasswordValid = async (req, res) => {
        
         const userExists = await User.findOne({ email });
         if (!userExists) {
-            return res.status(404).json({
+            return res.status(STATUS_CODES.NOT_FOUND).json({
                 success: false,
                 message: "No user found with this email ",
             });
@@ -386,19 +387,19 @@ const changePasswordValid = async (req, res) => {
             req.session.email = email;
             console.log('OTP:', otp);
 
-            return res.status(200).json({
+            return res.status(STATUS_CODES.OK).json({
                 success: true,
                 redirectUrl: '/change-password-otp',
             });
         } else {
-            return res.status(500).json({
+            return res.status(STATUS_CODES.SERVER_ERROR).json({
                 success: false,
                 message: "Failed to send OTP. Please try again.",
             });
         }
     } catch (error) {
         console.error("Error in changePasswordValid:", error);
-        return res.status(500).json({
+        return res.status(STATUS_CODES.SERVER_ERROR).json({
             success: false,
             message: "An error occurred. Please try again later.",
         });
@@ -437,7 +438,7 @@ const verifychangePassOtp=async(req,res)=>{
             res.json({success:false,message:"Otp not matching"})
         }
     } catch (error) {
-        res.status(500).json({success:false,message:"An error occured. Please try again later"})
+        res.status(STATUS_CODES.SERVER_ERROR).json({success:false,message:"An error occured. Please try again later"})
     }
 }
 
@@ -548,7 +549,7 @@ const deleteAddress=async(req,res)=>{
         const addressId=req.query.id;
         const findAddress=await Address.findOne({"address._id":addressId})
         if(!findAddress){
-            return res.status(404).send("Address not found")
+            return res.status(STATUS_CODES.NOT_FOUND).send("Address not found")
         }
         await Address.updateOne({
             
@@ -593,7 +594,7 @@ const getOrderDetailsPage = async (req, res) => {
       });
 
     if (!order) {
-      return res.status(404).render('not-found', { message: 'Order not found' });
+      return res.status(STATUS_CODES.NOT_FOUND).render('not-found', { message: 'Order not found' });
     }
 
    
@@ -612,7 +613,7 @@ const getOrderDetailsPage = async (req, res) => {
     });
   } catch (error) {
     console.error('Error loading order details:', error.message, error.stack);
-    res.status(500).render('error', { message: 'Internal Server Error' });
+    res.status(STATUS_CODES.SERVER_ERROR).render('error', { message: 'Internal Server Error' });
   }
 };
 

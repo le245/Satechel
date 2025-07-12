@@ -3,6 +3,7 @@ const Category = require("../../Models/categorySchema");
 const User = require("../../Models/userSchema");
 const Wishlist=require("../../Models/wishlistSchema")
 const Cart=require("../../Models/cartSchema")
+const STATUS_CODES= require("../../Models/status")
 
 
 
@@ -29,7 +30,7 @@ const loadWishlist=async(req,res)=>{
         })
     } catch (error) {
          console.error('Error in getWishlist:', error);
-    res.status(500).send('There is an error');
+    res.status(STATUS_CODES.SERVER_ERROR).send('There is an error');
     }
 }
 
@@ -41,7 +42,7 @@ const addWishlist = async (req, res) => {
 
     if (!userId) {
       return res
-        .status(401)
+        .status(STATUS_CODES.UNAUTHORIZED)
         .json({ success: false, message: 'Please log in to add to wishlist' });
     }
 
@@ -59,7 +60,7 @@ const addWishlist = async (req, res) => {
 
       if (productExists) {
         return res
-          .status(400)
+          .status(STATUS_CODES.BAD_REQUEST)
           .json({ success: false, message: 'Product already in wishlist' });
       }
 
@@ -71,7 +72,7 @@ const addWishlist = async (req, res) => {
     res.json({ success: true, message: 'Product added to wishlist' });
   } catch (error) {
     console.error('Error in addToWishlist:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -81,14 +82,14 @@ const removeFromWishlist = async (req, res) => {
     const { productId } = req.body;
 
     if (!userId) {
-      return res.status(401).json({
+      return res.status(STATUS_CODES.UNAUTHORIZED).json({
         success: false,
         message: 'Please log in to remove from wishlist',
       });
     }
 
     if (!productId) {
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         message: 'Product ID is required',
       });
@@ -101,20 +102,20 @@ const removeFromWishlist = async (req, res) => {
     );
 
     if (!updatedWishlist) {
-      return res.status(404).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         message: 'Wishlist not found',
       });
     }
 
-    res.status(200).json({
+    res.status(STATUS_CODES.OK).json({
       success: true,
       message: 'Product removed from wishlist successfully',
       wishlist: updatedWishlist.products,
     });
   } catch (error) {
     console.error('Error removing from wishlist:', error);
-    res.status(500).json({
+    res.status(STATUS_CODES.SERVER_ERROR).json({
       success: false,
       message: 'Server error while removing from wishlist',
       error: error.message,

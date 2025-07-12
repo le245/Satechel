@@ -2,6 +2,7 @@ const Product = require("../../Models/productSchema");
 const User = require("../../Models/userSchema");
 const Offer = require("../../Models/offerSchema");
 const Category = require("../../Models/categorySchema");
+const STATUS_CODES= require("../../Models/status")
 
 
 
@@ -16,7 +17,7 @@ const getProductDetailPage=async(req,res)=>{
     const productId= req.params.id;
     const product= await Product.findById(productId).populate('category').lean()
       if (!product) {
-      return res.status(404).json({ success: false, message: 'Product not found' });
+      return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: 'Product not found' });
     }
 
     const productOffer = await Offer.findOne({
@@ -59,7 +60,7 @@ const getProductDetailPage=async(req,res)=>{
 
   } catch (error) {
   
-    res.status(500).json({ success: false, message: "Something went wrong" });
+    res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, message: "Something went wrong" });
   }
 }
 module.exports = {

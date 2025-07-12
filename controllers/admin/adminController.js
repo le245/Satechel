@@ -113,7 +113,7 @@ const getSalesData = async (dateFilter, filterType = 'daily') => {
           $multiply: [
             {
               $ifNull: [
-                // '$orderedItems.salesPrice',
+                '$orderedItems.salesPrice',
                 '$orderedItems.regularPrice',
               ],
             },

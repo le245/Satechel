@@ -161,7 +161,7 @@
                     <% if (orders && Array.isArray(orders) && orders.length > 0) { %>
                         <% orders.forEach(order => { %>
                             <tr class="border-b hover:bg-gray-50">
-                                <td class="p-2"><%= order?.orderId || 'N/A' %></td>
+                                <td class="p-2">ORD<%= order?.orderId || 'N/A' %></td>
                                 <td class="p-2">
                                     <% if (order.items && order.items.length > 0) { %>
                                         <% order.items.forEach(item => { %>
@@ -179,7 +179,13 @@
                                         <%= order?.status || 'Pending' %>
                                     </span>
                                 </td>
-                                <td class="p-2"><%= formatCurrency(order?.finalAmount || order?.totalPrice) %></td>
+                                <td class="p-2">
+                                    <%= formatCurrency(
+                                        (order?.status === 'CANCELLED' || order?.status === 'RETURNED') && order.originalFinalAmount 
+                                        ? order.originalFinalAmount 
+                                        : (order.finalAmount || order.totalPrice || order.originalFinalAmount || 0)
+                                    ) %>
+                                </td>
                                 <td class="p-2"><%= formatDate(order?.createOn) %></td>
                                 <td class="p-2">
                                     <a href="/userProfile/order-details/<%= order?.orderId || '' %>" 

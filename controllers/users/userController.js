@@ -5,6 +5,8 @@ const nodemailer = require("nodemailer");
 const bcrypt = require("bcrypt");
 require("dotenv").config();
 const util = require('util')
+const STATUS_CODES= require("../../Models/status")
+
 
 const pageNotFound = async (req, res) => {
     try {
@@ -28,7 +30,7 @@ const loadHomepage = async (req, res) => {
       
     } catch (error) {
         console.log("Home page not loading :",error)
-        res.status(500).send('Server Error')
+        res.status(STATUS_CODES.BAD_REQUEST).send('Server Error')
     }
 };
 
@@ -37,7 +39,7 @@ const loadSignup = async (req, res) => {
         return res.render('signup');
     } catch (error) {
         console.error('Signup page not loading:', error);
-        return res.status(500).send('Server Error');
+        return res.status(STATUS_CODES.SERVER_ERROR).send('Server Error');
     }
 };
 
@@ -46,7 +48,7 @@ const loadVerifyOtp = async (req, res) => {
         return res.render('verify-otp', { message: null });
     } catch (error) {
         console.error('OTP page not loading:', error);
-        return res.status(500).send('Server Error');
+        return res.status(STATUS_CODES.SERVER_ERROR).send('Server Error');
     }
 };
 
@@ -138,16 +140,16 @@ const verifyOtp = async (req, res) => {
         const { otp } = req.body;
 
         if (!otp) {
-            return res.status(400).json({ success: false, message: 'OTP is required' });
+            return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'OTP is required' });
         }
 
         if (otp !== req.session.userOtp) {
-            return res.status(400).json({ success: false, message: 'Invalid OTP, please try again' });
+            return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Invalid OTP, please try again' });
         }
 
         const userData = req.session.userData;
         if (!userData || !userData.name || !userData.email || !userData.password) {
-            return res.status(400).json({ success: false, message: 'User data incomplete' });
+            return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'User data incomplete' });
         }
 
         const passwordHash = await securePassword(userData.password);
@@ -168,14 +170,14 @@ const verifyOtp = async (req, res) => {
         return res.json({ success: true, redirectUrl: '/home' });
     } catch (error) {
         console.error('Error verifying OTP:', error.message);
-        return res.status(500).json({ success: false, message: 'An error occurred: ' + error.message });
+        return res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, message: 'An error occurred: ' + error.message });
     }
 };
 
 const resendOtp = async (req, res) => {
     try {
         if (!req.session.userData || !req.session.userData.email) {
-            return res.status(400).json({ success: false, message: 'Session expired, please sign up again' });
+            return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Session expired, please sign up again' });
         }
 
         const newOtp = generateOtp();
@@ -195,7 +197,7 @@ const resendOtp = async (req, res) => {
         return res.json({ success: true, message: 'New OTP sent successfully!' });
     } catch (error) {
         console.error('Error resending OTP:', error.message);
-        return res.status(500).json({ success: false, message: 'An error occurred' });
+        return res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, message: 'An error occurred' });
     }
 };
 
@@ -344,7 +346,7 @@ const getShop = async (req, res) => {
         });
     } catch (error) {
         console.error('Error in getShop', error.message);
-        return res.status(500).render("pageerror", { message: "An error occurred while loading the shop page." });
+        return res.status(STATUS_CODES.SERVER_ERROR).render("pageerror", { message: "An error occurred while loading the shop page." });
     }
 };
 

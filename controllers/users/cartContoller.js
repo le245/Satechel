@@ -4,6 +4,7 @@ const Product = require("../../Models/productSchema");
 const Category = require("../../Models/categorySchema");
 const Wishlist = require("../../Models/wishlistSchema");
 const Offer = require("../../Models/offerSchema");
+const STATUS_CODES= require("../../Models/status")
 
  
 
@@ -124,7 +125,7 @@ const addToCart = async (req, res) => {
     const { fromWishlist } = req.query;
 
     if (!productId || !quantity) {
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         message: 'Missing required fields',
         details: {
@@ -135,7 +136,7 @@ const addToCart = async (req, res) => {
     }
 
     if (!Number.isInteger(quantity) || quantity < 1) {
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         message: 'Quantity must be a positive integer',
       });
@@ -166,14 +167,14 @@ const addToCart = async (req, res) => {
     }
 
     if (newQuantity > 5) {
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         message: 'Maximum quantity allowed is 5 items',
       });
     }
 
     if (newQuantity > product.quantity) {
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         message: 'Stock limit reached',
         availableStock: product.quantity,
@@ -204,14 +205,14 @@ const addToCart = async (req, res) => {
       );
     }
 
-    return res.status(200).json({
+    return res.status(STATUS_CODES.OK).json({
       success: true,
       message: 'Item added to cart successfully',
       cart,
     });
   } catch (error) {
     
-    return res.status(500).json({
+    return res.status(STATUS_CODES.SERVER_ERROR).json({
       success: false,
       message: 'Server error while adding to cart',
       error: error.message,
@@ -242,15 +243,15 @@ const updateCart = async (req, res) => {
     }
 
     if (quantity < 1) {
-      return res.status(400).json({ success: false, message: 'Quantity must be at least 1' });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Quantity must be at least 1' });
     }
 
     if (quantity > 5) {
-      return res.status(400).json({ success: false, message: 'Maximum quantity is 5' });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Maximum quantity is 5' });
     }
 
     if (quantity > product.quantity) {
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         message: 'Stock limit reached',
         availableStock: product.quantity,
@@ -261,10 +262,10 @@ const updateCart = async (req, res) => {
     item.price = await calculateDiscountedPrice(product);
     await cart.save();
 
-    return res.status(200).json({ success: true, message: 'Cart updated' });
+    return res.status(STATUS_CODES.OK).json({ success: true, message: 'Cart updated' });
   } catch (error) {
    
-    return res.status(500).json({ success: false, message: 'Server error' });
+    return res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -275,7 +276,7 @@ const deleteItemFromCart = async (req, res) => {
     const productId = req.params.productId;
 
     if (!userId || !productId) {
-      return res.status(400).json({ success: false, message: 'Missing user or product ID' });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Missing user or product ID' });
     }
 
     const cart = await Cart.findOne({ userId: userId });
@@ -291,7 +292,7 @@ const deleteItemFromCart = async (req, res) => {
     res.json({ success: true, message: 'Item removed from cart' });
   } catch (error) {
 
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, message: 'Server error' });
   }
 };
 

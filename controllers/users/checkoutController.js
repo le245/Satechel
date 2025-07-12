@@ -12,6 +12,7 @@ const env = require("dotenv").config();
 const mongoose = require("mongoose");
 const easyinvoice = require("easyinvoice");
 const moment = require("moment");
+const STATUS_CODES= require("../../Models/status")
 
 
 
@@ -65,7 +66,7 @@ const placeOrder = async (req, res) => {
 
     if (!addressId || !paymentMethod) {
       return res
-        .status(400)
+        .status(STATUS_CODES.BAD_REQUEST)
         .json({
           success: false,
           message: "Address and payment method are required",
@@ -75,7 +76,7 @@ const placeOrder = async (req, res) => {
     const userAddress = await Address.findOne({ userId });
     if (!userAddress) {
       return res
-        .status(400)
+        .status(STATUS_CODES.BAD_REQUEST)
         .json({ success: false, message: "User address not found" });
     }
 
@@ -84,19 +85,19 @@ const placeOrder = async (req, res) => {
     );
     if (!selectedAddress) {
       return res
-        .status(400)
+        .status(STATUS_CODES.BAD_REQUEST)
         .json({ success: false, message: "Selected address not found" });
     }
 
     const cart = await Cart.findOne({ userId }).populate("items.productId");
     if (!cart || cart.items.length === 0) {
-      return res.status(400).json({ success: false, message: "Cart is empty" });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Cart is empty" });
     }
 
     for (const item of cart.items) {
       if (!item.productId) {
         return res
-          .status(400)
+          .status(STATUS_CODES.BAD_REQUEST)
           .json({
             success: false,
             message: `Product not found for item: ${
@@ -105,7 +106,7 @@ const placeOrder = async (req, res) => {
           });
       }
       if (item.productId.quantity < item.quantity) {
-        return res.status(400).json({
+        return res.status(STATUS_CODES.BAD_REQUEST).json({
           success: false,
           message: `Not enough stock for ${item.productId.productName}`,
         });
@@ -127,12 +128,12 @@ const placeOrder = async (req, res) => {
 
       if (!coupon) {
         return res
-          .status(400)
+          .status(STATUS_CODES.BAD_REQUEST)
           .json({ success: false, message: "Invalid or expired coupon" });
       }
 
       if (subTotal < coupon.minimumPrice) {
-        return res.status(400).json({
+        return res.status(STATUS_CODES.BAD_REQUEST).json({
           success: false,
           message: `Order total must be at least ₹${coupon.minimumPrice} to use this coupon`,
         });
@@ -145,19 +146,19 @@ const placeOrder = async (req, res) => {
     const orderTotalNum = parseFloat(orderTotal);
     if (isNaN(subTotalNum) || isNaN(orderTotalNum)) {
       return res
-        .status(400)
+        .status(STATUS_CODES.BAD_REQUEST)
         .json({ success: false, message: "Invalid subtotal or order total" });
     }
 
     const finalAmount = subTotalNum - discount;
     if (Math.abs(orderTotalNum - finalAmount) > 0.01) {
       return res
-        .status(400)
+        .status(STATUS_CODES.BAD_REQUEST)
         .json({ success: false, message: "Order total mismatch" });
     }
 
     if (paymentMethod === "cod" && finalAmount > 1000) {
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         message: "COD not allowed for orders above ₹1000",
       });
@@ -167,12 +168,12 @@ const placeOrder = async (req, res) => {
       const user = await User.findById(userId);
       if (!user) {
         return res
-          .status(400)
+          .status(STATUS_CODES.BAD_REQUEST)
           .json({ success: false, message: "User not found" });
       }
       if (user.wallet < finalAmount) {
         return res
-          .status(400)
+          .status(STATUS_CODES.BAD_REQUEST)
           .json({ success: false, message: "Insufficient wallet balance" });
       }
     }
@@ -407,7 +408,7 @@ const createRazorpayOrder = async (req, res) => {
 
     if (!addressId || !paymentMethod) {
       return res
-        .status(400)
+        .status(STATUS_CODES.BAD_REQUEST)
         .json({
           success: false,
           message: "Address and payment method are required",
@@ -417,7 +418,7 @@ const createRazorpayOrder = async (req, res) => {
     const userAddress = await Address.findOne({ userId });
     if (!userAddress) {
       return res
-        .status(400)
+        .status(STATUS_CODES.BAD_REQUEST)
         .json({ success: false, message: "User address not found" });
     }
 
@@ -426,19 +427,19 @@ const createRazorpayOrder = async (req, res) => {
     );
     if (!selectedAddress) {
       return res
-        .status(400)
+        .status(STATUS_CODES.BAD_REQUEST)
         .json({ success: false, message: "Selected address not found" });
     }
 
     const cart = await Cart.findOne({ userId }).populate("items.productId");
     if (!cart || cart.items.length === 0) {
-      return res.status(400).json({ success: false, message: "Cart is empty" });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Cart is empty" });
     }
 
     for (const item of cart.items) {
       if (!item.productId) {
         return res
-          .status(400)
+          .status(STATUS_CODES.BAD_REQUEST)
           .json({
             success: false,
             message: `Product not found for item: ${
@@ -447,7 +448,7 @@ const createRazorpayOrder = async (req, res) => {
           });
       }
       if (item.productId.quantity < item.quantity) {
-        return res.status(400).json({
+        return res.status(STATUS_CODES.BAD_REQUEST).json({
           success: false,
           message: `Not enough stock for ${item.productId.productName}`,
         });
@@ -473,12 +474,12 @@ const createRazorpayOrder = async (req, res) => {
 
       if (!coupon) {
         return res
-          .status(400)
+          .status(STATUS_CODES.BAD_REQUEST)
           .json({ success: false, message: "Invalid or expired coupon" });
       }
 
       if (subTotal < coupon.minimumPrice) {
-        return res.status(400).json({
+        return res.status(STATUS_CODES.BAD_REQUEST).json({
           success: false,
           message: `Order total must be at least ₹${coupon.minimumPrice} to use this coupon`,
         });
@@ -490,7 +491,7 @@ const createRazorpayOrder = async (req, res) => {
     const expectedAmountInPaise = Math.round((subTotal - discount) * 100);
     if (Math.abs(amount - expectedAmountInPaise) > 1) {
       return res
-        .status(400)
+        .status(STATUS_CODES.BAD_REQUEST)
         .json({ success: false, message: "Amount mismatch" });
     }
     function generateTenDigitNumber() {
@@ -569,21 +570,21 @@ const verifyRazorPayment = async (req, res) => {
 
     if (generated_signature !== razorpaySignature) {
       return res
-        .status(400)
+        .status(STATUS_CODES.BAD_REQUEST)
         .json({ success: false, message: "Invalid payment signature" });
     }
 
     const order = await Order.findById(orderId).populate("items.productId");
     if (!order) {
       return res
-        .status(400)
+        .status(STATUS_CODES.BAD_REQUEST)
         .json({ success: false, message: "Order not found" });
     }
 
     for (const item of order.items) {
       if (item.productId) {
         if (item.productId.quantity < item.quantity) {
-          return res.status(400).json({
+          return res.status(STATUS_CODES.BAD_REQUEST).json({
             success: false,
             message: `Stock no longer available for ${item.productId.productName}`,
           });
@@ -621,7 +622,7 @@ const orderSuccess = async (req, res) => {
 
     if (!user) {
       return res
-        .status(401)
+        .status(STATUS_CODES.SERVER_ERROR)
         .json({ success: false, message: "User not authenticated" });
     }
 
@@ -696,7 +697,7 @@ const handlePaymentFailure = async (req, res) => {
 
     if (!mongoose.isValidObjectId(orderId)) {
       return res
-        .status(400)
+        .status(STATUS_CODES.BAD_REQUEST)
         .json({ success: false, message: "Invalid order ID" });
     }
 
@@ -733,7 +734,7 @@ const retryPayment = async (req, res) => {
 
     if (!orderId || !mongoose.isValidObjectId(orderId)) {
       return res
-        .status(400)
+        .status(STATUS_CODES.BAD_REQUEST)
         .json({
           success: false,
           message: "Order ID is required and must be valid",
@@ -751,7 +752,7 @@ const retryPayment = async (req, res) => {
       !["Payment Failed", "Pending", "Payment Pending"].includes(order.status)
     ) {
       return res
-        .status(400)
+        .status(STATUS_CODES.BAD_REQUEST)
         .json({ success: false, message: "Order is not eligible for retry" });
     }
 
@@ -799,7 +800,7 @@ const loadTransactionFailurePage = async (req, res) => {
     const { orderId } = req.query;
 
     if (!orderId || !mongoose.isValidObjectId(orderId)) {
-      return res.status(400).render("error", {
+      return res.status(STATUS_CODES.BAD_REQUEST).render("error", {
         message: "Invalid or missing order ID",
         user: req.session.user,
       });
@@ -859,7 +860,7 @@ const downloadInvoice = async (req, res) => {
      
     ];
     if (!allowedStatuses.includes(order.status)) {
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         message:
           "Invoice can only be downloaded for orders in  Delivered"

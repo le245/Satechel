@@ -46,7 +46,11 @@
                                     <td>
                                         <%= order.items ? order.items.length : 0 %> items
                                     </td>
-                                    <td>₹<%= order.finalAmount ? order.finalAmount.toFixed(2) : '0.00' %></td>
+                                    <td>₹<%= 
+                                        (order.status === 'Cancelled' || order.status === 'Returned') && order.originalFinalAmount 
+                                        ? order.originalFinalAmount.toFixed(2) 
+                                        : (order.finalAmount ? order.finalAmount.toFixed(2) : '0.00')
+                                    %></td>
                                     <td>
                                         <select onchange="updateOrderStatus(this, '<%= order.orderId %>')" class="status-select <%= order.status ? order.status.toLowerCase().replace(/\s+/g, '') : 'pending' %>" data-previous-status="<%= order.status || 'Pending' %>">
                                             <option value="Pending" <%= order.status === 'Pending' ? 'selected' : '' %>>Pending</option>

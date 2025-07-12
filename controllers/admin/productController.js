@@ -2,6 +2,7 @@ const Product = require("../../Models/productSchema");
 const Category = require("../../Models/categorySchema");
 const User = require("../../Models/userSchema");
 const { handleUpload } = require("../../config/cloudinary");
+const STATUS_CODES= require("../../Models/status")
 
 
 const getProductAddPage = async (req, res) => {
@@ -38,14 +39,14 @@ const addproducts = async (req, res) => {
       !regularPrice ||
       regularPrice.toString().trim() === ""
     ) {
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         error: "All fields are required",
       });
     }
 
     if (!/^[a-zA-Z0-9\s]{3,100}$/.test(productName?.trim())) {
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         error:
           "Product name must be 3-100 characters long and contain only alphanumeric characters and spaces",
@@ -53,7 +54,7 @@ const addproducts = async (req, res) => {
     }
 
     if (description.trim().length < 10 || description.trim().length > 1000) {
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         error: "Description must be between 10 and 1000 characters",
       });
@@ -61,14 +62,14 @@ const addproducts = async (req, res) => {
 
     const categoryId = await Category.findOne({ name: category });
     if (!categoryId) {
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         error: "Invalid category name",
       });
     }
 
     if (!productImages || !Array.isArray(productImages) || productImages.length < 3) {
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         error: "At least 3 product images are required",
       });
@@ -76,7 +77,7 @@ const addproducts = async (req, res) => {
 
     const parsedQuantity = parseInt(quantity);
     if (isNaN(parsedQuantity) || parsedQuantity < 0) {
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         error: "Quantity must be 0 or greater",
       });
@@ -84,7 +85,7 @@ const addproducts = async (req, res) => {
 
     const parsedRegularPrice = parseFloat(regularPrice);
     if (isNaN(parsedRegularPrice) || parsedRegularPrice <= 0) {
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         error: "Regular price must be greater than 0",
       });
@@ -94,7 +95,7 @@ const addproducts = async (req, res) => {
       productName: productName.trim(),
     });
     if (productExists) {
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         error: "Product already exists, please try with another name",
       });
@@ -106,7 +107,7 @@ const addproducts = async (req, res) => {
         const result = await handleUpload(base64Image);
         imagePaths.push(result.secure_url);
       } catch (err) {
-        return res.status(400).json({
+        return res.status(STATUS_CODES.BAD_REQUEST).json({
           success: false,
           error: "Failed to upload one or more images to Cloudinary",
         });
@@ -124,13 +125,13 @@ const addproducts = async (req, res) => {
 
     await newProduct.save();
 
-    return res.status(200).json({
+    return res.status(STATUS_CODES.OK).json({
       success: true,
       message: "Product added successfully",
       redirectUrl: "/admin/product",
     });
   } catch (error) {
-    return res.status(500).json({
+    return res.status(STATUS_CODES.NOT_FOUND).json({
       success: false,
       error: error.message || "Server error while saving product",
     });
@@ -177,7 +178,7 @@ const blockProduct = async (req, res) => {
   try {
     const productId = req.query.id;
     await Product.updateOne({ _id: productId }, { isBlocked: true });
-    return res.status(200).json({ success: true, message: "Blocked successfully" });
+    return res.status(STATUS_CODES.OK).json({ success: true, message: "Blocked successfully" });
   } catch (error) {
     res.redirect("/admin/pageerror");
   }
@@ -187,10 +188,10 @@ const unblockProduct = async (req, res) => {
   try {
     const productId = req.query.id;
     if (!productId) {
-      return res.status(400).json({ success: false, message: "Product ID not found" });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Product ID not found" });
     }
     await Product.updateOne({ _id: productId }, { isBlocked: false });
-    return res.status(200).json({ success: true, message: "Unblocked successfully" });
+    return res.status(STATUS_CODES.OK).json({ success: true, message: "Unblocked successfully" });
   } catch (error) {
     res.redirect("/admin/pageerror");
   }
@@ -201,7 +202,7 @@ const getEditProduct = async (req, res) => {
     const id = req.query.id;
     const product = await Product.findOne({ _id: id });
     if (!product) {
-      return res.status(400).json({ success: false, error: "Product not found" });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, error: "Product not found" });
     }
     const categories = await Category.find({});
     res.render("product-edit", {
@@ -237,14 +238,14 @@ const editProduct = async (req, res) => {
       !regularPrice ||
       regularPrice.toString().trim() === ""
     ) {
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         error: "All fields are required",
       });
     }
 
     if (!/^[a-zA-Z0-9\s]{3,100}$/.test(productName.trim())) {
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         error:
           "Product name must be 3-100 characters long and contain only alphanumeric characters and spaces",
@@ -256,7 +257,7 @@ const editProduct = async (req, res) => {
       _id: { $ne: id },
     });
     if (existingProduct) {
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         error: "Product name already exists",
       });
@@ -264,11 +265,11 @@ const editProduct = async (req, res) => {
 
     const categoryId = await Category.findById(category);
     if (!categoryId) {
-      return res.status(400).json({ success: false, error: "Invalid category" });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, error: "Invalid category" });
     }
 
     if (description.trim().length < 10 || description.trim().length > 1000) {
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         error: "Description must be between 10 and 1000 characters",
       });
@@ -276,7 +277,7 @@ const editProduct = async (req, res) => {
 
     const parsedQuantity = parseInt(quantity);
     if (isNaN(parsedQuantity) || parsedQuantity < 0) {
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         error: "Quantity must be 0 or greater",
       });
@@ -284,14 +285,14 @@ const editProduct = async (req, res) => {
 
     const parsedRegularPrice = parseFloat(regularPrice);
     if (isNaN(parsedRegularPrice) || parsedRegularPrice <= 0) {
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         error: "Regular price must be greater than 0",
       });
     }
 
     if (!productImages || !Array.isArray(productImages) || productImages.length < 3) {
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         error: "At least 3 product images are required",
       });
@@ -303,7 +304,7 @@ const editProduct = async (req, res) => {
         const result = await handleUpload(base64Image);
         imagePaths.push(result.secure_url);
       } catch (err) {
-        return res.status(400).json({
+        return res.status(STATUS_CODES.BAD_REQUEST).json({
           success: false,
           error: "Failed to upload one or more images to Cloudinary",
         });
@@ -324,19 +325,19 @@ const editProduct = async (req, res) => {
     );
 
     if (updatedProduct) {
-      return res.status(200).json({
+      return res.status(STATUS_CODES.OK).json({
         success: true,
         message: "Product updated successfully",
         redirectUrl: "/admin/products",
       });
     } else {
-      return res.status(404).json({
+      return res.status(STATUS_CODES.NOT_FOUND).json({
         success: false,
         error: "Product not found",
       });
     }
   } catch (error) {
-    return res.status(500).json({
+    return res.status(STATUS_CODES.SERVER_ERROR).json({
       success: false,
       error: error.message || "Internal server error",
     });

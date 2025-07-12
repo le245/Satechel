@@ -384,45 +384,45 @@
                 </div>
                 <div class="col-md-6 mb-3">
                     <h4 class="section-title">Payment Summary</h4>
-                    <div class="card price-details">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Subtotal</span>
-                                <span id="subtotal-amount">₹<%= order.subTotal ? order.subTotal.toFixed(2) : '0.00' %></span>
-                            </div>
-                            <% if (order.discount > 0) { %>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Discount</span>
-                                <span id="discount-amount">₹<%= order.discount.toFixed(2) %></span>
-                            </div>
-                            <% } %>
-                            <% if (order.couponApplied) { %>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Coupon Applied</span>
-                                <span><i class="fas fa-check-circle me-1" style="color: #6b7280;"></i> Yes</span>
-                            </div>
-                            <% } %>
-                            <hr class="my-2">
-                            <div class="d-flex justify-content-between fw-bold">
-                                <span>Total</span>
-                                <span id="final-amount">
-                                    ₹<%= order.status === 'Cancelled' ? (order.originalFinalAmount ? order.originalFinalAmount.toFixed(2) : '0.00') : (order.finalAmount ? order.finalAmount.toFixed(2) : '0.00') %>
-                                </span>
-                            </div>
-                            <div class="d-flex justify-content-between mt-2">
-                                <span>Payment Status</span>
-                                <span class="<%= order.status === 'PaymentFailed' ? 'text-danger' : 'text-success' %>">
-                                    <%= order.status === 'PaymentFailed' ? 'Failed' : 'Completed' %>
-                                </span>
-                            </div>
-                            <% if (order.status === 'Cancelled' && order.originalFinalAmount > 0) { %>
-                            <div class="d-flex justify-content-between mt-2 text-success">
-                                <span>Refunded to Wallet</span>
-                                <span>₹<%= order.originalFinalAmount ? order.originalFinalAmount.toFixed(2) : '0.00' %></span>
-                            </div>
-                            <% } %>
-                        </div>
-                    </div>
+                   <div class="card price-details">
+    <div class="card-body">
+        <div class="d-flex justify-content-between mb-2">
+            <span>Subtotal</span>
+            <span id="subtotal-amount">₹<%= order.status === 'Cancelled' ? (order.originalSubTotal ? order.originalSubTotal.toFixed(2) : '0.00') : (order.subTotal ? order.subTotal.toFixed(2) : '0.00') %></span>
+        </div>
+        <% if (order.discount > 0) { %>
+        <div class="d-flex justify-content-between mb-2">
+            <span>Discount</span>
+            <span id="discount-amount">₹<%= order.discount.toFixed(2) %></span>
+        </div>
+        <% } %>
+        <% if (order.couponApplied) { %>
+        <div class="d-flex justify-content-between mb-2">
+            <span>Coupon Applied</span>
+            <span><i class="fas fa-check-circle me-1" style="color: #6b7280;"></i> Yes</span>
+        </div>
+        <% } %>
+        <hr class="my-2">
+        <div class="d-flex justify-content-between fw-bold">
+            <span>Total</span>
+            <span id="final-amount">
+                ₹<%= order.status === 'Cancelled' ? (order.originalFinalAmount ? order.originalFinalAmount.toFixed(2) : '0.00') : (order.finalAmount ? order.finalAmount.toFixed(2) : '0.00') %>
+            </span>
+        </div>
+        <div class="d-flex justify-content-between mt-2">
+            <span>Payment Status</span>
+            <span class="<%= order.status === 'PaymentFailed' ? 'text-danger' : 'text-success' %>">
+                <%= order.status === 'PaymentFailed' ? 'Failed' : 'Completed' %>
+            </span>
+        </div>
+        <% if (order.status === 'Cancelled' && order.originalFinalAmount > 0) { %>
+        <div class="d-flex justify-content-between mt-2 text-success">
+            <span>Refunded to Wallet</span>
+            <span>₹<%= order.originalFinalAmount ? order.originalFinalAmount.toFixed(2) : '0.00' %></span>
+        </div>
+        <% } %>
+    </div>
+</div>
                 </div>
             </div>
 
