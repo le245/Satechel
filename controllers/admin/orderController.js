@@ -292,15 +292,15 @@ const approveReturn = async (req, res) => {
       return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'No return request found' });
     }
 
-    // Update return status
+  
     item.returnStatus = 'Approved';
 
-    // Restock product quantity
+    
     await Product.findByIdAndUpdate(item.productId._id || item.productId, {
       $inc: { quantity: item.quantity }
     });
 
-    // Wallet refund for prepaid orders
+    
     if (order.paymentMethod !== 'cod') {
       const user = await User.findById(order.userId);
       if (!user) {
@@ -325,7 +325,6 @@ const approveReturn = async (req, res) => {
       await user.save();
     }
 
-    // Update order status if all items are returned/cancelled
     const allItemsProcessed = order.items.every(item =>
       item.returnStatus === 'Approved' ||
       item.returnStatus === 'Rejected' ||
@@ -368,7 +367,7 @@ const rejectReturn = async (req, res) => {
     
     const item = order.items.find(item => item._id.toString() === productId);
     if (!item) {
-      return res.status(STATUS_NOT_FOUND).json({ success: false, message: 'Product not found in order' });
+      return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: 'Product not found in order' });
     }
 
   

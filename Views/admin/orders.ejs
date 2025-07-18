@@ -93,12 +93,12 @@
                     <ul class="pagination justify-content-center">
                         <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
                             <a class="page-link" href="?page=1" aria-label="First">
-                                <span aria-hidden="true">««</span>
+                                
                             </a>
                         </li>
                         <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
                             <a class="page-link" href="?page=<%= currentPage - 1 %>" aria-label="Previous">
-                                <span aria-hidden="true">«</span>
+                              
                             </a>
                         </li>
                         <% 
@@ -116,12 +116,12 @@
                         <% } %>
                         <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
                             <a class="page-link" href="?page=<%= currentPage + 1 %>" aria-label="Next">
-                                <span aria-hidden="true">»</span>
+                               
                             </a>
                         </li>
                         <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
                             <a class="page-link" href="?page=<%= totalPages %>" aria-label="Last">
-                                <span aria-hidden="true">»»</span>
+                               
                             </a>
                         </li>
                     </ul>

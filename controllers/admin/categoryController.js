@@ -51,7 +51,7 @@ const addCategory = async (req, res) => {
 
       if (!name || !description) {
         return res
-          .status(STATUS_CODES)
+          .status(STATUS_CODES.BAD_REQUEST)
           .json({ error: 'Name and description are required' });
       }
   
@@ -157,7 +157,7 @@ const editCategory = async (req, res) => {
             _id: { $ne: categoryid  }
         });
         if (existingCategory) {
-            return res.status(400).json({ error: 'A category with this name already exists' });
+            return res.status(STATUS_CODES.BAD_REQUEST).json({ error: 'A category with this name already exists' });
         }
 
         const updateCategory = await Category.findByIdAndUpdate(

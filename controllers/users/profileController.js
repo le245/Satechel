@@ -222,11 +222,11 @@ const userProfile = async (req, res) => {
   try {
     const userId = req.session.user;
 
-    const userData = await User.findById(userId)
-     await User.populate(userData, {
-  path: 'walletHistory.productId',
-  select: 'productName',
-});
+    const userData = await User.findById(userId).populate({
+      path: 'walletHistory.productId',
+      model: 'Product', // Ensure this matches your Product model name
+      select: 'productName',
+    });
 
     if (!userData) {
       console.log("User not found");
@@ -257,8 +257,6 @@ const userProfile = async (req, res) => {
     const totalOrderPages = Math.ceil(totalOrders / orderLimit);
 
     const history = userData.walletHistory || [];
-
-    // Sort and paginate
     const sortedHistory = [...history].sort((a, b) => new Date(b.date) - new Date(a.date));
     const paginatedHistory = sortedHistory.slice(walletSkip, walletSkip + walletLimit);
     const totalWalletPages = Math.ceil(history.length / walletLimit);
@@ -285,9 +283,7 @@ const userProfile = async (req, res) => {
     console.error("Error loading profile:", error.message);
     res.redirect("/pageNotFound");
   }
-};
-
-
+};  
 
 const changeEmail=async(req,res)=>{
     try {
@@ -453,7 +449,7 @@ const addAddress=async(req,res)=>{
 }
 const postAddAddress=async(req,res)=>{
     try{
- const userId = req.session.user;
+    const userId = req.session.user;
     const userData = await User.findById(userId);
     const { addressType, name, city, landMark, state, pincode, phone, altPhone } = req.body;
 
@@ -594,7 +590,7 @@ const getOrderDetailsPage = async (req, res) => {
       });
 
     if (!order) {
-      return res.status(STATUS_CODES.NOT_FOUND).render('not-found', { message: 'Order not found' });
+      return res.status(STATUS_CODES.NOT_FOUND).render('page-404', { message: 'Order not found' });
     }
 
    
@@ -602,8 +598,7 @@ const getOrderDetailsPage = async (req, res) => {
     let selectedAddress = null;
     if (order.address && order.selectedAddressId) {
       selectedAddress = order.address.address.find(
-        (addr) => addr._id.toString() === order.selectedAddressId.toString()
-      );
+        (addr) => addr._id.toString() === order.selectedAddressId.toString());
     }
 
     res.render('order-details', {

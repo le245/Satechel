@@ -385,15 +385,18 @@
                 <div class="col-md-6 mb-3">
                     <h4 class="section-title">Payment Summary</h4>
                    <div class="card price-details">
+ <div class="card price-details">
     <div class="card-body">
         <div class="d-flex justify-content-between mb-2">
             <span>Subtotal</span>
-            <span id="subtotal-amount">₹<%= order.status === 'Cancelled' ? (order.originalSubTotal ? order.originalSubTotal.toFixed(2) : '0.00') : (order.subTotal ? order.subTotal.toFixed(2) : '0.00') %></span>
+            <span id="subtotal-amount">
+                ₹<%= order.status === 'Cancelled' ? (order.originalSubTotal || order.subTotal || 0).toFixed(2) : (order.subTotal || 0).toFixed(2) %>
+            </span>
         </div>
         <% if (order.discount > 0) { %>
         <div class="d-flex justify-content-between mb-2">
             <span>Discount</span>
-            <span id="discount-amount">₹<%= order.discount.toFixed(2) %></span>
+            <span id="discount-amount">₹<%= (order.discount || 0).toFixed(2) %></span>
         </div>
         <% } %>
         <% if (order.couponApplied) { %>
@@ -406,7 +409,7 @@
         <div class="d-flex justify-content-between fw-bold">
             <span>Total</span>
             <span id="final-amount">
-                ₹<%= order.status === 'Cancelled' ? (order.originalFinalAmount ? order.originalFinalAmount.toFixed(2) : '0.00') : (order.finalAmount ? order.finalAmount.toFixed(2) : '0.00') %>
+                ₹<%= order.status === 'Cancelled' ? (order.originalFinalAmount || order.finalAmount || 0).toFixed(2) : (order.finalAmount || 0).toFixed(2) %>
             </span>
         </div>
         <div class="d-flex justify-content-between mt-2">
@@ -418,10 +421,11 @@
         <% if (order.status === 'Cancelled' && order.originalFinalAmount > 0) { %>
         <div class="d-flex justify-content-between mt-2 text-success">
             <span>Refunded to Wallet</span>
-            <span>₹<%= order.originalFinalAmount ? order.originalFinalAmount.toFixed(2) : '0.00' %></span>
+            <span>₹<%= (order.originalFinalAmount || 0).toFixed(2) %></span>
         </div>
         <% } %>
     </div>
+</div>
 </div>
                 </div>
             </div>
@@ -625,154 +629,163 @@
             }
         }
 
-        async function cancelItem(button, orderId, itemId, currentStatus) {
-            button.classList.add('btn-loading');
-            button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Cancelling...';
+      async function cancelItem(button, orderId, itemId, currentStatus) {
+    button.classList.add('btn-loading');
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Cancelling...';
 
-            if (!orderId || !itemId) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Invalid Input',
-                    text: 'Order ID or Item ID is missing.',
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000,
-                    timerProgressBar: true
-                });
-                button.classList.remove('btn-loading');
-                button.innerHTML = '<i class="fas fa-times me-1"></i> Cancel';
-                return;
-            }
+    if (!orderId || !itemId) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Invalid Input',
+            text: 'Order ID or Item ID is missing.',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+        button.classList.remove('btn-loading');
+        button.innerHTML = '<i class="fas fa-times me-1"></i> Cancel';
+        return;
+    }
 
-            if (!['Pending', 'Processing'].includes(currentStatus)) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Cannot Cancel',
-                    text: 'This item cannot be cancelled as the order is no longer in Pending or Processing status.',
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000,
-                    timerProgressBar: true
-                });
-                button.classList.remove('btn-loading');
-                button.innerHTML = '<i class="fas fa-times me-1"></i> Cancel';
-                return;
-            }
+    if (!['Pending', 'Processing'].includes(currentStatus)) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Cannot Cancel',
+            text: 'This item cannot be cancelled as the order is no longer in Pending or Processing status.',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+        button.classList.remove('btn-loading');
+        button.innerHTML = '<i class="fas fa-times me-1"></i> Cancel';
+        return;
+    }
 
-            const result = await Swal.fire({
-                title: 'Cancel Item',
-                text: 'Are you sure you want to cancel this item? This action cannot be undone.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#6b7280',
-                cancelButtonColor: '#9ca3af',
-                confirmButtonText: 'Yes, cancel item',
-                cancelButtonText: 'No, keep it'
+    const result = await Swal.fire({
+        title: 'Cancel Item',
+        text: 'Are you sure you want to cancel this item? This action cannot be undone.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#6b7280',
+        cancelButtonColor: '#9ca3af',
+        confirmButtonText: 'Yes, cancel item',
+        cancelButtonText: 'No, keep it'
+    });
+
+    if (result.isConfirmed) {
+        try {
+            const response = await fetch(`/orders/cancel/${orderId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ itemId })
             });
+            const data = await response.json();
 
-            if (result.isConfirmed) {
-                try {
-                    const response = await fetch(`/orders/cancel/${orderId}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ itemId })
-                    });
-                    const data = await response.json();
+            if (data.success) {
+                const row = button.closest('tr');
+                const statusCell = row.querySelector('.item-status');
+                const actionsCell = row.querySelector('.item-actions');
 
-                    if (data.success) {
-                        const row = button.closest('tr');
-                        const statusCell = row.querySelector('.item-status');
-                        const actionsCell = row.querySelector('.item-actions');
+                // Update item status to Cancelled
+                statusCell.textContent = 'Cancelled';
+                statusCell.classList.remove('hidden');
+                statusCell.classList.add('text-danger');
+                actionsCell.innerHTML = ''; // Remove all action buttons for this item
 
-                        // Update item status to Cancelled
-                        statusCell.textContent = 'Cancelled';
-                        statusCell.classList.remove('hidden');
-                        statusCell.classList.add('text-danger');
-                        actionsCell.innerHTML = ''; // Remove all action buttons for this item
-
-                        // Update order summary amounts
-                        const subtotalElement = document.getElementById('subtotal-amount');
-                        const totalElement = document.getElementById('final-amount');
-                        subtotalElement.textContent = `₹${data.updatedOrder.subTotal.toFixed(2)}`;
-                        totalElement.textContent = `₹${data.updatedOrder.finalAmount.toFixed(2)}`;
-
-                        // Update total items count
-                        const totalItemsElement = document.querySelector('.card-body p.card-text');
-                        const remainingItems = Array.from(document.querySelectorAll('#order-items .product-item'))
-                            .filter(row => row.querySelector('.item-status').textContent !== 'Cancelled').length;
-                        totalItemsElement.textContent = `${remainingItems} items`;
-
-                        // Update order status badge and timeline if all items are cancelled
-                        if (data.updatedOrder.status === 'Cancelled') {
-                            const orderStatusBadge = document.querySelector('.status-badge');
-                            orderStatusBadge.textContent = 'Cancelled';
-                            orderStatusBadge.className = 'status-badge status-Cancelled';
-
-                            const timelineContainer = document.querySelector('.tracking-timeline');
-                            timelineContainer.innerHTML = `
-                                <div class="timeline-item">
-                                    <div class="timeline-dot timeline-dot-Cancelled"></div>
-                                    <div class="timeline-content">
-                                        <h5 class="mb-1">Cancelled</h5>
-                                        <p class="text-muted mb-0">Order was cancelled</p>
-                                    </div>
-                                </div>
-                            `;
-
-                            // Remove Cancel Entire Order button
-                            const cancelOrderBtn = document.getElementById('cancelOrderBtn');
-                            if (cancelOrderBtn) cancelOrderBtn.remove();
-
-                            // Remove all remaining Cancel buttons
-                            document.querySelectorAll('.cancel-item-btn').forEach(btn => btn.remove());
-                        }
-
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Item Cancelled',
-                            text: 'The item has been cancelled successfully.',
-                            toast: true,
-                            position: 'top-end',
-                            showConfirmButton: false,
-                            timer: 3000,
-                            timerProgressBar: true
-                        });
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Failed',
-                            text: data.message || 'Failed to cancel item.',
-                            toast: true,
-                            position: 'top-end',
-                            showConfirmButton: false,
-                            timer: 3000,
-                            timerProgressBar: true
-                        });
-                    }
-                } catch (error) {
-                    console.error('Error cancelling item:', error);
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'An error occurred while cancelling the item. Please try again.',
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 3000,
-                        timerProgressBar: true
-                    });
-                } finally {
-                    button.classList.remove('btn-loading');
-                    button.innerHTML = '<i class="fas fa-times me-1"></i> Cancel';
+                // Update order summary amounts
+                const subtotalElement = document.getElementById('subtotal-amount');
+                const totalElement = document.getElementById('final-amount');
+                const discountElement = document.getElementById('discount-amount');
+                subtotalElement.textContent = `₹${data.updatedOrder.subTotal.toFixed(2)}`;
+                totalElement.textContent = `₹${data.updatedOrder.finalAmount.toFixed(2)}`;
+                if (discountElement) {
+                    discountElement.textContent = `₹${data.updatedOrder.discount.toFixed(2)}`;
                 }
-            } else {
-                button.classList.remove('btn-loading');
-                button.innerHTML = '<i class="fas fa-times me-1"></i> Cancel';
-            }
-        }
 
+                // If order is cancelled, show original amounts
+                if (data.updatedOrder.status === 'Cancelled') {
+                    subtotalElement.textContent = `₹${data.updatedOrder.originalSubTotal.toFixed(2)}`;
+                    totalElement.textContent = `₹${data.updatedOrder.originalFinalAmount.toFixed(2)}`;
+                }
+
+                // Update total items count
+                const totalItemsElement = document.querySelector('.card-body p.card-text');
+                const remainingItems = Array.from(document.querySelectorAll('#order-items .product-item'))
+                    .filter(row => row.querySelector('.item-status').textContent !== 'Cancelled').length;
+                totalItemsElement.textContent = `${remainingItems} items`;
+
+                // Update order status badge and timeline if all items are cancelled
+                if (data.updatedOrder.status === 'Cancelled') {
+                    const orderStatusBadge = document.querySelector('.status-badge');
+                    orderStatusBadge.textContent = 'Cancelled';
+                    orderStatusBadge.className = 'status-badge status-Cancelled';
+
+                    const timelineContainer = document.querySelector('.tracking-timeline');
+                    timelineContainer.innerHTML = `
+                        <div class="timeline-item">
+                            <div class="timeline-dot timeline-dot-Cancelled"></div>
+                            <div class="timeline-content">
+                                <h5 class="mb-1">Cancelled</h5>
+                                <p class="text-muted mb-0">Order was cancelled</p>
+                            </div>
+                        </div>
+                    `;
+
+                    // Remove Cancel Entire Order button
+                    const cancelOrderBtn = document.getElementById('cancelOrderBtn');
+                    if (cancelOrderBtn) cancelOrderBtn.remove();
+
+                    // Remove all remaining Cancel buttons
+                    document.querySelectorAll('.cancel-item-btn').forEach(btn => btn.remove());
+                }
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Item Cancelled',
+                    text: 'The item has been cancelled successfully.',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Failed',
+                    text: data.message || 'Failed to cancel item.',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+            }
+        } catch (error) {
+            console.error('Error cancelling item:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'An error occurred while cancelling the item. Please try again.',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+        } finally {
+            button.classList.remove('btn-loading');
+            button.innerHTML = '<i class="fas fa-times me-1"></i> Cancel';
+        }
+    } else {
+        button.classList.remove('btn-loading');
+        button.innerHTML = '<i class="fas fa-times me-1"></i> Cancel';
+    }
+}
         async function returnItem(button, orderId, itemId, itemName) {
             button.classList.add('btn-loading');
             button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Processing...';

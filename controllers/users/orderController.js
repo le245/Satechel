@@ -3,7 +3,6 @@ const Product=require('../../Models/productSchema')
 const User = require('../../Models/userSchema')
 const STATUS_CODES= require("../../Models/status")
 
-
 const cancelOrder = async (req, res) => {
     try {
         const { orderId } = req.params;
@@ -11,39 +10,43 @@ const cancelOrder = async (req, res) => {
         const userId = req.session.user;
 
         if (!userId) {
-            return res.status(STATUS_CODES.UNAUTHORIZED).json({ success: false, message: 'Please login first' });
+            return res.status(401).json({ success: false, message: 'Please login first' });
         }
 
         const order = await Order.findOne({ orderId, userId }).populate('items.productId');
         if (!order) {
-            return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: 'Order not found' });
+            return res.status(404).json({ success: false, message: 'Order not found' });
         }
 
         if (order.status !== 'Pending' && order.status !== 'Processing') {
-            return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Cannot cancel this order now' });
+            return res.status(400).json({ success: false, message: 'Cannot cancel this order now' });
         }
 
-        const originalFinalAmount = order.finalAmount;
-        const originalSubTotal = order.subTotal;
+        // Ensure original values are preserved
+        if (!order.originalSubTotal) {
+            order.originalSubTotal = order.subTotal;
+        }
+        if (!order.originalFinalAmount) {
+            order.originalFinalAmount = order.finalAmount;
+        }
 
         let refundAmount = 0;
         let cancelledItems = [];
 
-        // Calculate discount factor based on original values
         const discountFactor = order.originalSubTotal > 0 ? (order.originalFinalAmount / order.originalSubTotal) : 1;
 
         if (itemId) {
             const item = order.items.find(i => i.productId._id.toString() === itemId);
             if (!item) {
-                return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: 'Item not found in order' });
+                return res.status(404).json({ success: false, message: 'Item not found in order' });
             }
 
             if (item.cancelStatus === 'Cancelled') {
-                return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Item already cancelled' });
+                return res.status(400).json({ success: false, message: 'Item already cancelled' });
             }
 
             if (item.returnStatus !== 'Not Requested') {
-                return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Cannot cancel item with an active return request' });
+                return res.status(400).json({ success: false, message: 'Cannot cancel item with an active return request' });
             }
 
             item.cancelStatus = 'Cancelled';
@@ -52,23 +55,15 @@ const cancelOrder = async (req, res) => {
             const discountedItemTotal = itemTotal * discountFactor;
             refundAmount = discountedItemTotal;
 
-            // Recalculate subtotal based on non-cancelled items
-            order.subTotal = order.items
-                .filter(i => i.cancelStatus !== 'Cancelled')
-                .reduce((sum, i) => sum + (i.price * i.quantity), 0);
-
-            // Recalculate final amount with discount applied
-            order.finalAmount = order.subTotal * discountFactor;
-
-            await Product.findByIdAndUpdate(itemId, {
-                $inc: { quantity: item.quantity }
-            });
-
             cancelledItems.push({
                 itemId,
                 name: item.productId.productName,
                 quantity: item.quantity,
                 refundAmount: discountedItemTotal
+            });
+
+            await Product.findByIdAndUpdate(itemId, {
+                $inc: { quantity: item.quantity }
             });
 
             const allCancelled = order.items.every(i => i.cancelStatus === 'Cancelled');
@@ -97,25 +92,20 @@ const cancelOrder = async (req, res) => {
                     });
                 }
             }
-
-            // Recalculate subtotal and final amount after all cancellations
-            order.subTotal = 0;
-            order.finalAmount = 0;
         }
 
-        if (!order.originalFinalAmount) {
-            order.originalFinalAmount = originalFinalAmount;
-        }
-        if (!order.originalSubTotal) {
-            order.originalSubTotal = originalSubTotal;
-        }
+        // Recalculate subTotal and finalAmount
+        order.subTotal = order.items
+            .filter(i => i.cancelStatus !== 'Cancelled')
+            .reduce((sum, i) => sum + (i.price * i.quantity), 0);
+        order.finalAmount = order.subTotal * discountFactor;
 
         await order.save();
 
         if (order.paymentMethod !== 'cod' && refundAmount > 0) {
             const user = await User.findById(userId);
             if (!user) {
-                return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: 'User not found' });
+                return res.status(404).json({ success: false, message: 'User not found' });
             }
 
             user.wallet = (user.wallet || 0) + refundAmount;
@@ -149,10 +139,9 @@ const cancelOrder = async (req, res) => {
         });
     } catch (err) {
         console.error('Error cancelling order:', err.message);
-        res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, message: 'Something went wrong' });
+        res.status(500).json({ success: false, message: 'Something went wrong' });
     }
 };
-
 
 const returnOrder = async (req, res) => {
     try {

@@ -36,7 +36,8 @@ const couponSchema = new Schema(
         ref: 'User',
       },
     ],
-      usedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+      usedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }]
+
   },
 
   { timestamps: true }

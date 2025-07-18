@@ -251,11 +251,7 @@
                 <%= wishlist && wishlist.products ? wishlist.products.length : 0 %> items
             </div>
         </div>
-        <% if (wishlist && wishlist.products.length > 0) { %>
-            <div class="wishlist-actions">
-                <button class="btn-clear-wishlist" onclick="clearWishlist()" aria-label="Clear wishlist">Clear Wishlist</button>
-            </div>
-        <% } %>
+       
     </div>
 
     <% if (!wishlist || wishlist.products.length === 0) { %>

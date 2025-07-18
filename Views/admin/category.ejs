@@ -67,13 +67,13 @@
     <div class="pagination" id="pagination">
         <% if (totalPages > 1) { %>
             <% if (currentPage > 1) { %>
-                <a href="/admin/category?page=<%= currentPage - 1 %><%= search ? '&search=' + search : '' %>" class="page-link">« Previous</a>
+                <a href="/admin/category?page=<%= currentPage - 1 %><%= search ? '&search=' + search : '' %>" class="page-link">« </a>
             <% } %>
             <% for(let i = 1; i <= totalPages; i++) { %>
                 <a href="/admin/category?page=<%= i %><%= search ? '&search=' + search : '' %>" class="page-link <%= i === currentPage ? 'active' : '' %>"><%= i %></a>
             <% } %>
             <% if (currentPage < totalPages) { %>
-                <a href="/admin/category?page=<%= currentPage + 1 %><%= search ? '&search=' + search : '' %>" class="page-link">Next »</a>
+                <a href="/admin/category?page=<%= currentPage + 1 %><%= search ? '&search=' + search : '' %>" class="page-link"> »</a>
             <% } %>
         <% } %>
     </div>

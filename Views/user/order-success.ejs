@@ -206,6 +206,7 @@
       justify-content: center;
       border-radius: 6px;
       margin-right: 20px;
+      position: relative;
     }
 
     .item-image img {
@@ -213,6 +214,12 @@
       height: 100%;
       object-fit: cover;
       border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    .item-image .no-image {
+      font-size: 24px;
+      color: var(--gray);
     }
 
     .item-details {
@@ -429,27 +436,25 @@
             <% order.items.forEach(item => { %>
               <div class="item-card">
                 <div class="item-image">
-                  <% if (item?.productId && item.productId.productImage && Array.isArray(item.productId.productImage) && item.productId.productImage.length > 0) { %>
+                  <% if (item?.productId?.productImage && Array.isArray(item.productId.productImage) && item.productId.productImage.length > 0) { %>
                     <img 
-                              src="<%= item?.productId?.productImage && Array.isArray(item.productId.productImage) && item.productId.productImage.length > 0 ? item.productId.productImage[0] : 'https://via.placeholder.com/50' %>" 
-                              alt="<%= item?.productId?.productName || 'Product' %>" 
-                              class="w-12 h-12 rounded mr-3 border border-gray-300"
-                              onerror="this.onerror=null; this.src='https://via.placeholder.com/50';"
-                            >
+                      src="<%= item.productId.productImage[0] %>" 
+                      alt="<%= item.productId.productName || 'Product' %>" 
+                      onerror="this.onerror=null; this.src='https://via.placeholder.com/90'; console.log('Image load failed for:', '<%= item.productId.productImage[0] %>');"
+                    >
                   <% } else { %>
-                    <i class="fas fa-box" aria-hidden="true"></i>
+                    <i class="no-image fas fa-box" aria-hidden="true"></i>
                     <span class="sr-only">No image available</span>
                   <% } %>
                 </div>
                 <div class="item-details">
-                  <div class="item-name"><%= item?.productId?.productName || 'Unnamed Item' %></div>
+                  <div class="item-name"><%= item.productId?.productName || 'Unnamed Item' %></div>
                   <div class="item-meta">
-                
-                    <div>Quantity: <%= item?.quantity || '1' %></div>
+                    <div>Quantity: <%= item.quantity || '1' %></div>
                   </div>
                 </div>
                 <div class="item-price">
-                  <%= formatCurrency((item?.price || 0) * (item?.quantity || 1)) %>
+                  <%= formatCurrency((item.price || 0) * (item.quantity || 1)) %>
                 </div>
               </div>
             <% }); %>
@@ -458,8 +463,6 @@
           <% } %>
         </div>
       </div>
-
-    
       
       <div class="divider"></div>
       

@@ -62,51 +62,41 @@ const getCheckOut = async (req, res) => {
 const placeOrder = async (req, res) => {
   try {
     const userId = req.session.user;
-    const { addressId, subTotal, orderTotal, paymentMethod, couponCode } =req.body;
+    const { addressId, subTotal, orderTotal, paymentMethod, couponCode } = req.body;
 
     if (!addressId || !paymentMethod) {
-      return res
-        .status(STATUS_CODES.BAD_REQUEST)
-        .json({
-          success: false,
-          message: "Address and payment method are required",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Address and payment method are required",
+      });
     }
 
     const userAddress = await Address.findOne({ userId });
     if (!userAddress) {
-      return res
-        .status(STATUS_CODES.BAD_REQUEST)
-        .json({ success: false, message: "User address not found" });
+      return res.status(400).json({ success: false, message: "User address not found" });
     }
 
     const selectedAddress = userAddress.address.find(
       (addr) => addr._id.toString() === addressId
     );
     if (!selectedAddress) {
-      return res
-        .status(STATUS_CODES.BAD_REQUEST)
-        .json({ success: false, message: "Selected address not found" });
+      return res.status(400).json({ success: false, message: "Selected address not found" });
     }
 
     const cart = await Cart.findOne({ userId }).populate("items.productId");
     if (!cart || cart.items.length === 0) {
-      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Cart is empty" });
+      return res.status(400).json({ success: false, message: "Cart is empty" });
     }
 
     for (const item of cart.items) {
       if (!item.productId) {
-        return res
-          .status(STATUS_CODES.BAD_REQUEST)
-          .json({
-            success: false,
-            message: `Product not found for item: ${
-              item.productName || "Unknown"
-            }`,
-          });
+        return res.status(400).json({
+          success: false,
+          message: `Product not found for item: ${item.productName || "Unknown"}`,
+        });
       }
       if (item.productId.quantity < item.quantity) {
-        return res.status(STATUS_CODES.BAD_REQUEST).json({
+        return res.status(400).json({
           success: false,
           message: `Not enough stock for ${item.productId.productName}`,
         });
@@ -119,21 +109,22 @@ const placeOrder = async (req, res) => {
         name: couponCode,
         isList: true,
         expireOn: { $gt: new Date() },
-        $or: [
-          { userId: { $ne: userId } },
-          { userId: null },
-          { userId: { $exists: false } },
-        ],
       });
 
       if (!coupon) {
-        return res
-          .status(STATUS_CODES.BAD_REQUEST)
-          .json({ success: false, message: "Invalid or expired coupon" });
+        return res.status(400).json({ success: false, message: "Invalid or expired coupon" });
+      }
+
+      const alreadyUsed = coupon.usedBy.some(
+        (id) => id.toString() === userId.toString()
+      );
+
+      if (alreadyUsed) {
+        return res.status(400).json({ success: false, message: "Coupon already used" });
       }
 
       if (subTotal < coupon.minimumPrice) {
-        return res.status(STATUS_CODES.BAD_REQUEST).json({
+        return res.status(400).json({
           success: false,
           message: `Order total must be at least ₹${coupon.minimumPrice} to use this coupon`,
         });
@@ -144,21 +135,18 @@ const placeOrder = async (req, res) => {
 
     const subTotalNum = parseFloat(subTotal);
     const orderTotalNum = parseFloat(orderTotal);
+    const finalAmount = subTotalNum - discount;
+
     if (isNaN(subTotalNum) || isNaN(orderTotalNum)) {
-      return res
-        .status(STATUS_CODES.BAD_REQUEST)
-        .json({ success: false, message: "Invalid subtotal or order total" });
+      return res.status(400).json({ success: false, message: "Invalid subtotal or order total" });
     }
 
-    const finalAmount = subTotalNum - discount;
     if (Math.abs(orderTotalNum - finalAmount) > 0.01) {
-      return res
-        .status(STATUS_CODES.BAD_REQUEST)
-        .json({ success: false, message: "Order total mismatch" });
+      return res.status(400).json({ success: false, message: "Order total mismatch" });
     }
 
     if (paymentMethod === "cod" && finalAmount > 1000) {
-      return res.status(STATUS_CODES.BAD_REQUEST).json({
+      return res.status(400).json({
         success: false,
         message: "COD not allowed for orders above ₹1000",
       });
@@ -166,21 +154,14 @@ const placeOrder = async (req, res) => {
 
     if (paymentMethod === "wallet") {
       const user = await User.findById(userId);
-      if (!user) {
-        return res
-          .status(STATUS_CODES.BAD_REQUEST)
-          .json({ success: false, message: "User not found" });
-      }
-      if (user.wallet < finalAmount) {
-        return res
-          .status(STATUS_CODES.BAD_REQUEST)
-          .json({ success: false, message: "Insufficient wallet balance" });
+      if (!user || user.wallet < finalAmount) {
+        return res.status(400).json({ success: false, message: "Insufficient wallet balance" });
       }
     }
 
     for (const item of cart.items) {
       item.productId.quantity -= item.quantity;
-      item.productId.totalSold =(item.productId.totalSold || 0) + item.quantity;
+      item.productId.totalSold = (item.productId.totalSold || 0) + item.quantity;
       await item.productId.save();
     }
 
@@ -208,12 +189,17 @@ const placeOrder = async (req, res) => {
       selectedAddressId: addressId,
     });
 
-
-
-    
-
     await newOrder.save();
 
+
+    if (couponCode) {
+      await Coupon.updateOne(
+        { name: couponCode },
+        { $addToSet: { usedBy: userId } }
+      );
+    }
+
+    
     if (req.session.coupon) {
       delete req.session.coupon;
       await new Promise((resolve, reject) => {
@@ -247,20 +233,19 @@ const placeOrder = async (req, res) => {
 
     await Cart.findOneAndDelete({ userId });
 
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: "Order placed successfully",
-        orderId:newOrder.orderId,
-      });
+    return res.status(200).json({
+      success: true,
+      message: "Order placed successfully",
+      orderId: newOrder.orderId,
+    });
   } catch (error) {
     console.error("Error placing order:", error.message, error.stack);
-    return res
-      .status(STATUS_SERVER_ERROR)
-      .json({ success: false, message: error.message || "Server error" });
+    return res.status(500).json({ success: false, message: error.message || "Server error" });
   }
 };
+
+
+
 
 const loadaddAddress = async (req, res) => {
   try {
@@ -459,33 +444,35 @@ const createRazorpayOrder = async (req, res) => {
       (total, item) => total + item.price * item.quantity,
       0
     );
+   
     let discount = 0;
     if (couponCode) {
       const coupon = await Coupon.findOne({
         name: couponCode,
         isList: true,
         expireOn: { $gt: new Date() },
-        $or: [
-          { userId: { $ne: userId } },
-          { userId: null },
-          { userId: { $exists: false } },
-        ],
       });
 
       if (!coupon) {
-        return res
-          .status(STATUS_CODES.BAD_REQUEST)
-          .json({ success: false, message: "Invalid or expired coupon" });
+        return res.status(400).json({ success: false, message: "Invalid or expired coupon" });
+      }
+
+      const alreadyUsed = coupon.usedBy.some(
+        (id) => id.toString() === userId.toString()
+      );
+
+      if (alreadyUsed) {
+        return res.status(400).json({ success: false, message: "Coupon already used" });
       }
 
       if (subTotal < coupon.minimumPrice) {
-        return res.status(STATUS_CODES.BAD_REQUEST).json({
+        return res.status(400).json({
           success: false,
           message: `Order total must be at least ₹${coupon.minimumPrice} to use this coupon`,
         });
       }
 
-      discount = coupon.offerPrice;
+      discount = parseFloat(coupon.offerPrice);
     }
 
     const expectedAmountInPaise = Math.round((subTotal - discount) * 100);
@@ -517,6 +504,28 @@ const createRazorpayOrder = async (req, res) => {
     });
 
     await newOrder.save();
+
+       if (couponCode) {
+      await Coupon.updateOne(
+        { name: couponCode },
+        { $addToSet: { usedBy: userId } }
+      );
+    }
+
+    
+    if (req.session.coupon) {
+      delete req.session.coupon;
+      await new Promise((resolve, reject) => {
+        req.session.save((err) => {
+          if (err) {
+            console.error("Error saving session:", err);
+            reject(err);
+          } else {
+            resolve();
+          }
+        });
+      });
+    }
 
     const razorpayOrder = await razorpayInstance.orders.create({
       amount,
@@ -626,30 +635,26 @@ const orderSuccess = async (req, res) => {
         .json({ success: false, message: "User not authenticated" });
     }
 
+    let order;
     if (mongoose.isValidObjectId(orderId)) {
-      const order = await Order.findById(orderId)
+      order = await Order.findById(orderId)
         .populate("items.productId")
         .lean();
-      if (!order) {
-        return res
-          .status(STATUS_NOT_FOUND)
-          .json({ success: false, message: "Order not found!" });
-      }
-
-    res.render("order-success", { order, user });
-
-    }else{
-      const order = await Order.findOne({orderId:orderId})
-     
-      if (!order) {
-        return res
-          .status(STATUS_NOT_FOUND)
-          .json({ success: false, message: "Order not found!" });
-      }
-    res.render("order-success", { order, user });
-
+    } else {
+      order = await Order.findOne({ orderId })
+        .populate("items.productId")
+        .lean();
     }
-   
+
+    if (!order) {
+      return res
+        .status(STATUS_NOT_FOUND)
+        .json({ success: false, message: "Order not found!" });
+    }
+
+  
+
+    res.render("order-success", { order, user });
 
   } catch (error) {
     console.error("Error in orderSuccess:", error.message, error.stack);
@@ -658,7 +663,6 @@ const orderSuccess = async (req, res) => {
       .json({ success: false, message: "Internal server error" });
   }
 };
-
 const handlePaymentDismissal = async (req, res) => {
   try {
     const { orderId } = req.body;

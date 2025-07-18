@@ -29,7 +29,7 @@ const loadHomepage = async (req, res) => {
         return res.render('home',{user:userData})
       
     } catch (error) {
-        console.log("Home page not loading :",error)
+     
         res.status(STATUS_CODES.BAD_REQUEST).send('Server Error')
     }
 };
@@ -38,7 +38,7 @@ const loadSignup = async (req, res) => {
     try {
         return res.render('signup');
     } catch (error) {
-        console.error('Signup page not loading:', error);
+        
         return res.status(STATUS_CODES.SERVER_ERROR).send('Server Error');
     }
 };
@@ -204,7 +204,7 @@ const resendOtp = async (req, res) => {
 const loadlogin=async (req,res)=>{
     try {
       
-            return res.render("login")
+     return res.render("login")
 
     } catch (error) {
         res.redirect("/pageNotFound")
@@ -221,7 +221,7 @@ const login = async (req, res) => {
         }
 
         const findUser = await User.findOne({email: email });
-        console.log('login user is',findUser)
+
 
         if (!findUser) {
             return res.render("login", { message: "User not found" });
@@ -365,3 +365,4 @@ module.exports = {
     logout,
     getShop
 };
+

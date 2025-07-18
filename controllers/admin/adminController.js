@@ -559,31 +559,42 @@ const downloadPDFReport = async (req, res) => {
     ]);
 
     const doc = new PDFDocument({ margin: 30 });
+
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader(
       'Content-Disposition',
       'attachment; filename=SalesReport.pdf'
     );
+
     doc.pipe(res);
 
     doc.fontSize(20).text('Sales Report', { align: 'center' });
+
     doc
       .fontSize(12)
       .text(`Filter: ${filter}`)
       .text(
-        `Date Range: ${format(dateFilter.createOn.$gte, 'yyyy-MM-dd')} to ${format(dateFilter.createOn.$lte, 'yyyy-MM-dd')}`
+        `Date Range: ${
+          dateFilter.createOn?.$gte
+            ? format(dateFilter.createOn.$gte, 'yyyy-MM-dd')
+            : 'N/A'
+        } to ${
+          dateFilter.createOn?.$lte
+            ? format(dateFilter.createOn.$lte, 'yyyy-MM-dd')
+            : 'N/A'
+        }`
       );
     doc.moveDown();
 
     const tableData = orders.flatMap((order) =>
       order.items.map((item) => ({
-        orderId: order.orderId.slice(0, 12),
+        orderId: order.orderId?.slice(0, 12) || 'N/A',
         date: format(order.createOn, 'yyyy-MM-dd'),
         product: item.productId?.productName || 'N/A',
         qty: item.quantity || 0,
         price: `₹${(item.price || 0).toFixed(2)}`,
-        discount: `₹${order.discount.toFixed(2)}`,
-        final: `₹${order.finalAmount.toFixed(2)}`,
+        discount: `₹${(order.discount || 0).toFixed(2)}`,
+        final: `₹${(order.finalAmount || 0).toFixed(2)}`,
         status: order.status || 'N/A',
       }))
     );
@@ -620,6 +631,7 @@ const downloadPDFReport = async (req, res) => {
       .fontSize(12)
       .text('Summary', { underline: true })
       .fontSize(11);
+
     const sum = summary[0] || {};
     doc
       .text(`Total Orders: ${sum.totalOrders || 0}`)
@@ -633,6 +645,7 @@ const downloadPDFReport = async (req, res) => {
     res.redirect('/admin/pageerror');
   }
 };
+
 const getAnalyticsData = async (req, res) => {
   try {
     const { filter = 'daily', startDate, endDate } = req.query;
@@ -679,3 +692,5 @@ module.exports = {
     downloadExcelReport,
     downloadPDFReport
 };
+
+  
