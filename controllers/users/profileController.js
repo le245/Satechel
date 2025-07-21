@@ -217,14 +217,13 @@ const postNewPassword = async (req, res) => {
     }
 };
 
-
 const userProfile = async (req, res) => {
   try {
     const userId = req.session.user;
 
     const userData = await User.findById(userId).populate({
       path: 'walletHistory.productId',
-      model: 'Product', // Ensure this matches your Product model name
+      model: 'Product',
       select: 'productName',
     });
 
@@ -283,7 +282,8 @@ const userProfile = async (req, res) => {
     console.error("Error loading profile:", error.message);
     res.redirect("/pageNotFound");
   }
-};  
+};
+
 
 const changeEmail=async(req,res)=>{
     try {
@@ -569,48 +569,48 @@ res.redirect("/userProfile")
   res.redirect("/pageNotFound")
 }
 }
-
 const getOrderDetailsPage = async (req, res) => {
-  try {
-    const { orderId } = req.params;
-    const userId = req.session.user;
+    try {
+        const { orderId } = req.params;
+        const userId = req.session.user;
 
-    if (!userId) {
-      return res.redirect('/login');
+        if (!userId) {
+            return res.redirect('/login');
+        }
+
+        const order = await Order.findOne({ orderId, userId })
+            .populate({
+                path: 'items.productId',
+                model: 'Product',
+            })
+            .populate({
+                path: 'address',
+                model: 'Address',
+            });
+
+        if (!order) {
+            return res.status(STATUS_CODES.NOT_FOUND).render('page-404', { message: 'Order not found' });
+        }
+
+        let selectedAddress = null;
+        if (order.address && order.selectedAddressId) {
+            selectedAddress = order.address.address.find(
+                (addr) => addr._id.toString() === order.selectedAddressId.toString()
+            );
+        }
+
+        res.render('order-details', {
+            order,
+            user: userId,
+            selectedAddress,
+        });
+    } catch (error) {
+        console.error('Error loading order details:', error.message, error.stack);
+        res.status(STATUS_CODES.SERVER_ERROR).render('error', { message: 'Internal Server Error' });
     }
-
-    const order = await Order.findOne({ orderId, userId })
-      .populate({
-        path: 'items.productId',
-        model: 'Product',
-      })
-      .populate({
-        path: 'address',
-        model: 'Address',
-      });
-
-    if (!order) {
-      return res.status(STATUS_CODES.NOT_FOUND).render('page-404', { message: 'Order not found' });
-    }
-
-   
-
-    let selectedAddress = null;
-    if (order.address && order.selectedAddressId) {
-      selectedAddress = order.address.address.find(
-        (addr) => addr._id.toString() === order.selectedAddressId.toString());
-    }
-
-    res.render('order-details', {
-      order,
-      user: userId,
-      selectedAddress, 
-    });
-  } catch (error) {
-    console.error('Error loading order details:', error.message, error.stack);
-    res.status(STATUS_CODES.SERVER_ERROR).render('error', { message: 'Internal Server Error' });
-  }
 };
+
+
 
 
 

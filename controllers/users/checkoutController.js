@@ -50,7 +50,7 @@ const getCheckOut = async (req, res) => {
       Coupon: coupons,
     });
   } catch (error) {
-    console.error("Error loading checkout:", error.message, error.stack);
+   
     res
       .status(STATUS_SERVER_ERROR)
       .render("pageNotFound", {
@@ -161,7 +161,7 @@ const placeOrder = async (req, res) => {
 
     for (const item of cart.items) {
       item.productId.quantity -= item.quantity;
-      item.productId.totalSold = (item.productId.totalSold || 0) + item.quantity;
+      item.productId.totalSold = (item.productId.totalSold || 256) + item.quantity;
       await item.productId.save();
     }
 
@@ -191,7 +191,6 @@ const placeOrder = async (req, res) => {
 
     await newOrder.save();
 
-
     if (couponCode) {
       await Coupon.updateOne(
         { name: couponCode },
@@ -199,13 +198,12 @@ const placeOrder = async (req, res) => {
       );
     }
 
-    
     if (req.session.coupon) {
       delete req.session.coupon;
       await new Promise((resolve, reject) => {
         req.session.save((err) => {
           if (err) {
-            console.error("Error saving session:", err);
+         
             reject(err);
           } else {
             resolve();
@@ -215,18 +213,25 @@ const placeOrder = async (req, res) => {
     }
 
     if (paymentMethod === "wallet") {
+      const transaction = {
+        transactionId: `WAL${Date.now()}`,
+        type: "debit",
+        amount: finalAmount,
+        date: new Date(),
+      };
+
+      // If single product, set productId; otherwise, set description
+      if (cart.items.length === 1) {
+        transaction.productId = cart.items[0].productId._id;
+      } else {
+        transaction.description = `Payment for order #${newOrder.orderId}`;
+      }
+
       await User.updateOne(
         { _id: userId },
         {
           $inc: { wallet: -finalAmount },
-          $push: {
-            walletHistory: {
-              transactionId: `WAL${Date.now()}`,
-              type: "debit",
-              amount: finalAmount,
-              status: "Completed",
-            },
-          },
+          $push: { walletHistory: transaction },
         }
       );
     }
@@ -239,10 +244,11 @@ const placeOrder = async (req, res) => {
       orderId: newOrder.orderId,
     });
   } catch (error) {
-    console.error("Error placing order:", error.message, error.stack);
+  
     return res.status(500).json({ success: false, message: error.message || "Server error" });
   }
 };
+
 
 
 
@@ -252,7 +258,7 @@ const loadaddAddress = async (req, res) => {
     const user = req.session.user;
     res.render("checkout-addAddress", { user });
   } catch (error) {
-    console.error("Error loading add address:", error);
+  
     res.redirect("/pageNotFound");
   }
 };
@@ -262,7 +268,6 @@ const addAddress = async (req, res) => {
     const user = req.session.user;
     res.render("add-address", { user });
   } catch (error) {
-    console.error("Error loading add address:", error);
     res.redirect("/pageNotFound");
   }
 };
@@ -315,7 +320,7 @@ const postAddress = async (req, res) => {
     }
     res.redirect("/checkout");
   } catch (error) {
-    console.error("Error adding address:", error);
+   
     res.redirect("/pageNotFound");
   }
 };
@@ -337,7 +342,7 @@ const loadeditAddress = async (req, res) => {
     }
     res.render("checkout-editAddress", { address: addressData, user });
   } catch (error) {
-    console.error("Error in edit address:", error);
+   
     res.redirect("/pageNotFound");
   }
 };
@@ -381,7 +386,7 @@ const EditAddresspost = async (req, res) => {
     );
     res.redirect("/checkout");
   } catch (error) {
-    console.error("Error in edit address:", error);
+  
     res.redirect("/pageNotFound");
   }
 };
@@ -518,7 +523,7 @@ const createRazorpayOrder = async (req, res) => {
       await new Promise((resolve, reject) => {
         req.session.save((err) => {
           if (err) {
-            console.error("Error saving session:", err);
+        
             reject(err);
           } else {
             resolve();
@@ -541,7 +546,7 @@ const createRazorpayOrder = async (req, res) => {
       orderId: newOrder._id,
     });
   } catch (error) {
-    console.error("Error creating Razorpay order:", error.message, error.stack);
+  
     res
       .status(STATUS_SERVER_ERROR)
       .json({
@@ -561,7 +566,7 @@ const razorPayment = async (req, res) => {
     });
     res.json({ success: true, order });
   } catch (error) {
-    console.error("Error in razorPayment:", error);
+
     res.json({ success: false, message: "Failed to create Razorpay order" });
   }
 };
@@ -614,7 +619,7 @@ const verifyRazorPayment = async (req, res) => {
 
     res.json({ success: true, orderId: order._id });
   } catch (error) {
-    console.error("Payment verification error:", error.message, error.stack);
+    
     res
       .status(STATUS_SERVER_ERROR)
       .json({
@@ -657,7 +662,7 @@ const orderSuccess = async (req, res) => {
     res.render("order-success", { order, user });
 
   } catch (error) {
-    console.error("Error in orderSuccess:", error.message, error.stack);
+   
     return res
       .status(STATUS_SERVER_ERROR)
       .json({ success: false, message: "Internal server error" });
@@ -688,7 +693,7 @@ const handlePaymentDismissal = async (req, res) => {
       orderId: order.orderId,
     });
   } catch (error) {
-    console.error("Error in handlePaymentDismissal:", error);
+    
     res
       .status(STATUS_SERVER_ERROR)
       .json({ success: false, message: "Failed to handle payment dismissal" });
@@ -725,7 +730,7 @@ const handlePaymentFailure = async (req, res) => {
       .status(200)
       .json({ success: true, message: "Payment failure recorded" });
   } catch (error) {
-    console.error("Error in handlePaymentFailure:", error.message, error.stack);
+  
     res
       .status(STATUS_SERVER_ERROR)
       .json({ success: false, message: "Failed to handle payment failure" });
@@ -752,13 +757,18 @@ const retryPayment = async (req, res) => {
         .json({ success: false, message: "Order not found" });
     }
 
-    if (
-      !["Payment Failed", "Pending", "Payment Pending"].includes(order.status)
-    ) {
+    // Check eligible statuses
+    const eligibleStatuses = ["Payment Failed", "Pending", "Payment Pending"];
+    if (!eligibleStatuses.includes(order.status)) {
       return res
         .status(STATUS_CODES.BAD_REQUEST)
         .json({ success: false, message: "Order is not eligible for retry" });
     }
+
+    // Update order status and payment method
+    order.status = "Payment Pending"; // Set to a pending state during retry
+    order.paymentMethod = "razorpay"; // Set payment method for retry
+    await order.save();
 
     const razorpayOrder = await razorpayInstance.orders.create({
       amount: Math.round(order.finalAmount * 100),
@@ -792,7 +802,7 @@ const retryPayment = async (req, res) => {
       razorpayOptions,
     });
   } catch (error) {
-    console.error("Error in retryPayment:", error.message, error.stack);
+
     res
       .status(STATUS_SERVER_ERROR)
       .json({ success: false, message: "Server error: " + error.message });
@@ -833,11 +843,7 @@ const loadTransactionFailurePage = async (req, res) => {
         }).format(amount),
     });
   } catch (error) {
-    console.error(
-      "Error in loadTransactionFailurePage:",
-      error.message,
-      error.stack
-    );
+  
     res.status(STATUS_SERVER_ERROR).render("error", {
       message: "Server error",
       user: req.session.user,
@@ -934,7 +940,7 @@ const downloadInvoice = async (req, res) => {
 
     res.download(invoicePath, `invoice_${order.orderId}.pdf`, (err) => {
       if (err) {
-        console.error("Error downloading the file:", err);
+      
         res
           .status(STATUS_SERVER_ERROR)
           .json({ success: false, message: "Error downloading the invoice" });

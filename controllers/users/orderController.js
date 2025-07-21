@@ -1,6 +1,7 @@
 const Order=require('../../Models/orderSchema');
 const Product=require('../../Models/productSchema')
 const User = require('../../Models/userSchema')
+const mongoose = require('mongoose')
 const STATUS_CODES= require("../../Models/status")
 
 const cancelOrder = async (req, res) => {
@@ -22,7 +23,7 @@ const cancelOrder = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Cannot cancel this order now' });
         }
 
-        // Ensure original values are preserved
+
         if (!order.originalSubTotal) {
             order.originalSubTotal = order.subTotal;
         }
@@ -94,7 +95,6 @@ const cancelOrder = async (req, res) => {
             }
         }
 
-        // Recalculate subTotal and finalAmount
         order.subTotal = order.items
             .filter(i => i.cancelStatus !== 'Cancelled')
             .reduce((sum, i) => sum + (i.price * i.quantity), 0);
@@ -138,7 +138,7 @@ const cancelOrder = async (req, res) => {
             }
         });
     } catch (err) {
-        console.error('Error cancelling order:', err.message);
+       
         res.status(500).json({ success: false, message: 'Something went wrong' });
     }
 };
@@ -147,82 +147,186 @@ const returnOrder = async (req, res) => {
     try {
         const { orderId } = req.params;
         const { itemId, reason } = req.body;
+        const userId = req.session.user;
 
-       
+        if (!userId) {
+            return res.status(STATUS_CODES.UNAUTHORIZED).json({ success: false, message: 'Please login first' });
+        }
 
         if (!reason || reason.trim().length < 10) {
             return res.status(STATUS_CODES.BAD_REQUEST).json({
                 success: false,
-                message: 'Return reason is required and must be at least 10 characters long.'
+                message: 'Return reason is required and must be at least 10 characters long.',
             });
         }
 
-        const order = await Order.findOne({ orderId }); 
+        const order = await Order.findOne({ orderId, userId }).populate('items.productId');
         if (!order) {
             return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: 'Order not found' });
         }
 
-    
-        if (order.status.toLowerCase() !== 'delivered') {
+        if (!['Delivered', 'ReturnRequest'].includes(order.status)) {
             return res.status(STATUS_CODES.BAD_REQUEST).json({
                 success: false,
-                message: 'Return not allowed. Order is not delivered yet.'
+                message: 'Return not allowed. Order is not delivered yet.',
             });
         }
 
+
+        if (!order.originalSubTotal || order.originalSubTotal === 0) {
+            order.originalSubTotal = order.items.reduce((sum, item) => {
+                const price = item.price || (item.productId?.price || 0);
+                const quantity = item.quantity || 1;
+                return sum + (price * quantity);
+            }, 0);
+
+        }
+
+        if (!order.originalFinalAmount) {
+            order.originalFinalAmount = order.finalAmount || order.originalSubTotal - (order.discount || 0);
+   
+        }
+
+        let returnedItems = [];
+
         if (itemId) {
-            const item = order.items.find(item => item.productId && item.productId._id?.toString() === itemId);
+            if (!mongoose.Types.ObjectId.isValid(itemId)) {
+                return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Invalid item ID format' });
+            }
+
+            const item = order.items.find(i => i.productId && i.productId._id.toString() === itemId);
             if (!item) {
                 return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: 'Item not found in order' });
             }
 
+            item.returnStatus = item.returnStatus || 'Not Requested';
+            item.cancelStatus = item.cancelStatus || 'Not Cancelled';
+
             if (item.returnStatus !== 'Not Requested') {
                 return res.status(STATUS_CODES.BAD_REQUEST).json({
                     success: false,
-                    message: 'Return request for this item has already been submitted.'
+                    message: 'Return request for this item has already been submitted or processed.',
+                });
+            }
+
+            if (item.cancelStatus === 'Cancelled') {
+                return res.status(STATUS_CODES.BAD_REQUEST).json({
+                    success: false,
+                    message: 'Cannot request return for a cancelled item.',
                 });
             }
 
             item.returnStatus = 'Requested';
             item.returnReason = reason.trim();
             item.returnRequestedAt = new Date();
+
+            returnedItems.push({
+                itemId: item.productId._id.toString(),
+                name: item.productId ? item.productId.productName : 'Unknown',
+                quantity: item.quantity,
+            });
         } else {
-            
             const hasReturnableItems = order.items.some(
-                item => item.returnStatus === 'Not Requested' && item.cancelStatus !== 'Rejected'
+                (item) => {
+                    const returnStatus = item.returnStatus || 'Not Requested';
+                    const cancelStatus = item.cancelStatus || 'Not Cancelled';
+                    return returnStatus === 'Not Requested' && cancelStatus !== 'Cancelled';
+                }
             );
             if (!hasReturnableItems) {
                 return res.status(STATUS_CODES.BAD_REQUEST).json({
                     success: false,
-                    message: 'No items are eligible for return in this order.'
+                    message: 'No items are eligible for return in this order.',
                 });
             }
 
-       
-            order.items.forEach(item => {
-                if (item.returnStatus === 'Not Requested' && item.cancelStatus !== 'Rejected') {
+            order.items.forEach((item) => {
+                item.returnStatus = item.returnStatus || 'Not Requested';
+                item.cancelStatus = item.cancelStatus || 'Not Cancelled';
+                if (item.returnStatus === 'Not Requested' && item.cancelStatus !== 'Cancelled') {
                     item.returnStatus = 'Requested';
                     item.returnReason = reason.trim();
                     item.returnRequestedAt = new Date();
+                    returnedItems.push({
+                        itemId: item.productId._id.toString(),
+                        name: item.productId ? item.productId.productName : 'Unknown',
+                        quantity: item.quantity,
+                    });
                 }
             });
         }
-        if (order.items.some(item => item.returnStatus === 'Requested') && !order.status.includes('Return')) {
-            order.status = 'Return Requested'; 
+
+        const activeItems = order.items.filter(
+            (item) => {
+                const returnStatus = item.returnStatus || 'Not Requested';
+                const cancelStatus = item.cancelStatus || 'Not Cancelled';
+                return cancelStatus !== 'Cancelled' && returnStatus === 'Not Requested';
+            }
+        );
+        order.subTotal = activeItems.reduce((sum, item) => {
+            const price = item.price || (item.productId?.price || 0);
+            const quantity = item.quantity || 1;
+            return sum + (price * quantity);
+        }, 0);
+
+      
+        if (order.originalSubTotal && order.subTotal >= 0) {
+            order.discount = order.originalSubTotal > 0 ? (order.subTotal / order.originalSubTotal) * (order.discount || 0) : 0;
+        } else {
+            order.discount = 0;
         }
 
-        await order.save();
+        order.finalAmount = Math.max(0, order.subTotal - (order.discount || 0));
+
     
+        const determineOrderStatus = (items) => {
+            const activeItems = items.filter((item) => (item.cancelStatus || 'Not Cancelled') !== 'Cancelled');
+            if (activeItems.length === 0) return 'Cancelled';
+            if (activeItems.every((item) => (item.returnStatus || 'Not Requested') === 'Returned')) {
+                return 'Returned';
+            }
+            if (activeItems.some((item) => (item.returnStatus || 'Not Requested') === 'Requested')) {
+                return activeItems.every((item) => (item.returnStatus || 'Not Requested') === 'Requested' || (item.returnStatus || 'Not Requested') === 'Returned') ? 'ReturnRequest' : 'Delivered';
+            }
+            return 'Delivered';
+        };
+
+        order.status = determineOrderStatus(order.items);
+
+        await order.save();
+
+        const displaySubTotal = order.originalSubTotal; 
+        const displayFinalAmount = order.originalFinalAmount; 
+
+       
 
         res.status(STATUS_CODES.OK).json({
             success: true,
-            message: 'Return request submitted successfully'
+            message: itemId ? 'Item return requested successfully' : 'Order return requested successfully',
+            updatedStatus: order.status,
+            updatedOrder: {
+                subTotal: order.subTotal,
+                finalAmount: order.finalAmount,
+                discount: order.discount || 0,
+                originalSubTotal: order.originalSubTotal,
+                originalFinalAmount: order.originalFinalAmount,
+                displaySubTotal: displaySubTotal,
+                displayFinalAmount: displayFinalAmount,
+                items: order.items.map(item => ({
+                    productId: item.productId._id.toString(),
+                    returnStatus: item.returnStatus || 'Not Requested',
+                    cancelStatus: item.cancelStatus || 'Not Cancelled',
+                })),
+            },
+            returnedItems,
         });
     } catch (error) {
-    
-        res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, message: 'Server error' });
+      
+        res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, message: `Server error: ${error.message}` });
     }
 };
+
+
 
 
 module.exports = { cancelOrder ,

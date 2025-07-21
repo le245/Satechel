@@ -63,212 +63,227 @@ const getOrderDetailsPage = async (req, res) => {
 
 
 
-
 const updateStatus = async (req, res) => {
-  try {
-    const { orderId } = req.params;
-    const { status, action, returnReason, itemId } = req.body;
+    try {
+        const { orderId } = req.params;
+        const { status, action, returnReason, itemId } = req.body;
 
-    
-    if (!orderId || typeof orderId !== 'string') {
-      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Invalid order ID format' });
-    }
-
-  
-    const order = await Order.findOne({ orderId });
-    if (!order) {
-      return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: 'Order not found' });
-    }
-
-    const currentStatus = order.status;
-    const validStatuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled', 'ReturnRequest', 'Returned'];
-
-    if (status && !validStatuses.includes(status)) {
-      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: `Invalid status. Must be one of: ${validStatuses.join(', ')}` });
-    }
-
-    
-    if (currentStatus === 'Delivered' && status && !['ReturnRequest', 'Returned'].includes(status)) {
-      return res.status(STATUS_CODES.BAD_REQUEST).json({
-        success: false,
-        message: 'Delivered orders can only be changed to ReturnRequest or Returned',
-      });
-    }
-
-    if (currentStatus === 'Shipped' && status && (status === 'Pending' || status === 'Processing')) {
-      return res.status(STATUS_CODES.BAD_REQUEST).json({
-        success: false,
-        message: 'Shipped orders cannot be changed to Pending or Processing',
-      });
-    }
-
-    if (currentStatus === 'Cancelled') {
-      return res.status(STATUS_CODES.BAD_REQUEST).json({
-        success: false,
-        message: 'Cancelled orders cannot be changed to another status',
-      });
-    }
-
-    
-    const determineOrderStatus = (items) => {
-      const activeItems = items.filter(item => item.cancelStatus !== 'Cancelled');
-      if (activeItems.length === 0) return 'Cancelled';
-      if (activeItems.every(item => item.returnStatus === 'Requested')) return 'ReturnRequest';
-      if (activeItems.every(item => item.returnStatus === 'Approved' || item.returnStatus === 'Rejected')) return 'Returned';
-      if (activeItems.every(item => item.cancelStatus === 'Completed' && item.returnStatus === 'Not Requested')) {
-        return status || currentStatus; 
-      }
-      return currentStatus; 
-    };
-
-    
-    if (action === 'cancelItem' && itemId) {
-      if (!mongoose.Types.ObjectId.isValid(itemId)) {
-        return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Invalid item ID format' });
-      }
-
-      const item = order.items.id(itemId);
-      if (!item) {
-        return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: 'Item not found in order' });
-      }
-
-      if (item.cancelStatus === 'Cancelled') {
-        return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Item is already cancelled' });
-      }
-
-      if (item.returnStatus !== 'Not Requested') {
-        return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Cannot cancel an item with an active return request' });
-      }
-
-      item.cancelStatus = 'Cancelled';
-      order.status = determineOrderStatus(order.items);
-    }
-  
-    else if (action === 'initiateReturn' && currentStatus === 'Delivered') {
-      if (!itemId && order.items.length > 1) {
-        return res.status(STATUS_CODES.BAD_REQUEST).json({
-          success: false,
-          message: 'Item ID is required for orders with multiple items',
-        });
-      }
-
-      let updatedItems = false;
-      if (itemId) {
-        if (!mongoose.Types.ObjectId.isValid(itemId)) {
-          return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Invalid item ID format' });
+        if (!orderId || typeof orderId !== 'string') {
+            return res.status(400).json({ success: false, message: 'Invalid order ID format' });
         }
 
-        const item = order.items.id(itemId);
-        if (!item) {
-          return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: 'Item not found in order' });
+        const order = await Order.findOne({ orderId });
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Order not found' });
         }
 
-        if (item.returnStatus === 'Not Requested' && item.cancelStatus !== 'Cancelled') {
-          item.returnStatus = 'Requested';
-          item.returnRequestedAt = new Date();
-          item.returnReason = returnReason || 'No reason provided';
-          updatedItems = true;
+        const currentStatus = order.status;
+        const validStatuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled', 'ReturnRequest', 'Returned'];
+
+        if (status && !validStatuses.includes(status)) {
+            return res.status(400).json({ success: false, message: `Invalid status. Must be one of: ${validStatuses.join(', ')}` });
+        }
+
+        if (currentStatus === 'Delivered' && status && !['ReturnRequest', 'Returned'].includes(status)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Delivered orders can only be changed to ReturnRequest or Returned',
+            });
+        }
+
+        if (currentStatus === 'Shipped' && status && (status === 'Pending' || status === 'Processing')) {
+            return res.status(400).json({
+                success: false,
+                message: 'Shipped orders cannot be changed to Pending or Processing',
+            });
+        }
+
+        if (currentStatus === 'Cancelled') {
+            return res.status(400).json({
+                success: false,
+                message: 'Cancelled orders cannot be changed to another status',
+            });
+        }
+
+        const determineOrderStatus = (items) => {
+            const activeItems = items.filter(item => item.cancelStatus !== 'Cancelled');
+            if (activeItems.length === 0) return 'Cancelled';
+            if (activeItems.some(item => item.returnStatus === 'Requested')) return 'ReturnRequest';
+            if (activeItems.every(item => item.returnStatus === 'Approved' || item.returnStatus === 'Rejected')) return 'Returned';
+            return status || currentStatus;
+        };
+
+        if (action === 'cancelItem' && itemId) {
+            if (!mongoose.Types.ObjectId.isValid(itemId)) {
+                return res.status(400).json({ success: false, message: 'Invalid item ID format' });
+            }
+
+            const item = order.items.id(itemId);
+            if (!item) {
+                return res.status(404).json({ success: false, message: 'Item not found in order' });
+            }
+
+            if (item.cancelStatus === 'Cancelled') {
+                return res.status(400).json({ success: false, message: 'Item is already cancelled' });
+            }
+
+            if (item.returnStatus !== 'Not Requested') {
+                return res.status(400).json({ success: false, message: 'Cannot cancel an item with an active return request' });
+            }
+
+            item.cancelStatus = 'Cancelled';
+            order.status = determineOrderStatus(order.items);
+        } else if (action === 'initiateReturn' && currentStatus === 'Delivered') {
+            if (!itemId && order.items.length > 1) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Item ID is required for orders with multiple items',
+                });
+            }
+
+            let updatedItems = false;
+            if (itemId) {
+                if (!mongoose.Types.ObjectId.isValid(itemId)) {
+                    return res.status(400).json({ success: false, message: 'Invalid item ID format' });
+                }
+
+                const item = order.items.id(itemId);
+                if (!item) {
+                    return res.status(404).json({ success: false, message: 'Item not found in order' });
+                }
+
+                if (item.returnStatus === 'Not Requested' && item.cancelStatus !== 'Cancelled') {
+                    item.returnStatus = 'Requested';
+                    item.returnRequestedAt = new Date();
+                    item.returnReason = returnReason || 'No reason provided';
+                    updatedItems = true;
+                } else {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'Item is not eligible for return request (already requested or cancelled)',
+                    });
+                }
+            } else {
+                order.items.forEach(item => {
+                    if (item.returnStatus === 'Not Requested' && item.cancelStatus !== 'Cancelled') {
+                        item.returnStatus = 'Requested';
+                        item.returnRequestedAt = new Date();
+                        item.returnReason = returnReason || 'No reason provided';
+                        updatedItems = true;
+                    }
+                });
+            }
+
+            if (!updatedItems) {
+                return res.status(400).json({ success: false, message: 'No eligible items updated for return request' });
+            }
+
+            order.status = determineOrderStatus(order.items);
+        } else if (status === 'ReturnRequest' && currentStatus === 'Delivered') {
+            let updatedItems = false;
+            if (itemId) {
+                if (!mongoose.Types.ObjectId.isValid(itemId)) {
+                    return res.status(400).json({ success: false, message: 'Invalid item ID format' });
+                }
+
+                const item = order.items.id(itemId);
+                if (!item) {
+                    return res.status(404).json({ success: false, message: 'Item not found in order' });
+                }
+
+                if (item.returnStatus === 'Not Requested' && item.cancelStatus !== 'Cancelled') {
+                    item.returnStatus = 'Requested';
+                    item.returnRequestedAt = new Date();
+                    item.returnReason = returnReason || 'No reason provided';
+                    updatedItems = true;
+                } else {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'Item is not eligible for return request (already requested or cancelled)',
+                    });
+                }
+            } else {
+                order.items.forEach(item => {
+                    if (item.returnStatus === 'Not Requested' && item.cancelStatus !== 'Cancelled') {
+                        item.returnStatus = 'Requested';
+                        item.returnRequestedAt = new Date();
+                        item.returnReason = returnReason || 'No reason provided';
+                        updatedItems = true;
+                    }
+                });
+            }
+
+            if (!updatedItems) {
+                return res.status(400).json({ success: false, message: 'No eligible items updated for return request' });
+            }
+
+            order.status = determineOrderStatus(order.items);
+        } else if (itemId && status) {
+            if (!mongoose.Types.ObjectId.isValid(itemId)) {
+                return res.status(400).json({ success: false, message: 'Invalid item ID format' });
+            }
+
+            const item = order.items.id(itemId);
+            if (!item) {
+                return res.status(404).json({ success: false, message: 'Item not found in order' });
+            }
+
+            if (item.cancelStatus === 'Cancelled') {
+                return res.status(400).json({ success: false, message: 'Cannot update status of a cancelled item' });
+            }
+
+            if (item.returnStatus !== 'Not Requested') {
+                return res.status(400).json({ success: false, message: 'Cannot update status of an item with an active return request' });
+            }
+
+            item.cancelStatus = status === 'Delivered' ? 'Completed' : item.cancelStatus;
+            order.status = determineOrderStatus(order.items);
+
+            if (status === 'Delivered') {
+                order.invoiceDate = new Date();
+            }
+        } else if (status) {
+            if (status === 'Delivered' && ['ReturnRequest', 'Returned'].includes(currentStatus)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Cannot move ReturnRequest or Returned orders back to Delivered',
+                });
+            }
+
+            if (status === 'ReturnRequest' && currentStatus !== 'Delivered') {
+                return res.status(400).json({
+                    success: false,
+                    message: 'ReturnRequest can only be set from Delivered status',
+                });
+            }
+
+            order.items.forEach(item => {
+                if (item.cancelStatus !== 'Cancelled') {
+                    item.cancelStatus = status === 'Delivered' ? 'Completed' : item.cancelStatus;
+                }
+            });
+
+            order.status = determineOrderStatus(order.items);
+
+            if (status === 'Delivered') {
+                order.invoiceDate = new Date();
+            }
         } else {
-          return res.status(STATUS_CODES).json({
-            success: false,
-            message: 'Item is not eligible for return request (already requested or cancelled)',
-          });
+            return res.status(400).json({ success: false, message: 'No valid status or action provided' });
         }
-      } else {
-        order.items.forEach(item => {
-          if (item.returnStatus === 'Not Requested' && item.cancelStatus !== 'Cancelled') {
-            item.returnStatus = 'Requested';
-            item.returnRequestedAt = new Date();
-            item.returnReason = returnReason || 'No reason provided';
-            updatedItems = true;
-          }
+
+        await order.save();
+
+        res.json({
+            success: true,
+            message: 'Order status updated successfully',
+            updatedStatus: order.status,
         });
-      }
-
-      if (!updatedItems) {
-        return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'No eligible items updated for return request' });
-      }
-
-      order.status = determineOrderStatus(order.items);
+    } catch (error) {
+     
+        const orderId = req.params.orderId || 'unknown';
+        res.status(500).json({ success: false, message: `Server error: ${error.message}` });
     }
- 
-    else if (itemId && status) {
-      if (!mongoose.Types.ObjectId.isValid(itemId)) {
-        return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Invalid item ID format' });
-      }
-
-      const item = order.items.id(itemId);
-      if (!item) {
-        return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: 'Item not found in order' });
-      }
-
-      if (item.cancelStatus === 'Cancelled') {
-        return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Cannot update status of a cancelled item' });
-      }
-
-      if (item.returnStatus !== 'Not Requested') {
-        return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Cannot update status of an item with an active return request' });
-      }
-
-    
-      item.cancelStatus = status === 'Delivered' ? 'Completed' : item.cancelStatus;
-
-      order.status = determineOrderStatus(order.items);
-
-      if (status === 'Delivered') {
-        order.invoiceDate = new Date();
-      }
-    }
-  
-    else if (status) {
-    
-      if (status === 'Delivered' && ['ReturnRequest', 'Returned'].includes(currentStatus)) {
-        return res.status(STATUS_CODES.BAD_REQUEST).json({
-          success: false,
-          message: 'Cannot move ReturnRequest or Returned orders back to Delivered',
-        });
-      }
-
-      if (status === 'ReturnRequest' && currentStatus !== 'Delivered') {
-        return res.status(STATUS_CODES.BAD_REQUEST).json({
-          success: false,
-          message: 'ReturnRequest can only be set from Delivered status',
-        });
-      }
-
-
-      order.items.forEach(item => {
-        if (item.cancelStatus !== 'Cancelled') {
-          item.cancelStatus = status === 'Delivered' ? 'Completed' : item.cancelStatus;
-        }
-      });
-
-      order.status = status;
-
-      if (status === 'Delivered') {
-        order.invoiceDate = new Date();
-      }
-    } else {
-      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'No valid status or action provided' });
-    }
-
-
-    await order.save();
-
-    res.json({
-      success: true,
-      message: 'Order status updated successfully',
-      updatedStatus: order.status,
-    });
-  } catch (error) {
-    console.error('Error updating order status:', {
-      error: error.message,
-      stack: error.stack,
-      orderId,
-      body: req.body,
-    });
-    res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, message: `Server error: ${error.message}` });
-  }
 };
 
 
@@ -345,7 +360,7 @@ const approveReturn = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Error in approveReturn:", error.message, error.stack);
+    
     return res.status(STATUS_CODES.SERVER_ERROR).json({
       success: false,
       message: 'An error occurred while processing your request.'

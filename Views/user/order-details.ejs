@@ -276,7 +276,21 @@
                         <div class="card-body">
                             <h5 class="card-title"><i class="fas fa-money-bill-wave me-2"></i>Total Amount</h5>
                             <p class="card-text" id="total-amount">
-                                ₹<%= order.status === 'Cancelled' ? (order.originalFinalAmount ? order.originalFinalAmount.toFixed(2) : '0.00') : (order.finalAmount ? order.finalAmount.toFixed(2) : '0.00') %>
+                                <% 
+                                    // Calculate fallback totals once
+                                    let calculatedSubTotal = 0;
+                                    let calculatedTotal = 0;
+                                    if (order.items && order.items.length > 0) {
+                                        calculatedSubTotal = order.items.reduce((sum, item) => {
+                                            return sum + (item.cancelStatus === 'Cancelled' ? 0 : (item.price || 0) * (item.quantity || 0));
+                                        }, 0);
+                                        calculatedTotal = calculatedSubTotal - (order.discount || 0);
+                                    }
+                                    const displayTotal = order.status === 'Cancelled' 
+                                        ? (order.originalFinalAmount || calculatedTotal || 0).toFixed(2)
+                                        : (order.displayFinalAmount || order.finalAmount || calculatedTotal || 0).toFixed(2);
+                                %>
+                                ₹<%= displayTotal %>
                             </p>
                         </div>
                     </div>
@@ -340,7 +354,13 @@
                                                             <i class="fas fa-times me-1"></i> Cancel
                                                         </button>
                                                     <% } %>
-                                                    <% if (order.status.toLowerCase() === 'delivered' && item.returnStatus === 'Not Requested' && item.cancelStatus !== 'Cancelled') { %>
+                                                    <% 
+                                                        const orderStatusLower = order.status ? order.status.toLowerCase() : '';
+                                                        const returnStatus = item.returnStatus || 'Not Requested';
+                                                        const cancelStatus = item.cancelStatus || 'Not Cancelled';
+                                                        console.log(`Item ${item.productId._id}: orderStatus=${orderStatusLower}, returnStatus=${returnStatus}, cancelStatus=${cancelStatus}`);
+                                                    %>
+                                                    <% if (['delivered', 'returnrequest'].includes(orderStatusLower) && returnStatus === 'Not Requested' && cancelStatus !== 'Cancelled') { %>
                                                         <button class="btn btn-warning btn-sm return-item-btn" 
                                                                 data-order-id="<%= order.orderId || '' %>" 
                                                                 data-item-id="<%= item.productId._id || '' %>" 
@@ -384,49 +404,58 @@
                 </div>
                 <div class="col-md-6 mb-3">
                     <h4 class="section-title">Payment Summary</h4>
-                   <div class="card price-details">
- <div class="card price-details">
-    <div class="card-body">
-        <div class="d-flex justify-content-between mb-2">
-            <span>Subtotal</span>
-            <span id="subtotal-amount">
-                ₹<%= order.status === 'Cancelled' ? (order.originalSubTotal || order.subTotal || 0).toFixed(2) : (order.subTotal || 0).toFixed(2) %>
-            </span>
-        </div>
-        <% if (order.discount > 0) { %>
-        <div class="d-flex justify-content-between mb-2">
-            <span>Discount</span>
-            <span id="discount-amount">₹<%= (order.discount || 0).toFixed(2) %></span>
-        </div>
-        <% } %>
-        <% if (order.couponApplied) { %>
-        <div class="d-flex justify-content-between mb-2">
-            <span>Coupon Applied</span>
-            <span><i class="fas fa-check-circle me-1" style="color: #6b7280;"></i> Yes</span>
-        </div>
-        <% } %>
-        <hr class="my-2">
-        <div class="d-flex justify-content-between fw-bold">
-            <span>Total</span>
-            <span id="final-amount">
-                ₹<%= order.status === 'Cancelled' ? (order.originalFinalAmount || order.finalAmount || 0).toFixed(2) : (order.finalAmount || 0).toFixed(2) %>
-            </span>
-        </div>
-        <div class="d-flex justify-content-between mt-2">
-            <span>Payment Status</span>
-            <span class="<%= order.status === 'PaymentFailed' ? 'text-danger' : 'text-success' %>">
-                <%= order.status === 'PaymentFailed' ? 'Failed' : 'Completed' %>
-            </span>
-        </div>
-        <% if (order.status === 'Cancelled' && order.originalFinalAmount > 0) { %>
-        <div class="d-flex justify-content-between mt-2 text-success">
-            <span>Refunded to Wallet</span>
-            <span>₹<%= (order.originalFinalAmount || 0).toFixed(2) %></span>
-        </div>
-        <% } %>
-    </div>
-</div>
-</div>
+                    <div class="card price-details">
+                        <div class="card-body">
+                            <% 
+                                // Reuse calculated totals from Order Summary
+                                const displaySubTotal = order.status === 'Cancelled' 
+                                    ? (order.originalSubTotal || calculatedSubTotal || 0).toFixed(2)
+                                    : (order.displaySubTotal || order.subTotal || calculatedSubTotal || 0).toFixed(2);
+                                const displayFinalAmount = order.status === 'Cancelled' 
+                                    ? (order.originalFinalAmount || calculatedTotal || 0).toFixed(2)
+                                    : (order.displayFinalAmount || order.finalAmount || calculatedTotal || 0).toFixed(2);
+                            %>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Subtotal</span>
+                                <span id="subtotal-amount">₹<%= displaySubTotal %></span>
+                            </div>
+                            <% if (order.discount > 0) { %>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Discount</span>
+                                <span id="discount-amount">₹<%= (order.discount || 0).toFixed(2) %></span>
+                            </div>
+                            <% } %>
+                            <% if (order.couponApplied) { %>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Coupon Applied</span>
+                                <span><i class="fas fa-check-circle me-1" style="color: #6b7280;"></i> Yes</span>
+                            </div>
+                            <% } %>
+                            <hr class="my-2">
+                            <div class="d-flex justify-content-between fw-bold">
+                                <span>Total</span>
+                                <span id="final-amount">₹<%= displayFinalAmount %></span>
+                            </div>
+                            <div class="d-flex justify-content-between mt-2">
+                                <span>Payment Status</span>
+                                <span class="<%= order.status === 'PaymentFailed' ? 'text-danger' : 'text-success' %>">
+                                    <%= order.status === 'PaymentFailed' ? 'Failed' : 'Completed' %>
+                                </span>
+                            </div>
+                            <% if (order.status === 'Cancelled' && (order.originalFinalAmount || calculatedTotal) > 0) { %>
+                            <div class="d-flex justify-content-between mt-2 text-success">
+                                <span>Refunded to Wallet</span>
+                                <span>₹<%= (order.originalFinalAmount || calculatedTotal || 0).toFixed(2) %></span>
+                            </div>
+                            <% } %>
+                            <% if (order.status === 'ReturnRequest' && (order.originalFinalAmount || calculatedTotal) > (order.finalAmount || calculatedTotal || 0)) { %>
+                            <div class="d-flex justify-content-between mt-2 text-success refund-pending">
+                                <span>Refund Pending for Return</span>
+                                <span>₹<%= ((order.originalFinalAmount || calculatedTotal || 0) - (order.finalAmount || calculatedTotal || 0)).toFixed(2) %></span>
+                            </div>
+                            <% } %>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -438,9 +467,19 @@
                         <div class="card-body">
                             <div class="tracking-timeline">
                                 <% 
-                                // Declare allStatuses and currentStatusIndex only once
-                                const allStatuses = ['PaymentPending', 'PaymentFailed', 'Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled', 'ReturnRequest', 'Returned'];
-                                const currentStatusIndex = allStatuses.indexOf(order.status);
+                                    // Define allStatuses if not passed from controller
+                                    let allStatusesLocal = typeof allStatuses !== 'undefined' ? allStatuses : [
+                                        'PaymentPending',
+                                        'PaymentFailed',
+                                        'Pending',
+                                        'Processing',
+                                        'Shipped',
+                                        'Delivered',
+                                        'Cancelled',
+                                        'ReturnRequest',
+                                        'Returned'
+                                    ];
+                                    const currentStatusIndex = allStatusesLocal.indexOf(order.status);
                                 %>
                                 <% if (order.status === 'PaymentFailed') { %>
                                     <div class="timeline-item">
@@ -459,7 +498,7 @@
                                         </div>
                                     </div>
                                 <% } else if (order.status === 'ReturnRequest' || order.status === 'Returned') { %>
-                                    <% allStatuses.forEach((status, index) => { %>
+                                    <% allStatusesLocal.forEach((status, index) => { %>
                                         <% if (index <= currentStatusIndex && status !== 'Cancelled' && status !== 'PaymentFailed' && status !== 'PaymentPending') { %>
                                             <div class="timeline-item">
                                                 <div class="timeline-dot timeline-dot-<%= status %>"></div>
@@ -473,7 +512,7 @@
                                         <% } %>
                                     <% }); %>
                                 <% } else { %>
-                                    <% allStatuses.forEach((status, index) => { %>
+                                    <% allStatusesLocal.forEach((status, index) => { %>
                                         <% if (index <= currentStatusIndex && status !== 'Cancelled' && status !== 'ReturnRequest' && status !== 'Returned' && status !== 'PaymentFailed') { %>
                                             <div class="timeline-item">
                                                 <div class="timeline-dot timeline-dot-<%= status %>"></div>
@@ -501,18 +540,28 @@
                             <i class="fas fa-times me-1"></i> Cancel Entire Order
                         </button>
                     <% } %>
-                    <% if (order.status.toLowerCase() === 'delivered' && order.items.some(item => item.returnStatus === 'Not Requested' && item.cancelStatus !== 'Cancelled')) { %>
+                    <% 
+                        const hasReturnableItems = order.items.some(item => {
+                            const returnStatus = item.returnStatus || 'Not Requested';
+                            const cancelStatus = item.cancelStatus || 'Not Cancelled';
+                            return ['delivered', 'returnrequest'].includes(order.status.toLowerCase()) && 
+                                   returnStatus === 'Not Requested' && 
+                                   cancelStatus !== 'Cancelled';
+                        });
+                        console.log(`Order ${order.orderId}: hasReturnableItems=${hasReturnableItems}, orderStatus=${order.status}`);
+                    %>
+                    <% if (hasReturnableItems) { %>
                         <button id="returnOrderBtn" class="btn btn-warning me-2" onclick="returnEntireOrder('<%= order.orderId %>')">
                             <i class="fas fa-undo me-1"></i> Return Entire Order
                         </button>
                     <% } %>
-                    <% if (order.status === 'PaymentFailed' && order.paymentMethod === 'razorpay') { %>
-                        <button class="btn btn-warning me-2" onclick="retryPayment('<%= order._id.toString() %>', <%= order.finalAmount %>)">
+                    <% if (order.status && order.status.toLowerCase() === 'paymentfailed' && order.paymentMethod && order.paymentMethod.toLowerCase() === 'razorpay') { %>
+                        <button class="btn btn-warning me-2" onclick="retryPayment('<%= order._id.toString() %>', <%= displayFinalAmount || 0 %>)">
                             <i class="fas fa-redo me-1"></i> Retry Payment
                         </button>
                     <% } %>
-                    <% if (order.status.toLowerCase() === 'delivered') { %>
-                        <a href="/download-invoice/<%= order._id %>" class="btn btn-sm me-2" style="background-color: grey; color: #fff; border-radius: 5px; padding: 6px 12px;">
+                    <% if (order.status && order.status.toLowerCase() === 'delivered') { %>
+                        <a href="/download-invoice/<%= order._id %>" class="btn btn-sm me-2" style="background-color: greyturns grey; color: #fff; border-radius: 5px; padding: 6px 12px;">
                             <i class="fas fa-download me-1"></i> Download Invoice
                         </a>
                     <% } %>
@@ -529,7 +578,23 @@
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
     <script>
+        // Log order financial data for debugging
+        console.log('Order financial data:', {
+            orderId: '<%= order.orderId %>',
+            status: '<%= order.status %>',
+            subTotal: '<%= order.subTotal %>',
+            displaySubTotal: '<%= order.displaySubTotal %>',
+            finalAmount: '<%= order.finalAmount %>',
+            displayFinalAmount: '<%= order.displayFinalAmount %>',
+            originalSubTotal: '<%= order.originalSubTotal %>',
+            originalFinalAmount: '<%= order.originalFinalAmount %>',
+            discount: '<%= order.discount %>',
+            calculatedSubTotal: '<%= order.items.reduce((sum, item) => sum + (item.cancelStatus === "Cancelled" ? 0 : (item.price || 0) * (item.quantity || 0)), 0).toFixed(2) %>',
+            calculatedTotal: '<%= (order.items.reduce((sum, item) => sum + (item.cancelStatus === "Cancelled" ? 0 : (item.price || 0) * (item.quantity || 0)), 0) - (order.discount || 0)).toFixed(2) %>'
+        });
+
         async function cancelOrder(orderId, currentStatus) {
+            console.log('Cancel Order called with orderId:', orderId, 'Current Status:', currentStatus);
             if (!['Pending', 'Processing'].includes(currentStatus)) {
                 Swal.fire({
                     icon: 'error',
@@ -553,6 +618,7 @@
                 if (statusResponse.ok) {
                     const statusData = await statusResponse.json();
                     apiStatus = statusData.status;
+                    console.log('Fetched order status:', apiStatus);
                     if (!['Pending', 'Processing'].includes(apiStatus)) {
                         Swal.fire({
                             icon: 'error',
@@ -629,164 +695,179 @@
             }
         }
 
-      async function cancelItem(button, orderId, itemId, currentStatus) {
-    button.classList.add('btn-loading');
-    button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Cancelling...';
+        async function cancelItem(button, orderId, itemId, currentStatus) {
+            console.log('Cancel Item called with orderId:', orderId, 'itemId:', itemId, 'Current Status:', currentStatus);
+            button.classList.add('btn-loading');
+            button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Cancelling...';
 
-    if (!orderId || !itemId) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Invalid Input',
-            text: 'Order ID or Item ID is missing.',
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true
-        });
-        button.classList.remove('btn-loading');
-        button.innerHTML = '<i class="fas fa-times me-1"></i> Cancel';
-        return;
-    }
-
-    if (!['Pending', 'Processing'].includes(currentStatus)) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Cannot Cancel',
-            text: 'This item cannot be cancelled as the order is no longer in Pending or Processing status.',
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true
-        });
-        button.classList.remove('btn-loading');
-        button.innerHTML = '<i class="fas fa-times me-1"></i> Cancel';
-        return;
-    }
-
-    const result = await Swal.fire({
-        title: 'Cancel Item',
-        text: 'Are you sure you want to cancel this item? This action cannot be undone.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#6b7280',
-        cancelButtonColor: '#9ca3af',
-        confirmButtonText: 'Yes, cancel item',
-        cancelButtonText: 'No, keep it'
-    });
-
-    if (result.isConfirmed) {
-        try {
-            const response = await fetch(`/orders/cancel/${orderId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ itemId })
-            });
-            const data = await response.json();
-
-            if (data.success) {
-                const row = button.closest('tr');
-                const statusCell = row.querySelector('.item-status');
-                const actionsCell = row.querySelector('.item-actions');
-
-                // Update item status to Cancelled
-                statusCell.textContent = 'Cancelled';
-                statusCell.classList.remove('hidden');
-                statusCell.classList.add('text-danger');
-                actionsCell.innerHTML = ''; // Remove all action buttons for this item
-
-                // Update order summary amounts
-                const subtotalElement = document.getElementById('subtotal-amount');
-                const totalElement = document.getElementById('final-amount');
-                const discountElement = document.getElementById('discount-amount');
-                subtotalElement.textContent = `₹${data.updatedOrder.subTotal.toFixed(2)}`;
-                totalElement.textContent = `₹${data.updatedOrder.finalAmount.toFixed(2)}`;
-                if (discountElement) {
-                    discountElement.textContent = `₹${data.updatedOrder.discount.toFixed(2)}`;
-                }
-
-                // If order is cancelled, show original amounts
-                if (data.updatedOrder.status === 'Cancelled') {
-                    subtotalElement.textContent = `₹${data.updatedOrder.originalSubTotal.toFixed(2)}`;
-                    totalElement.textContent = `₹${data.updatedOrder.originalFinalAmount.toFixed(2)}`;
-                }
-
-                // Update total items count
-                const totalItemsElement = document.querySelector('.card-body p.card-text');
-                const remainingItems = Array.from(document.querySelectorAll('#order-items .product-item'))
-                    .filter(row => row.querySelector('.item-status').textContent !== 'Cancelled').length;
-                totalItemsElement.textContent = `${remainingItems} items`;
-
-                // Update order status badge and timeline if all items are cancelled
-                if (data.updatedOrder.status === 'Cancelled') {
-                    const orderStatusBadge = document.querySelector('.status-badge');
-                    orderStatusBadge.textContent = 'Cancelled';
-                    orderStatusBadge.className = 'status-badge status-Cancelled';
-
-                    const timelineContainer = document.querySelector('.tracking-timeline');
-                    timelineContainer.innerHTML = `
-                        <div class="timeline-item">
-                            <div class="timeline-dot timeline-dot-Cancelled"></div>
-                            <div class="timeline-content">
-                                <h5 class="mb-1">Cancelled</h5>
-                                <p class="text-muted mb-0">Order was cancelled</p>
-                            </div>
-                        </div>
-                    `;
-
-                    // Remove Cancel Entire Order button
-                    const cancelOrderBtn = document.getElementById('cancelOrderBtn');
-                    if (cancelOrderBtn) cancelOrderBtn.remove();
-
-                    // Remove all remaining Cancel buttons
-                    document.querySelectorAll('.cancel-item-btn').forEach(btn => btn.remove());
-                }
-
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Item Cancelled',
-                    text: 'The item has been cancelled successfully.',
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000,
-                    timerProgressBar: true
-                });
-            } else {
+            if (!orderId || !itemId) {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Failed',
-                    text: data.message || 'Failed to cancel item.',
+                    title: 'Invalid Input',
+                    text: 'Order ID or Item ID is missing.',
                     toast: true,
                     position: 'top-end',
                     showConfirmButton: false,
                     timer: 3000,
                     timerProgressBar: true
                 });
+                button.classList.remove('btn-loading');
+                button.innerHTML = '<i class="fas fa-times me-1"></i> Cancel';
+                return;
             }
-        } catch (error) {
-            console.error('Error cancelling item:', error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'An error occurred while cancelling the item. Please try again.',
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true
+
+            if (!['Pending', 'Processing'].includes(currentStatus)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Cannot Cancel',
+                    text: 'This item cannot be cancelled as the order is no longer in Pending or Processing status.',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+                button.classList.remove('btn-loading');
+                button.innerHTML = '<i class="fas fa-times me-1"></i> Cancel';
+                return;
+            }
+
+            const result = await Swal.fire({
+                title: 'Cancel Item',
+                text: 'Are you sure you want to cancel this item? This action cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#6b7280',
+                cancelButtonColor: '#9ca3af',
+                confirmButtonText: 'Yes, cancel item',
+                cancelButtonText: 'No, keep it'
             });
-        } finally {
-            button.classList.remove('btn-loading');
-            button.innerHTML = '<i class="fas fa-times me-1"></i> Cancel';
+
+            if (result.isConfirmed) {
+                try {
+                    const response = await fetch(`/orders/cancel/${orderId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ itemId })
+                    });
+                    const data = await response.json();
+
+                    if (data.success) {
+                        const row = button.closest('tr');
+                        const statusCell = row.querySelector('.item-status');
+                        const actionsCell = row.querySelector('.item-actions');
+
+                        statusCell.textContent = 'Cancelled';
+                        statusCell.classList.remove('hidden');
+                        statusCell.classList.add('text-danger');
+                        actionsCell.innerHTML = '';
+
+                        const subtotalElement = document.getElementById('subtotal-amount');
+                        const totalElement = document.getElementById('final-amount');
+                        const discountElement = document.getElementById('discount-amount');
+                        const totalAmountElement = document.getElementById('total-amount');
+
+                        // Calculate new totals client-side if API response is incomplete
+                        let newSubTotal = data.updatedOrder.displaySubTotal !== undefined 
+                            ? data.updatedOrder.displaySubTotal 
+                            : data.updatedOrder.subTotal;
+                        let newFinalAmount = data.updatedOrder.displayFinalAmount !== undefined 
+                            ? data.updatedOrder.displayFinalAmount 
+                            : data.updatedOrder.finalAmount;
+                        
+                        if (newSubTotal === undefined || newFinalAmount === undefined) {
+                            const items = Array.from(document.querySelectorAll('#order-items .product-item'));
+                            newSubTotal = items.reduce((sum, row) => {
+                                if (row.querySelector('.item-status').textContent !== 'Cancelled') {
+                                    const price = parseFloat(row.querySelector('.item-price').textContent.replace('₹', '')) || 0;
+                                    const quantity = parseInt(row.querySelector('.item-quantity').textContent) || 0;
+                                    return sum + price * quantity;
+                                }
+                                return sum;
+                            }, 0);
+                            newFinalAmount = newSubTotal - (data.updatedOrder.discount || 0);
+                        }
+
+                        subtotalElement.textContent = `₹${(data.updatedOrder.status === 'Cancelled' ? (data.updatedOrder.originalSubTotal || newSubTotal || 0) : (newSubTotal || 0)).toFixed(2)}`;
+                        totalElement.textContent = `₹${(data.updatedOrder.status === 'Cancelled' ? (data.updatedOrder.originalFinalAmount || newFinalAmount || 0) : (newFinalAmount || 0)).toFixed(2)}`;
+                        totalAmountElement.textContent = `₹${(data.updatedOrder.status === 'Cancelled' ? (data.updatedOrder.originalFinalAmount || newFinalAmount || 0) : (newFinalAmount || 0)).toFixed(2)}`;
+                        if (discountElement && data.updatedOrder.discount !== undefined) {
+                            discountElement.textContent = `₹${(data.updatedOrder.discount || 0).toFixed(2)}`;
+                        }
+
+                        if (data.updatedOrder.status === 'Cancelled') {
+                            const orderStatusBadge = document.querySelector('.status-badge');
+                            orderStatusBadge.textContent = 'Cancelled';
+                            orderStatusBadge.className = 'status-badge status-Cancelled';
+
+                            const timelineContainer = document.querySelector('.tracking-timeline');
+                            timelineContainer.innerHTML = `
+                                <div class="timeline-item">
+                                    <div class="timeline-dot timeline-dot-Cancelled"></div>
+                                    <div class="timeline-content">
+                                        <h5 class="mb-1">Cancelled</h5>
+                                        <p class="text-muted mb-0">Order was cancelled</p>
+                                    </div>
+                                </div>
+                            `;
+
+                            const cancelOrderBtn = document.getElementById('cancelOrderBtn');
+                            if (cancelOrderBtn) cancelOrderBtn.remove();
+
+                            document.querySelectorAll('.cancel-item-btn').forEach(btn => btn.remove());
+                        }
+
+                        const totalItemsElement = document.querySelector('.card-body p.card-text');
+                        const remainingItems = Array.from(document.querySelectorAll('#order-items .product-item'))
+                            .filter(row => row.querySelector('.item-status').textContent !== 'Cancelled').length;
+                        totalItemsElement.textContent = `${remainingItems} items`;
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Item Cancelled',
+                            text: 'The item has been cancelled successfully.',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Failed',
+                            text: data.message || 'Failed to cancel item.',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error cancelling item:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'An error occurred while cancelling the item. Please try again.',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                } finally {
+                    button.classList.remove('btn-loading');
+                    button.innerHTML = '<i class="fas fa-times me-1"></i> Cancel';
+                }
+            } else {
+                button.classList.remove('btn-loading');
+                button.innerHTML = '<i class="fas fa-times me-1"></i> Cancel';
+            }
         }
-    } else {
-        button.classList.remove('btn-loading');
-        button.innerHTML = '<i class="fas fa-times me-1"></i> Cancel';
-    }
-}
+
         async function returnItem(button, orderId, itemId, itemName) {
+            console.log('Return Item called with orderId:', orderId, 'itemId:', itemId, 'itemName:', itemName);
             button.classList.add('btn-loading');
             button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Processing...';
 
@@ -807,8 +888,8 @@
             }
 
             const policyResult = await Swal.fire({
-                title: `Return Item`,
-                html: `<p>Do you want to proceed with the return request?</p>`,
+                title: `Return Item: ${itemName}`,
+                html: `<p>Do you want to proceed with the return request for ${itemName}?</p>`,
                 icon: 'info',
                 showCancelButton: true,
                 confirmButtonColor: '#6b7280',
@@ -824,7 +905,7 @@
             }
 
             const result = await Swal.fire({
-                title: `Return Item`,
+                title: `Return Item: ${itemName}`,
                 input: 'textarea',
                 inputLabel: 'Reason for Return',
                 inputPlaceholder: 'Type your reason here...',
@@ -858,6 +939,8 @@
                     });
                     const data = await response.json();
 
+                    console.log('Return response:', data);
+
                     if (data.success) {
                         const row = button.closest('tr');
                         const statusCell = row.querySelector('.item-status');
@@ -869,9 +952,9 @@
                         actionsCell.innerHTML = '';
 
                         const orderStatusBadge = document.querySelector('.status-badge');
-                        if (!orderStatusBadge.textContent.includes('Return')) {
-                            orderStatusBadge.textContent = 'ReturnRequest';
-                            orderStatusBadge.className = 'status-badge status-ReturnRequest';
+                        if (data.updatedStatus && !orderStatusBadge.textContent.includes('Return')) {
+                            orderStatusBadge.textContent = data.updatedStatus;
+                            orderStatusBadge.className = `status-badge status-${data.updatedStatus.replace(/\s+/g, '')}`;
                         }
 
                         const timelineContainer = document.querySelector('.tracking-timeline');
@@ -885,11 +968,85 @@
                             </div>
                         `;
 
+                        const subtotalElement = document.getElementById('subtotal-amount');
+                        const totalElement = document.getElementById('final-amount');
+                        const totalAmountElement = document.getElementById('total-amount');
+                        const discountElement = document.getElementById('discount-amount');
+
+                        // Calculate new totals client-side if API response is incomplete
+                        let newSubTotal = data.updatedOrder.displaySubTotal !== undefined 
+                            ? data.updatedOrder.displaySubTotal 
+                            : data.updatedOrder.subTotal;
+                        let newFinalAmount = data.updatedOrder.displayFinalAmount !== undefined 
+                            ? data.updatedOrder.displayFinalAmount 
+                            : data.updatedOrder.finalAmount;
+                        
+                        if (newSubTotal === undefined || newFinalAmount === undefined) {
+                            const items = Array.from(document.querySelectorAll('#order-items .product-item'));
+                            newSubTotal = items.reduce((sum, row) => {
+                                if (row.querySelector('.item-status').textContent !== 'Cancelled' && 
+                                    row.querySelector('.item-status').textContent !== 'Return Requested' && 
+                                    row.querySelector('.item-status').textContent !== 'Returned') {
+                                    const price = parseFloat(row.querySelector('.item-price').textContent.replace('₹', '')) || 0;
+                                    const quantity = parseInt(row.querySelector('.item-quantity').textContent) || 0;
+                                    return sum + price * quantity;
+                                }
+                                return sum;
+                            }, 0);
+                            newFinalAmount = newSubTotal - (data.updatedOrder.discount || 0);
+                        }
+
+                        subtotalElement.textContent = `₹${(data.updatedOrder.status === 'Cancelled' ? (data.updatedOrder.originalSubTotal || newSubTotal || 0) : (newSubTotal || 0)).toFixed(2)}`;
+                        totalElement.textContent = `₹${(data.updatedOrder.status === 'Cancelled' ? (data.updatedOrder.originalFinalAmount || newFinalAmount || 0) : (newFinalAmount || 0)).toFixed(2)}`;
+                        totalAmountElement.textContent = `₹${(data.updatedOrder.status === 'Cancelled' ? (data.updatedOrder.originalFinalAmount || newFinalAmount || 0) : (newFinalAmount || 0)).toFixed(2)}`;
+                        if (discountElement && data.updatedOrder.discount !== undefined) {
+                            discountElement.textContent = `₹${(data.updatedOrder.discount || 0).toFixed(2)}`;
+                        }
+
+                        if (data.updatedOrder.originalFinalAmount && data.updatedOrder.finalAmount < data.updatedOrder.originalFinalAmount) {
+                            const priceDetails = document.querySelector('.price-details .card-body');
+                            const existingRefundPending = priceDetails.querySelector('.refund-pending');
+                            const refundAmount = (data.updatedOrder.originalFinalAmount - (newFinalAmount || data.updatedOrder.finalAmount || 0)).toFixed(2);
+                            if (!existingRefundPending) {
+                                const refundPendingDiv = document.createElement('div');
+                                refundPendingDiv.className = 'd-flex justify-content-between mt-2 text-success refund-pending';
+                                refundPendingDiv.innerHTML = `
+                                    <span>Refund Pending for Return</span>
+                                    <span>₹${refundAmount}</span>
+                                `;
+                                priceDetails.appendChild(refundPendingDiv);
+                            } else {
+                                existingRefundPending.innerHTML = `
+                                    <span>Refund Pending for Return</span>
+                                    <span>₹${refundAmount}</span>
+                                `;
+                            }
+                        }
+
                         const allItems = document.querySelectorAll('#order-items .item-status');
-                        const allReturnedOrCancelled = Array.from(allItems).every(status => status.textContent === 'Return Requested' || status.textContent === 'Returned' || status.textContent === 'Cancelled');
+                        const allReturnedOrCancelled = Array.from(allItems).every(status => 
+                            status.textContent === 'Return Requested' || 
+                            status.textContent === 'Returned' || 
+                            status.textContent === 'Cancelled'
+                        );
+                        console.log('All items returned or cancelled:', allReturnedOrCancelled, 'Item statuses:', Array.from(allItems).map(s => s.textContent));
                         if (allReturnedOrCancelled) {
                             const returnOrderBtn = document.getElementById('returnOrderBtn');
-                            if (returnOrderBtn) returnOrderBtn.remove();
+                            if (returnOrderBtn) {
+                                console.log('Removing Return Entire Order button');
+                                returnOrderBtn.remove();
+                            }
+                        } else {
+                            console.log('Keeping Return Entire Order button: eligible items remain');
+                            const eligibleItems = Array.from(document.querySelectorAll('#order-items .product-item'))
+                                .filter(row => {
+                                    const status = row.querySelector('.item-status').textContent;
+                                    return status !== 'Cancelled' && status !== 'Return Requested' && status !== 'Returned';
+                                });
+                            console.log('Eligible items for return:', eligibleItems.map(row => ({
+                                itemId: row.dataset.itemId,
+                                status: row.querySelector('.item-status').textContent
+                            })));
                         }
 
                         Swal.fire({
@@ -901,6 +1058,9 @@
                             showConfirmButton: false,
                             timer: 3000,
                             timerProgressBar: true
+                        }).then(() => {
+                            console.log('Reloading page after return request');
+                            location.reload();
                         });
                     } else {
                         Swal.fire({
@@ -934,6 +1094,7 @@
         }
 
         async function returnEntireOrder(orderId) {
+            console.log('Return Entire Order called with orderId:', orderId);
             const button = document.getElementById('returnOrderBtn');
             button.classList.add('btn-loading');
             button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Processing...';
@@ -943,6 +1104,31 @@
                     icon: 'error',
                     title: 'Invalid Input',
                     text: 'Order ID is missing.',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+                button.classList.remove('btn-loading');
+                button.innerHTML = '<i class="fas fa-undo me-1"></i> Return Entire Order';
+                return;
+            }
+
+            const items = Array.from(document.querySelectorAll('#order-items .product-item'));
+            const hasReturnableItems = items.some(row => {
+                const status = row.querySelector('.item-status').textContent;
+                return status !== 'Cancelled' && status !== 'Return Requested' && status !== 'Returned';
+            });
+
+            console.log('Has returnable items:', hasReturnableItems, 'Item statuses:', 
+                items.map(row => row.querySelector('.item-status').textContent));
+
+            if (!hasReturnableItems) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'No Items Eligible',
+                    text: 'No items in this order are eligible for return.',
                     toast: true,
                     position: 'top-end',
                     showConfirmButton: false,
@@ -1006,6 +1192,8 @@
                     });
                     const data = await response.json();
 
+                    console.log('Return entire order response:', data);
+
                     if (data.success) {
                         document.querySelectorAll('#order-items .product-item').forEach(row => {
                             const statusCell = row.querySelector('.item-status');
@@ -1019,8 +1207,8 @@
                         });
 
                         const orderStatusBadge = document.querySelector('.status-badge');
-                        orderStatusBadge.textContent = 'ReturnRequest';
-                        orderStatusBadge.className = 'status-badge status-ReturnRequest';
+                        orderStatusBadge.textContent = data.updatedStatus || 'ReturnRequest';
+                        orderStatusBadge.className = `status-badge status-${(data.updatedStatus || 'ReturnRequest').replace(/\s+/g, '')}`;
 
                         const timelineContainer = document.querySelector('.tracking-timeline');
                         timelineContainer.innerHTML += `
@@ -1033,6 +1221,61 @@
                             </div>
                         `;
 
+                        const subtotalElement = document.getElementById('subtotal-amount');
+                        const totalElement = document.getElementById('final-amount');
+                        const totalAmountElement = document.getElementById('total-amount');
+                        const discountElement = document.getElementById('discount-amount');
+
+                        // Calculate new totals client-side if API response is incomplete
+                        let newSubTotal = data.updatedOrder.displaySubTotal !== undefined 
+                            ? data.updatedOrder.displaySubTotal 
+                            : data.updatedOrder.subTotal;
+                        let newFinalAmount = data.updatedOrder.displayFinalAmount !== undefined 
+                            ? data.updatedOrder.displayFinalAmount 
+                            : data.updatedOrder.finalAmount;
+                        
+                        if (newSubTotal === undefined || newFinalAmount === undefined) {
+                            const items = Array.from(document.querySelectorAll('#order-items .product-item'));
+                            newSubTotal = items.reduce((sum, row) => {
+                                if (row.querySelector('.item-status').textContent !== 'Cancelled' && 
+                                    row.querySelector('.item-status').textContent !== 'Return Requested' && 
+                                    row.querySelector('.item-status').textContent !== 'Returned') {
+                                    const price = parseFloat(row.querySelector('.item-price').textContent.replace('₹', '')) || 0;
+                                    const quantity = parseInt(row.querySelector('.item-quantity').textContent) || 0;
+                                    return sum + price * quantity;
+                                }
+                                return sum;
+                            }, 0);
+                            newFinalAmount = newSubTotal - (data.updatedOrder.discount || 0);
+                        }
+
+                        subtotalElement.textContent = `₹${(data.updatedOrder.status === 'Cancelled' ? (data.updatedOrder.originalSubTotal || newSubTotal || 0) : (newSubTotal || 0)).toFixed(2)}`;
+                        totalElement.textContent = `₹${(data.updatedOrder.status === 'Cancelled' ? (data.updatedOrder.originalFinalAmount || newFinalAmount || 0) : (newFinalAmount || 0)).toFixed(2)}`;
+                        totalAmountElement.textContent = `₹${(data.updatedOrder.status === 'Cancelled' ? (data.updatedOrder.originalFinalAmount || newFinalAmount || 0) : (newFinalAmount || 0)).toFixed(2)}`;
+                        if (discountElement && data.updatedOrder.discount !== undefined) {
+                            discountElement.textContent = `₹${(data.updatedOrder.discount || 0).toFixed(2)}`;
+                        }
+
+                        if (data.updatedOrder.originalFinalAmount && (newFinalAmount || data.updatedOrder.finalAmount) < data.updatedOrder.originalFinalAmount) {
+                            const priceDetails = document.querySelector('.price-details .card-body');
+                            const existingRefundPending = priceDetails.querySelector('.refund-pending');
+                            const refundAmount = (data.updatedOrder.originalFinalAmount - (newFinalAmount || data.updatedOrder.finalAmount || 0)).toFixed(2);
+                            if (!existingRefundPending) {
+                                const refundPendingDiv = document.createElement('div');
+                                refundPendingDiv.className = 'd-flex justify-content-between mt-2 text-success refund-pending';
+                                refundPendingDiv.innerHTML = `
+                                    <span>Refund Pending for Return</span>
+                                    <span>₹${refundAmount}</span>
+                                `;
+                                priceDetails.appendChild(refundPendingDiv);
+                            } else {
+                                existingRefundPending.innerHTML = `
+                                    <span>Refund Pending for Return</span>
+                                    <span>₹${refundAmount}</span>
+                                `;
+                            }
+                        }
+
                         button.remove();
 
                         Swal.fire({
@@ -1044,6 +1287,9 @@
                             showConfirmButton: false,
                             timer: 3000,
                             timerProgressBar: true
+                        }).then(() => {
+                            console.log('Reloading page after entire order return');
+                            location.reload();
                         });
                     } else {
                         Swal.fire({
@@ -1077,8 +1323,8 @@
         }
 
         async function retryPayment(orderId, amount) {
+            console.log('Retry Payment called with orderId:', orderId, 'Amount:', amount);
             try {
-                console.log('Initiating retry payment for orderId:', orderId, 'Amount:', amount);
                 if (!orderId || typeof orderId !== 'string' || isNaN(amount) || amount <= 0) {
                     throw new Error('Invalid order ID or amount');
                 }
@@ -1095,7 +1341,7 @@
                 }
 
                 const data = await response.json();
-                console.log('Response data:', data);
+                console.log('Retry payment response:', data);
 
                 if (data.success && data.paymentMethod === 'razorpay') {
                     const rzp = new Razorpay({

@@ -34,7 +34,23 @@
                     <tbody>
                         <% if (orders && orders.length > 0) { %>
                             <% orders.forEach(order => { %>
-                                <tr>
+                                <% 
+                                    // Calculate fallback total for display
+                                    let calculatedTotal = 0;
+                                    if (order.items && Array.isArray(order.items) && order.items.length > 0) {
+                                        calculatedTotal = order.items.reduce((sum, item) => {
+                                            return sum + (item.cancelStatus === 'Cancelled' ? 0 : (item.price || 0) * (item.quantity || 0));
+                                        }, 0) - (order.discount || 0);
+                                    }
+                                    const displayTotal = (order.status === 'Cancelled' || order.status === 'Returned' || order.status === 'ReturnRequest') && order.originalFinalAmount
+                                        ? order.originalFinalAmount.toFixed(2)
+                                        : (order.displayFinalAmount || order.finalAmount || calculatedTotal || 0).toFixed(2);
+                                %>
+                                <tr data-order-id="<%= order.orderId %>"
+                                    data-original-final-amount="<%= order.originalFinalAmount || 0 %>"
+                                    data-final-amount="<%= order.finalAmount || 0 %>"
+                                    data-display-final-amount="<%= order.displayFinalAmount || 0 %>"
+                                    data-calculated-total="<%= calculatedTotal.toFixed(2) %>">
                                     <td>ORD<%= order.orderId || 'N/A' %></td>
                                     <td>
                                         <%= order.userId && order.userId.name ? order.userId.name : 'Unknown' %>
@@ -46,13 +62,11 @@
                                     <td>
                                         <%= order.items ? order.items.length : 0 %> items
                                     </td>
-                                    <td>₹<%= 
-                                        (order.status === 'Cancelled' || order.status === 'Returned') && order.originalFinalAmount 
-                                        ? order.originalFinalAmount.toFixed(2) 
-                                        : (order.finalAmount ? order.finalAmount.toFixed(2) : '0.00')
-                                    %></td>
+                                    <td>₹<%= displayTotal %></td>
                                     <td>
-                                        <select onchange="updateOrderStatus(this, '<%= order.orderId %>')" class="status-select <%= order.status ? order.status.toLowerCase().replace(/\s+/g, '') : 'pending' %>" data-previous-status="<%= order.status || 'Pending' %>">
+                                        <select onchange="updateOrderStatus(this, '<%= order.orderId %>')" 
+                                                class="status-select <%= order.status ? order.status.toLowerCase().replace(/\s+/g, '') : 'pending' %>" 
+                                                data-previous-status="<%= order.status || 'Pending' %>">
                                             <option value="Pending" <%= order.status === 'Pending' ? 'selected' : '' %>>Pending</option>
                                             <option value="Processing" <%= order.status === 'Processing' ? 'selected' : '' %>>Processing</option>
                                             <option value="Shipped" <%= order.status === 'Shipped' ? 'selected' : '' %>>Shipped</option>
@@ -93,12 +107,12 @@
                     <ul class="pagination justify-content-center">
                         <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
                             <a class="page-link" href="?page=1" aria-label="First">
-                                
+                                <span aria-hidden="true">««</span>
                             </a>
                         </li>
                         <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
                             <a class="page-link" href="?page=<%= currentPage - 1 %>" aria-label="Previous">
-                              
+                                <span aria-hidden="true">«</span>
                             </a>
                         </li>
                         <% 
@@ -116,12 +130,12 @@
                         <% } %>
                         <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
                             <a class="page-link" href="?page=<%= currentPage + 1 %>" aria-label="Next">
-                               
+                                <span aria-hidden="true">»</span>
                             </a>
                         </li>
                         <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
                             <a class="page-link" href="?page=<%= totalPages %>" aria-label="Last">
-                               
+                                <span aria-hidden="true">»»</span>
                             </a>
                         </li>
                     </ul>
@@ -340,11 +354,22 @@
 
         const body = { status: newStatus };
         if (itemId) body.itemId = itemId;
+        if (newStatus === 'ReturnRequest') {
+            body.action = 'initiateReturn';
+            body.returnReason = 'Admin-initiated return';
+        }
 
         // Normalize orderId (remove 'ORD' prefix if present)
         const cleanOrderId = orderId.startsWith('ORD') ? orderId.replace('ORD', '') : orderId;
 
-        console.log('Sending orderId:', cleanOrderId, 'Status:', newStatus); // Debug log
+        // Get financial data from the row's data attributes
+        const row = selectElement.closest('tr');
+        const originalTotal = parseFloat(row.dataset.originalFinalAmount) || 0;
+        const finalAmount = parseFloat(row.dataset.finalAmount) || 0;
+        const displayFinalAmount = parseFloat(row.dataset.displayFinalAmount) || 0;
+        const calculatedTotal = parseFloat(row.dataset.calculatedTotal) || 0;
+
+        console.log('Sending orderId:', cleanOrderId, 'Body:', body); // Debug log
 
         fetch(`/admin/updateOrderStatus/${cleanOrderId}`, {
             method: 'POST',
@@ -359,6 +384,14 @@
                 if (data.success) {
                     selectElement.className = `status-select ${newStatus.toLowerCase().replace(/\s+/g, '')}`;
                     selectElement.dataset.previousStatus = newStatus;
+
+                    // Update the Total column dynamically
+                    const totalCell = row.cells[3];
+                    const displayTotal = (newStatus === 'Cancelled' || newStatus === 'Returned' || newStatus === 'ReturnRequest') && originalTotal
+                        ? originalTotal.toFixed(2)
+                        : (displayFinalAmount || finalAmount || calculatedTotal || 0).toFixed(2);
+                    totalCell.textContent = `₹${displayTotal}`;
+
                     Swal.fire({
                         icon: 'success',
                         title: 'Status Updated',

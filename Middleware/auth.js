@@ -1,6 +1,5 @@
 const User=require("../Models/userSchema");
 
-
 const userAuth= async (req,res,next)=>{
    if(req.session.user){
     return next()

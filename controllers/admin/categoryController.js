@@ -88,6 +88,7 @@ const addCategory = async (req, res) => {
 const getListCategory = async (req, res) => {
     try {
         const categoryid = req.query.id;
+   
         await Category.updateOne({ _id: categoryid }, { $set: { isListed: false } });
         res.redirect("/admin/category");
     } catch (error) {

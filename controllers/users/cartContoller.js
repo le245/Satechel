@@ -262,7 +262,6 @@ const updateCart = async (req, res) => {
     item.price = await calculateDiscountedPrice(product);
     await cart.save();
 
-    // Return the updated item data
     return res.status(STATUS_CODES.OK).json({
       success: true,
       quantity: item.quantity,
@@ -270,7 +269,7 @@ const updateCart = async (req, res) => {
       message: 'Cart updated',
     });
   } catch (error) {
-    console.error('Error updating cart:', error);
+   
     return res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, message: 'Server error' });
   }
 };
