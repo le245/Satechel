@@ -13,7 +13,7 @@ async function handleUpload(file) {
   try {
     const res = await cloudinary.uploader.upload(file, {
       resource_type: 'auto',
-      folder: 'perfume_images',
+      folder: 'bags',
     });
     return res;
   } catch (error) {
