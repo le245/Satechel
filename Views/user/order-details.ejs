@@ -8,6 +8,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
     <style>
+        /* Existing styles remain unchanged */
         body {
             background-color: #f5f5f5;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -207,6 +208,18 @@
 <body>
     <div class="container">
         <div class="order-container">
+            <!-- Calculate totals once at the top -->
+            <% 
+                let calculatedSubTotal = 0;
+                let calculatedTotal = 0;
+                if (order.items && order.items.length > 0) {
+                    calculatedSubTotal = order.items.reduce((sum, item) => {
+                        return sum + (item.cancelStatus === 'Cancelled' ? 0 : (item.price || 0) * (item.quantity || 0));
+                    }, 0);
+                    calculatedTotal = calculatedSubTotal - (order.discount || 0);
+                }
+            %>
+
             <!-- Order Header -->
             <div class="order-header">
                 <div class="row align-items-center">
@@ -277,18 +290,7 @@
                             <h5 class="card-title"><i class="fas fa-money-bill-wave me-2"></i>Total Amount</h5>
                             <p class="card-text" id="total-amount">
                                 <% 
-                                    // Calculate fallback totals once
-                                    let calculatedSubTotal = 0;
-                                    let calculatedTotal = 0;
-                                    if (order.items && order.items.length > 0) {
-                                        calculatedSubTotal = order.items.reduce((sum, item) => {
-                                            return sum + (item.cancelStatus === 'Cancelled' ? 0 : (item.price || 0) * (item.quantity || 0));
-                                        }, 0);
-                                        calculatedTotal = calculatedSubTotal - (order.discount || 0);
-                                    }
-                                    const displayTotal = order.status === 'Cancelled' 
-                                        ? (order.originalFinalAmount || calculatedTotal || 0).toFixed(2)
-                                        : (order.displayFinalAmount || order.finalAmount || calculatedTotal || 0).toFixed(2);
+                                    const displayTotal = (order.displayFinalAmount || order.originalFinalAmount || order.finalAmount || calculatedTotal || 0).toFixed(2);
                                 %>
                                 ₹<%= displayTotal %>
                             </p>
@@ -407,13 +409,9 @@
                     <div class="card price-details">
                         <div class="card-body">
                             <% 
-                                // Reuse calculated totals from Order Summary
-                                const displaySubTotal = order.status === 'Cancelled' 
-                                    ? (order.originalSubTotal || calculatedSubTotal || 0).toFixed(2)
-                                    : (order.displaySubTotal || order.subTotal || calculatedSubTotal || 0).toFixed(2);
-                                const displayFinalAmount = order.status === 'Cancelled' 
-                                    ? (order.originalFinalAmount || calculatedTotal || 0).toFixed(2)
-                                    : (order.displayFinalAmount || order.finalAmount || calculatedTotal || 0).toFixed(2);
+                                const displaySubTotal = (order.displaySubTotal || order.originalSubTotal || order.subTotal || calculatedSubTotal || 0).toFixed(2);
+                                const displayFinalAmount = (order.displayFinalAmount || order.originalFinalAmount || order.finalAmount || calculatedTotal || 0).toFixed(2);
+                                const refundAmount = (order.refundedAmount || 0).toFixed(2);
                             %>
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Subtotal</span>
@@ -442,16 +440,16 @@
                                     <%= order.status === 'PaymentFailed' ? 'Failed' : 'Completed' %>
                                 </span>
                             </div>
-                            <% if (order.status === 'Cancelled' && (order.originalFinalAmount || calculatedTotal) > 0) { %>
+                            <% if (order.status === 'Cancelled' && refundAmount > 0) { %>
                             <div class="d-flex justify-content-between mt-2 text-success">
                                 <span>Refunded to Wallet</span>
-                                <span>₹<%= (order.originalFinalAmount || calculatedTotal || 0).toFixed(2) %></span>
+                                <span>₹<%= refundAmount %></span>
                             </div>
                             <% } %>
-                            <% if (order.status === 'ReturnRequest' && (order.originalFinalAmount || calculatedTotal) > (order.finalAmount || calculatedTotal || 0)) { %>
+                            <% if (['ReturnRequest', 'Returned'].includes(order.status) && refundAmount > 0) { %>
                             <div class="d-flex justify-content-between mt-2 text-success refund-pending">
                                 <span>Refund Pending for Return</span>
-                                <span>₹<%= ((order.originalFinalAmount || calculatedTotal || 0) - (order.finalAmount || calculatedTotal || 0)).toFixed(2) %></span>
+                                <span>₹<%= refundAmount %></span>
                             </div>
                             <% } %>
                         </div>
@@ -467,7 +465,6 @@
                         <div class="card-body">
                             <div class="tracking-timeline">
                                 <% 
-                                    // Define allStatuses if not passed from controller
                                     let allStatusesLocal = typeof allStatuses !== 'undefined' ? allStatuses : [
                                         'PaymentPending',
                                         'PaymentFailed',
@@ -561,7 +558,7 @@
                         </button>
                     <% } %>
                     <% if (order.status && order.status.toLowerCase() === 'delivered') { %>
-                        <a href="/download-invoice/<%= order._id %>" class="btn btn-sm me-2" style="background-color: greyturns grey; color: #fff; border-radius: 5px; padding: 6px 12px;">
+                        <a href="/download-invoice/<%= order._id %>" class="btn btn-sm me-2" style="background-color: grey; color: #fff; border-radius: 5px; padding: 6px 12px;">
                             <i class="fas fa-download me-1"></i> Download Invoice
                         </a>
                     <% } %>
@@ -589,8 +586,10 @@
             originalSubTotal: '<%= order.originalSubTotal %>',
             originalFinalAmount: '<%= order.originalFinalAmount %>',
             discount: '<%= order.discount %>',
-            calculatedSubTotal: '<%= order.items.reduce((sum, item) => sum + (item.cancelStatus === "Cancelled" ? 0 : (item.price || 0) * (item.quantity || 0)), 0).toFixed(2) %>',
-            calculatedTotal: '<%= (order.items.reduce((sum, item) => sum + (item.cancelStatus === "Cancelled" ? 0 : (item.price || 0) * (item.quantity || 0)), 0) - (order.discount || 0)).toFixed(2) %>'
+            couponApplied: '<%= order.couponApplied %>',
+            refundedAmount: '<%= order.refundedAmount %>',
+            calculatedSubTotal: '<%= calculatedSubTotal %>',
+            calculatedTotal: '<%= calculatedTotal %>'
         });
 
         async function cancelOrder(orderId, currentStatus) {
@@ -767,7 +766,7 @@
                         const discountElement = document.getElementById('discount-amount');
                         const totalAmountElement = document.getElementById('total-amount');
 
-                        // Calculate new totals client-side if API response is incomplete
+                        // Use API-provided values if available, otherwise calculate client-side
                         let newSubTotal = data.updatedOrder.displaySubTotal !== undefined 
                             ? data.updatedOrder.displaySubTotal 
                             : data.updatedOrder.subTotal;
@@ -776,21 +775,13 @@
                             : data.updatedOrder.finalAmount;
                         
                         if (newSubTotal === undefined || newFinalAmount === undefined) {
-                            const items = Array.from(document.querySelectorAll('#order-items .product-item'));
-                            newSubTotal = items.reduce((sum, row) => {
-                                if (row.querySelector('.item-status').textContent !== 'Cancelled') {
-                                    const price = parseFloat(row.querySelector('.item-price').textContent.replace('₹', '')) || 0;
-                                    const quantity = parseInt(row.querySelector('.item-quantity').textContent) || 0;
-                                    return sum + price * quantity;
-                                }
-                                return sum;
-                            }, 0);
-                            newFinalAmount = newSubTotal - (data.updatedOrder.discount || 0);
+                            newSubTotal = <%= calculatedSubTotal %>;
+                            newFinalAmount = <%= calculatedTotal %>;
                         }
 
-                        subtotalElement.textContent = `₹${(data.updatedOrder.status === 'Cancelled' ? (data.updatedOrder.originalSubTotal || newSubTotal || 0) : (newSubTotal || 0)).toFixed(2)}`;
-                        totalElement.textContent = `₹${(data.updatedOrder.status === 'Cancelled' ? (data.updatedOrder.originalFinalAmount || newFinalAmount || 0) : (newFinalAmount || 0)).toFixed(2)}`;
-                        totalAmountElement.textContent = `₹${(data.updatedOrder.status === 'Cancelled' ? (data.updatedOrder.originalFinalAmount || newFinalAmount || 0) : (newFinalAmount || 0)).toFixed(2)}`;
+                        subtotalElement.textContent = `₹${newSubTotal.toFixed(2)}`;
+                        totalElement.textContent = `₹${newFinalAmount.toFixed(2)}`;
+                        totalAmountElement.textContent = `₹${newFinalAmount.toFixed(2)}`;
                         if (discountElement && data.updatedOrder.discount !== undefined) {
                             discountElement.textContent = `₹${(data.updatedOrder.discount || 0).toFixed(2)}`;
                         }
@@ -932,9 +923,7 @@
                 try {
                     const response = await fetch(`/orders/return/${orderId}`, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ itemId, reason: returnReason })
                     });
                     const data = await response.json();
@@ -973,53 +962,55 @@
                         const totalAmountElement = document.getElementById('total-amount');
                         const discountElement = document.getElementById('discount-amount');
 
-                        // Calculate new totals client-side if API response is incomplete
-                        let newSubTotal = data.updatedOrder.displaySubTotal !== undefined 
+                        // Use API-provided display values
+                        const newSubTotal = data.updatedOrder.displaySubTotal !== undefined 
                             ? data.updatedOrder.displaySubTotal 
-                            : data.updatedOrder.subTotal;
-                        let newFinalAmount = data.updatedOrder.displayFinalAmount !== undefined 
+                            : data.updatedOrder.originalSubTotal || data.updatedOrder.subTotal;
+                        const newFinalAmount = data.updatedOrder.displayFinalAmount !== undefined 
                             ? data.updatedOrder.displayFinalAmount 
-                            : data.updatedOrder.finalAmount;
-                        
-                        if (newSubTotal === undefined || newFinalAmount === undefined) {
-                            const items = Array.from(document.querySelectorAll('#order-items .product-item'));
-                            newSubTotal = items.reduce((sum, row) => {
-                                if (row.querySelector('.item-status').textContent !== 'Cancelled' && 
-                                    row.querySelector('.item-status').textContent !== 'Return Requested' && 
-                                    row.querySelector('.item-status').textContent !== 'Returned') {
-                                    const price = parseFloat(row.querySelector('.item-price').textContent.replace('₹', '')) || 0;
-                                    const quantity = parseInt(row.querySelector('.item-quantity').textContent) || 0;
-                                    return sum + price * quantity;
-                                }
-                                return sum;
-                            }, 0);
-                            newFinalAmount = newSubTotal - (data.updatedOrder.discount || 0);
-                        }
+                            : data.updatedOrder.originalFinalAmount || data.updatedOrder.finalAmount;
+                        const refundAmount = data.updatedOrder.refundedAmount || 0;
 
-                        subtotalElement.textContent = `₹${(data.updatedOrder.status === 'Cancelled' ? (data.updatedOrder.originalSubTotal || newSubTotal || 0) : (newSubTotal || 0)).toFixed(2)}`;
-                        totalElement.textContent = `₹${(data.updatedOrder.status === 'Cancelled' ? (data.updatedOrder.originalFinalAmount || newFinalAmount || 0) : (newFinalAmount || 0)).toFixed(2)}`;
-                        totalAmountElement.textContent = `₹${(data.updatedOrder.status === 'Cancelled' ? (data.updatedOrder.originalFinalAmount || newFinalAmount || 0) : (newFinalAmount || 0)).toFixed(2)}`;
+                        subtotalElement.textContent = `₹${newSubTotal.toFixed(2)}`;
+                        totalElement.textContent = `₹${newFinalAmount.toFixed(2)}`;
+                        totalAmountElement.textContent = `₹${newFinalAmount.toFixed(2)}`;
                         if (discountElement && data.updatedOrder.discount !== undefined) {
                             discountElement.textContent = `₹${(data.updatedOrder.discount || 0).toFixed(2)}`;
                         }
 
-                        if (data.updatedOrder.originalFinalAmount && data.updatedOrder.finalAmount < data.updatedOrder.originalFinalAmount) {
+                        // Update refund amount display
+                        if (['ReturnRequest', 'Returned'].includes(data.updatedOrder.status) && refundAmount > 0) {
                             const priceDetails = document.querySelector('.price-details .card-body');
                             const existingRefundPending = priceDetails.querySelector('.refund-pending');
-                            const refundAmount = (data.updatedOrder.originalFinalAmount - (newFinalAmount || data.updatedOrder.finalAmount || 0)).toFixed(2);
                             if (!existingRefundPending) {
                                 const refundPendingDiv = document.createElement('div');
                                 refundPendingDiv.className = 'd-flex justify-content-between mt-2 text-success refund-pending';
                                 refundPendingDiv.innerHTML = `
                                     <span>Refund Pending for Return</span>
-                                    <span>₹${refundAmount}</span>
+                                    <span>₹${refundAmount.toFixed(2)}</span>
                                 `;
                                 priceDetails.appendChild(refundPendingDiv);
                             } else {
                                 existingRefundPending.innerHTML = `
                                     <span>Refund Pending for Return</span>
-                                    <span>₹${refundAmount}</span>
+                                    <span>₹${refundAmount.toFixed(2)}</span>
                                 `;
+                            }
+                        }
+
+                        // Update Coupon Applied display
+                        if (data.updatedOrder.couponApplied || <%= order.couponApplied ? 'true' : 'false' %>) {
+                            const priceDetails = document.querySelector('.price-details .card-body');
+                            let couponAppliedDiv = priceDetails.querySelector('.coupon-applied');
+                            if (!couponAppliedDiv && data.updatedOrder.discount > 0) {
+                                couponAppliedDiv = document.createElement('div');
+                                couponAppliedDiv.className = 'd-flex justify-content-between mb-2 coupon-applied';
+                                couponAppliedDiv.innerHTML = `
+                                    <span>Coupon Applied</span>
+                                    <span><i class="fas fa-check-circle me-1" style="color: #6b7280;"></i> Yes</span>
+                                `;
+                                const discountDiv = priceDetails.querySelector('.d-flex.justify-content-between.mb-2:nth-child(2)') || priceDetails.firstChild;
+                                priceDetails.insertBefore(couponAppliedDiv, discountDiv.nextSibling);
                             }
                         }
 
@@ -1185,9 +1176,7 @@
                 try {
                     const response = await fetch(`/orders/return/${orderId}`, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ reason: returnReason })
                     });
                     const data = await response.json();
@@ -1226,53 +1215,55 @@
                         const totalAmountElement = document.getElementById('total-amount');
                         const discountElement = document.getElementById('discount-amount');
 
-                        // Calculate new totals client-side if API response is incomplete
-                        let newSubTotal = data.updatedOrder.displaySubTotal !== undefined 
+                        // Use API-provided display values
+                        const newSubTotal = data.updatedOrder.displaySubTotal !== undefined 
                             ? data.updatedOrder.displaySubTotal 
-                            : data.updatedOrder.subTotal;
-                        let newFinalAmount = data.updatedOrder.displayFinalAmount !== undefined 
+                            : data.updatedOrder.originalSubTotal || data.updatedOrder.subTotal;
+                        const newFinalAmount = data.updatedOrder.displayFinalAmount !== undefined 
                             ? data.updatedOrder.displayFinalAmount 
-                            : data.updatedOrder.finalAmount;
-                        
-                        if (newSubTotal === undefined || newFinalAmount === undefined) {
-                            const items = Array.from(document.querySelectorAll('#order-items .product-item'));
-                            newSubTotal = items.reduce((sum, row) => {
-                                if (row.querySelector('.item-status').textContent !== 'Cancelled' && 
-                                    row.querySelector('.item-status').textContent !== 'Return Requested' && 
-                                    row.querySelector('.item-status').textContent !== 'Returned') {
-                                    const price = parseFloat(row.querySelector('.item-price').textContent.replace('₹', '')) || 0;
-                                    const quantity = parseInt(row.querySelector('.item-quantity').textContent) || 0;
-                                    return sum + price * quantity;
-                                }
-                                return sum;
-                            }, 0);
-                            newFinalAmount = newSubTotal - (data.updatedOrder.discount || 0);
-                        }
+                            : data.updatedOrder.originalFinalAmount || data.updatedOrder.finalAmount;
+                        const refundAmount = data.updatedOrder.refundedAmount || 0;
 
-                        subtotalElement.textContent = `₹${(data.updatedOrder.status === 'Cancelled' ? (data.updatedOrder.originalSubTotal || newSubTotal || 0) : (newSubTotal || 0)).toFixed(2)}`;
-                        totalElement.textContent = `₹${(data.updatedOrder.status === 'Cancelled' ? (data.updatedOrder.originalFinalAmount || newFinalAmount || 0) : (newFinalAmount || 0)).toFixed(2)}`;
-                        totalAmountElement.textContent = `₹${(data.updatedOrder.status === 'Cancelled' ? (data.updatedOrder.originalFinalAmount || newFinalAmount || 0) : (newFinalAmount || 0)).toFixed(2)}`;
+                        subtotalElement.textContent = `₹${newSubTotal.toFixed(2)}`;
+                        totalElement.textContent = `₹${newFinalAmount.toFixed(2)}`;
+                        totalAmountElement.textContent = `₹${newFinalAmount.toFixed(2)}`;
                         if (discountElement && data.updatedOrder.discount !== undefined) {
                             discountElement.textContent = `₹${(data.updatedOrder.discount || 0).toFixed(2)}`;
                         }
 
-                        if (data.updatedOrder.originalFinalAmount && (newFinalAmount || data.updatedOrder.finalAmount) < data.updatedOrder.originalFinalAmount) {
+                        // Update refund amount display
+                        if (['ReturnRequest', 'Returned'].includes(data.updatedOrder.status) && refundAmount > 0) {
                             const priceDetails = document.querySelector('.price-details .card-body');
                             const existingRefundPending = priceDetails.querySelector('.refund-pending');
-                            const refundAmount = (data.updatedOrder.originalFinalAmount - (newFinalAmount || data.updatedOrder.finalAmount || 0)).toFixed(2);
                             if (!existingRefundPending) {
                                 const refundPendingDiv = document.createElement('div');
                                 refundPendingDiv.className = 'd-flex justify-content-between mt-2 text-success refund-pending';
                                 refundPendingDiv.innerHTML = `
                                     <span>Refund Pending for Return</span>
-                                    <span>₹${refundAmount}</span>
+                                    <span>₹${refundAmount.toFixed(2)}</span>
                                 `;
                                 priceDetails.appendChild(refundPendingDiv);
                             } else {
                                 existingRefundPending.innerHTML = `
                                     <span>Refund Pending for Return</span>
-                                    <span>₹${refundAmount}</span>
+                                    <span>₹${refundAmount.toFixed(2)}</span>
                                 `;
+                            }
+                        }
+
+                        // Update Coupon Applied display
+                        if (data.updatedOrder.couponApplied || <%= order.couponApplied ? 'true' : 'false' %>) {
+                            const priceDetails = document.querySelector('.price-details .card-body');
+                            let couponAppliedDiv = priceDetails.querySelector('.coupon-applied');
+                            if (!couponAppliedDiv && data.updatedOrder.discount > 0) {
+                                couponAppliedDiv = document.createElement('div');
+                                couponAppliedDiv.className = 'd-flex justify-content-between mb-2 coupon-applied';
+                                couponAppliedDiv.innerHTML = `
+                                    <span>Coupon Applied</span>
+                                    <span><i class="fas fa-check-circle me-1" style="color: #6b7280;"></i> Yes</span>
+                                `;
+                                const discountDiv = priceDetails.querySelector('.d-flex.justify-content-between.mb-2:nth-child(2)') || priceDetails.firstChild;
+                                priceDetails.insertBefore(couponAppliedDiv, discountDiv.nextSibling);
                             }
                         }
 

@@ -333,9 +333,10 @@ const approveReturn = async (req, res) => {
         return res.status(404).json({ success: false, message: 'User not found' });
       }
 
-      const discountFactor = order.subTotal > 0 ? order.finalAmount / order.subTotal : 1;
+      const discountFactor = order.originalSubTotal > 0 ? order.originalFinalAmount / order.originalSubTotal : 1;
       const itemTotal = item.price * item.quantity;
       const refundAmount = itemTotal * discountFactor;
+
 
       user.wallet = (user.wallet || 0) + refundAmount;
 

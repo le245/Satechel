@@ -172,7 +172,7 @@
       color: var(--white);
     }
 
-    .status-cancelled, .status-returned {
+    .status-cancelled, .status-returned, .status-returnrequest {
       background-color: var(--danger);
       color: var(--white);
     }
@@ -366,6 +366,7 @@
       case 'delivered': return 'status-delivered';
       case 'cancelled': return 'status-cancelled';
       case 'returned': return 'status-returned';
+      case 'returnrequest': return 'status-returnrequest';
       default: return 'status-pending';
     }
   } %>
@@ -415,7 +416,21 @@
         <h3 class="section-title">Price Summary</h3>
         <div class="detail-row">
           <span class="detail-label">Subtotal:</span>
-          <span class="detail-value"><%= formatCurrency(order?.subTotal) %></span>
+          <span class="detail-value">
+            <% 
+            
+              let calculatedSubTotal = 0;
+              if (order?.items && Array.isArray(order.items) && order.items.length > 0) {
+                calculatedSubTotal = order.items.reduce((sum, item) => {
+                  return sum + (item.cancelStatus === 'Cancelled' ? 0 : (item.price || 0) * (item.quantity || 1));
+                }, 0);
+              }
+              const displaySubTotal = (order?.status === 'Cancelled' || order?.status === 'Returned' || order?.status === 'ReturnRequest')
+                ? (order?.originalSubTotal || order?.displaySubTotal || order?.subTotal || calculatedSubTotal || 0)
+                : (order?.displaySubTotal || order?.subTotal || calculatedSubTotal || 0);
+            %>
+            <%= formatCurrency(displaySubTotal) %>
+          </span>
         </div>
         <% if (typeof order?.discount !== 'undefined' && order?.discount > 0) { %>
         <div class="detail-row">
@@ -425,7 +440,16 @@
         <% } %>
         <div class="detail-row">
           <span class="detail-label">Final Amount:</span>
-          <span class="detail-value price-highlight"><%= formatCurrency(order?.finalAmount) %></span>
+          <span class="detail-value price-highlight">
+            <% 
+              // Calculate fallback final amount
+              let calculatedTotal = calculatedSubTotal - (order?.discount || 0);
+              const displayFinalAmount = (order?.status === 'Cancelled' || order?.status === 'Returned' || order?.status === 'ReturnRequest')
+                ? (order?.originalFinalAmount || order?.displayFinalAmount || order?.finalAmount || calculatedTotal || 0)
+                : (order?.displayFinalAmount || order?.finalAmount || calculatedTotal || 0);
+            %>
+            <%= formatCurrency(displayFinalAmount) %>
+          </span>
         </div>
       </div>
       

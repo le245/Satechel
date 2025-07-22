@@ -917,12 +917,12 @@ const downloadInvoice = async (req, res) => {
           price: item.price,
         })),
       bottomNotice:
-        `Subtotal: ₹${order.subTotal.toFixed(2)}\n` +
+        `Subtotal: ₹${order.originalSubTotal.toFixed(2)}\n` +
         (order.discount > 0
           ? `Discount: -₹${order.discount.toFixed(2)}\n`
           : "") +
         (order.couponApplied ? `Coupon Applied: Yes\n` : "") +
-        `Final Amount: ₹${order.finalAmount.toFixed(2)}`,
+        `Final Amount: ₹${order.originalFinalAmount.toFixed(2)}`,
     };
 
     const result = await easyinvoice.createInvoice(data);

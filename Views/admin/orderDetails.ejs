@@ -103,6 +103,10 @@
         .timeline-content {
             padding-left: 10px;
         }
+        .coupon-note {
+            color: #856404;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
@@ -190,9 +194,14 @@
                                         }, 0);
                                         calculatedTotal = calculatedSubTotal - (order.discount || 0);
                                     }
+                                    // Prioritize calculatedTotal if server-provided totals are inconsistent
                                     const displayTotal = order.status === 'Cancelled' 
                                         ? (order.originalFinalAmount || calculatedTotal || 0).toFixed(2)
-                                        : (order.displayFinalAmount || order.finalAmount || calculatedTotal || 0).toFixed(2);
+                                        : (order.displayFinalAmount && order.displayFinalAmount === calculatedSubTotal - (order.discount || 0) 
+                                            ? order.displayFinalAmount 
+                                            : order.finalAmount && order.finalAmount === calculatedSubTotal - (order.discount || 0) 
+                                            ? order.finalAmount 
+                                            : calculatedTotal || 0).toFixed(2);
                                 %>
                                 ₹<%= displayTotal %>
                             </p>
@@ -309,13 +318,19 @@
                     <div class="card price-details">
                         <div class="card-body">
                             <% 
-                                // Reuse calculated totals from Order Summary
+                                // Ensure discount is applied in display totals
                                 const displaySubTotal = order.status === 'Cancelled' 
                                     ? (order.originalSubTotal || calculatedSubTotal || 0).toFixed(2)
-                                    : (order.displaySubTotal || order.subTotal || calculatedSubTotal || 0).toFixed(2);
+                                    : (order.displaySubTotal && order.displaySubTotal === calculatedSubTotal 
+                                        ? order.displaySubTotal 
+                                        : order.subTotal || calculatedSubTotal || 0).toFixed(2);
                                 const displayFinalAmount = order.status === 'Cancelled' 
                                     ? (order.originalFinalAmount || calculatedTotal || 0).toFixed(2)
-                                    : (order.displayFinalAmount || order.finalAmount || calculatedTotal || 0).toFixed(2);
+                                    : (order.displayFinalAmount && order.displayFinalAmount === calculatedSubTotal - (order.discount || 0) 
+                                        ? order.displayFinalAmount 
+                                        : order.finalAmount && order.finalAmount === calculatedSubTotal - (order.discount || 0) 
+                                        ? order.finalAmount 
+                                        : calculatedTotal || 0).toFixed(2);
                             %>
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Subtotal</span>
@@ -323,14 +338,13 @@
                             </div>
                             <% if (order.discount > 0) { %>
                             <div class="d-flex justify-content-between mb-2">
-                                <span>Discount</span>
+                                <span>Discount <%= order.couponApplied ? '(Coupon)' : '' %></span>
                                 <span id="discount-amount">₹<%= (order.discount || 0).toFixed(2) %></span>
                             </div>
-                            <% } %>
-                            <% if (order.couponApplied) { %>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Coupon Applied</span>
-                                <span><i class="fas fa-check-circle me-1" style="color: #6b7280;"></i> Yes</span>
+                            <% } else if (order.couponApplied) { %>
+                            <div class="d-flex justify-content-between mb-2 coupon-note">
+                                <span>Coupon Applied (No Discount)</span>
+                                <span>₹0.00</span>
                             </div>
                             <% } %>
                             <hr class="my-2">
@@ -363,7 +377,6 @@
                         <div class="card-body">
                             <div class="tracking-timeline">
                                 <% 
-                                    // Use existing allStatuses declaration
                                     const mainStatuses = ['Pending', 'Processing', 'Shipped', 'Delivered'];
                                     const returnStatuses = ['ReturnRequest', 'Returned'];
                                     let displayStatuses = [];
@@ -415,7 +428,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        // Log order financial data for debugging
+        // Enhanced logging for debugging
         console.log('Order financial data:', {
             orderId: '<%= order.orderId %>',
             status: '<%= order.status %>',
@@ -426,8 +439,10 @@
             originalSubTotal: '<%= order.originalSubTotal %>',
             originalFinalAmount: '<%= order.originalFinalAmount %>',
             discount: '<%= order.discount %>',
+            couponApplied: '<%= order.couponApplied %>',
             calculatedSubTotal: '<%= order.items && Array.isArray(order.items) ? order.items.reduce((sum, item) => sum + (item.cancelStatus === "Cancelled" ? 0 : (item.price || 0) * (item.quantity || 0)), 0).toFixed(2) : "0.00" %>',
-            calculatedTotal: '<%= order.items && Array.isArray(order.items) ? (order.items.reduce((sum, item) => sum + (item.cancelStatus === "Cancelled" ? 0 : (item.price || 0) * (item.quantity || 0)), 0) - (order.discount || 0)).toFixed(2) : "0.00" %>'
+            calculatedTotal: '<%= order.items && Array.isArray(order.items) ? (order.items.reduce((sum, item) => sum + (item.cancelStatus === "Cancelled" ? 0 : (item.price || 0) * (item.quantity || 0)), 0) - (order.discount || 0)).toFixed(2) : "0.00" %>',
+            isDiscountApplied: '<%= (order.displayFinalAmount && order.displayFinalAmount === (order.displaySubTotal || order.subTotal || calculatedSubTotal) - (order.discount || 0)) || (order.finalAmount && order.finalAmount === (order.subTotal || calculatedSubTotal) - (order.discount || 0)) ? "true" : "false" %>'
         });
 
         window.approveReturn = function(orderId, productId) {
