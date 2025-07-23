@@ -692,5 +692,3 @@ module.exports = {
     downloadExcelReport,
     downloadPDFReport
 };
-
-  

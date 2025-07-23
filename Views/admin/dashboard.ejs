@@ -257,7 +257,6 @@
                                     </td>
                                     <td>
                                         <% 
-                                            // Calculate fallback total
                                             let calculatedSubTotal = 0;
                                             if (order.items && Array.isArray(order.items) && order.items.length > 0) {
                                                 calculatedSubTotal = order.items.reduce((sum, item) => {
@@ -273,7 +272,6 @@
                                     <td>₹<%= order.discount ? order.discount.toFixed(2) : '0.00' %></td>
                                     <td>
                                         <% 
-                                            // Calculate fallback final amount
                                             let calculatedTotal = calculatedSubTotal - (order.discount || 0);
                                             const displayFinalAmount = (order.status === 'Cancelled' || order.status === 'Returned' || order.status === 'ReturnRequest') 
                                                 ? (order.originalFinalAmount || order.displayFinalAmount || order.finalAmount || calculatedTotal || 0).toFixed(2)
@@ -313,39 +311,7 @@
             <div class="card">
                 <div class="card-body">
                     <h4>Sales Over Time</h4>
-                    ```chartjs
-                    {
-                        "type": "line",
-                        "data": {
-                            "labels": <%- JSON.stringify(salesData.map(s => s.date)) %>,
-                            "datasets": [{
-                                "label": "Total Sales (₹)",
-                                "data": <%- JSON.stringify(salesData.map(s => s.revenue || 0)) %>,
-                                "fill": false,
-                                "borderColor": "rgba(255, 99, 132, 1)",
-                                "backgroundColor": "rgba(255, 99, 132, 0.2)",
-                                "tension": 0.1
-                            }]
-                        },
-                        "options": {
-                            "scales": {
-                                "y": {
-                                    "beginAtZero": true,
-                                    "title": { "display": true, "text": "Sales (₹)" },
-                                    "ticks": {
-                                        "callback": "function(value) { return '₹' + value.toLocaleString(); }"
-                                    }
-                                },
-                                "x": {
-                                    "title": { "display": true, "text": "Date" }
-                                }
-                            },
-                            "plugins": {
-                                "legend": { "display": true }
-                            }
-                        }
-                    }
-                    ```
+                    <canvas id="salesChart"></canvas>
                 </div>
             </div>
         </div>
@@ -461,6 +427,40 @@
                 y: {
                     beginAtZero: true,
                     title: { display: true, text: 'Revenue (₹)' }
+                }
+            },
+            plugins: {
+                legend: { display: true }
+            }
+        }
+    });
+
+    // Initialize Sales Over Time Chart
+    const salesChartCtx = document.getElementById('salesChart').getContext('2d');
+    const salesChart = new Chart(salesChartCtx, {
+        type: 'line',
+        data: {
+            labels: <%- JSON.stringify(salesData.map(s => s.date)) || '["22/7/2025"]' %>,
+            datasets: [{
+                label: 'Total Sales (₹)',
+                data: <%- JSON.stringify(salesData.map(s => s.revenue || 0)) || '[61539.20]' %>,
+                fill: false,
+                borderColor: 'rgba(255, 99, 132, 1)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Sales (₹)' },
+                    ticks: {
+                        callback: function(value) { return '₹' + value.toLocaleString(); }
+                    }
+                },
+                x: {
+                    title: { display: true, text: 'Date' }
                 }
             },
             plugins: {

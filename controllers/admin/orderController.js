@@ -139,7 +139,7 @@ const updateStatus = async (req, res) => {
             item.cancelStatus = 'Cancelled';
             order.status = determineOrderStatus(order.items);
         } 
-        // Handle initiateReturn action
+    
         else if (action === 'initiateReturn' && currentStatus === 'Delivered') {
             if (!itemId && order.items.length > 1) {
                 return res.status(400).json({
@@ -187,7 +187,7 @@ const updateStatus = async (req, res) => {
 
             order.status = determineOrderStatus(order.items);
         } 
-        // Handle ReturnRequest status update
+      
         else if (status === 'ReturnRequest' && currentStatus === 'Delivered') {
             let updatedItems = false;
             if (itemId) {
@@ -228,7 +228,7 @@ const updateStatus = async (req, res) => {
 
             order.status = determineOrderStatus(order.items);
         } 
-        // Handle status update for specific item
+      
         else if (itemId && status) {
             if (!mongoose.Types.ObjectId.isValid(itemId)) {
                 return res.status(400).json({ success: false, message: 'Invalid item ID format' });
@@ -254,7 +254,7 @@ const updateStatus = async (req, res) => {
                 order.invoiceDate = new Date();
             }
         } 
-        // Handle general status update (e.g., moving to Delivered)
+      
         else if (status) {
             if (status === 'Delivered' && ['ReturnRequest', 'Returned'].includes(currentStatus)) {
                 return res.status(400).json({
@@ -318,15 +318,13 @@ const approveReturn = async (req, res) => {
       return res.status(400).json({ success: false, message: 'No return request found' });
     }
 
-    // Approve the return
+ 
     item.returnStatus = 'Approved';
 
-    // Update product stock
     await Product.findByIdAndUpdate(item.productId._id || item.productId, {
       $inc: { quantity: item.quantity }
     });
 
-    // Handle refund for non-COD orders
     if (order.paymentMethod !== 'cod') {
       const user = await User.findById(order.userId);
       if (!user) {
@@ -352,7 +350,6 @@ const approveReturn = async (req, res) => {
       await user.save();
     }
 
-    // Determine order status
     const activeItems = order.items.filter(item => item.cancelStatus !== 'Cancelled');
     if (activeItems.length === 0) {
       order.status = 'Cancelled';

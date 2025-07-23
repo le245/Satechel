@@ -159,6 +159,8 @@ const getAllProducts = async (req, res) => {
 
     const category = await Category.find({ isListed: true });
 
+   
+
     if (category) {
       res.render("product", {
         data: productData,
