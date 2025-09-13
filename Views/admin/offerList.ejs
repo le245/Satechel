@@ -1,118 +1,172 @@
 <%- include('../partials/admin/header') %>
 <style>
-    .btn-sm.btn-primary,
-    .btn-sm.btn-danger {
-        min-width: 70px;
-        white-space: nowrap;
-        display: inline-block;
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
     }
 
-    .pagination-container {
-        padding: 15px 0;
+
+    .sidebar a:hover {
+        background: #34495e;
     }
 
-    .pagination-container a {
-        text-decoration: none;
-        margin: 0 5px;
+    .content-area {
+        margin-left: 250px;
+        padding: 20px;
+        width: calc(100% - 250px);
+        box-sizing: border-box;
     }
 
-    .current-page {
-        font-weight: bold;
-        padding: 5px 10px;
+    .card {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        overflow: hidden;
     }
 
-    .pagination-container a:hover {
-        text-decoration: underline;
+    .content-header {
+        padding: 20px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .content-title {
+        margin: 0;
+    }
+
+    .btn-primary {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 5px 15px;
+        cursor: pointer;
+    }
+
+    .btn-primary:hover {
+        background: #0056b3;
     }
 
     .search-container {
+ 
         margin-bottom: 20px;
+
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+        width: 100%;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .table th, .table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+        word-wrap: break-word;
+        max-width: 0;
+        overflow-wrap: break-word;
+    }
+
+    .table th {
+        background: #f8f9fa;
+    }
+
+    .table td {
+        vertical-align: middle;
+    }
+
+    .actions .btn {
+        margin-right: 5px;
+    }
+
+    .pagination-container {
+        padding: 20px;
+        text-align: center;
+    }
+
+    .pagination-container a {
+        margin: 0 5px;
+        text-decoration: none;
+        color: #007bff;
+    }
+
+    .pagination-container .current-page {
+        font-weight: bold;
+        color: #000;
+        padding: 5px;
     }
 </style>
-<br>
-<div class="main-content container py-4">
-    <br><br>
+
+<div class="content-area">
     <div class="card">
-        <div class="row">
-            <div class="col-12">
-                <div class="content-header d-flex justify-content-between align-items-center" style="padding-right: 20px; padding-top: 20px;">
-                    <h2 class="content-title" style="padding-left: 20px; padding-top: 20px;">Offers List</h2>
-                    <a href="/admin/offer" class="btn btn-primary">Add New Offer</a>
-                </div>
-            </div>
+        <div class="content-header">
+            <h2 class="content-title">Offers List</h2>
+            <a href="/admin/offer" class="btn btn-primary">Add New Offer</a>
         </div>
-        <div class="card-body">
-            <!-- Search Bar -->
-            <div class="search-container">
+          <div class="search-container">
                 <form class="d-flex" method="GET" action="/admin/offer-list">
                     <input class="form-control me-2" type="search" name="search" placeholder="Search by Offer Name or Type" aria-label="Search" value="<%= searchQuery || '' %>">
                     <button class="btn btn-outline-primary" type="submit">Search</button>
                 </form>
             </div>
-
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Offer Name</th>
-                            <th>Type</th>
-                            <th>Discount (%)</th>
-                            <th>Product Id</th>
-                            <th style="min-width: 160px;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Offer Name</th>
+                        <th>Type</th>
+                        <th>Discount (%)</th>
+                        <th>Product Id</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (offers && offers.length > 0) { %>
                         <% offers.forEach(offer => { %>
                             <tr>
-                                <td><%= offer.name %></td>
-                                <td><%= offer.type.charAt(0).toUpperCase() + offer.type.slice(1) %></td>
-                                <td><%= offer.discount %>%</td>
+                                <td><%= offer.name || 'N/A' %></td>
+                                <td><%= (offer.type && offer.type.charAt(0).toUpperCase() + offer.type.slice(1)) || 'N/A' %></td>
+                                <td><%= offer.discount || 'N/A' %></td>
                                 <td>
                                     <% if (offer.type === 'product') { %>
-                                        <%= offer.productId %>
+                                        <%= offer.productId || 'N/A' %>
                                     <% } else if (offer.type === 'category') { %>
-                                        <%= offer.categoryId %>
+                                        <%= offer.categoryId || 'N/A' %>
                                     <% } else { %>
-                                        <%= offer.referralCode %>
+                                        <%= offer.referralCode || 'N/A' %>
                                     <% } %>
                                 </td>
-                                <td>
-                                    <div class="d-flex gap-2">
-                                        <button class="btn btn-sm btn-primary" onclick="editOffer('<%= JSON.stringify(offer) %>')">
-                                            Edit
-                                        </button>
-                                        <button class="btn btn-sm btn-danger" onclick="removeOffer('<%= offer._id %>')">
-                                            Remove
-                                        </button>
-                                    </div>
+                                <td class="actions">
+                                    <button class="btn btn-primary btn-sm" onclick="editOffer('<%= JSON.stringify(offer) %>')">Edit</button>
+                                    <button class="btn btn-danger btn-sm" onclick="removeOffer('<%= offer._id %>')">Remove</button>
                                 </td>
                             </tr>
                         <% }); %>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="pagination-container" style="margin-top: 20px; text-align: center;">
-                <% if (currentPage > 1) { %>
-                    <a href="?page=<%= currentPage - 1 %>&search=<%= searchQuery || '' %>" class="btn btn-sm btn-outline-primary">« Previous</a>
-                <% } %>
-
-                <% for (let i = 1; i <= totalPages; i++) { %>
-                    <% if (i === currentPage) { %>
-                        <span class="current-page btn btn-sm btn-primary mx-1" style="cursor: default;">
-                            <%= i %>
-                        </span>
                     <% } else { %>
-                        <a href="?page=<%= i %>&search=<%= searchQuery || '' %>" class="btn btn-sm btn-outline-primary mx-1">
-                            <%= i %>
-                        </a>
+                        <tr>
+                            <td colspan="5">No offers found.</td>
+                        </tr>
                     <% } %>
+                </tbody>
+            </table>
+        </div>
+        <div class="pagination-container">
+            <% if (currentPage > 1) { %>
+                <a href="?page=<%= currentPage - 1 %>&search=<%= searchQuery || '' %>"></a>
+            <% } %>
+            <% for (let i = 1; i <= totalPages; i++) { %>
+                <% if (i === currentPage) { %>
+                    <span class="current-page"><%= i %></span>
+                <% } else { %>
+                    <a href="?page=<%= i %>&search=<%= searchQuery || '' %>"><%= i %></a>
                 <% } %>
-
-                <% if (currentPage < totalPages) { %>
-                    <a href="?page=<%= currentPage + 1 %>&search=<%= searchQuery || '' %>" class="btn btn-sm btn-outline-primary">Next »</a>
-                <% } %>
-            </div>
+            <% } %>
+            <% if (currentPage < totalPages) { %>
+                <a href="?page=<%= currentPage + 1 %>&search=<%= searchQuery || '' %>"></a>
+            <% } %>
         </div>
     </div>
 </div>
@@ -147,32 +201,23 @@
 <script>
     function editOffer(offerData) {
         const offer = JSON.parse(offerData);
-        
         document.getElementById('editOfferId').value = offer._id;
         document.getElementById('editOfferDiscount').value = offer.discount;
-        
-        const modal = new bootstrap.Modal(document.getElementById('editOfferModal'));
-        modal.show();
+        new bootstrap.Modal(document.getElementById('editOfferModal')).show();
     }
- 
+
     function updateOffer() {
         const offerId = document.getElementById('editOfferId').value;
-        const updatedOffer = {
-            discount: document.getElementById('editOfferDiscount').value
-        };
-
+        const updatedOffer = { discount: document.getElementById('editOfferDiscount').value };
         fetch(`/admin/offer-update/${offerId}`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(updatedOffer)
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                Swal.fire('Updated!', 'Offer has been updated successfully.', 'success');
-                setTimeout(() => location.reload(), 1500);
+                Swal.fire('Updated!', 'Offer has been updated successfully.', 'success').then(() => location.reload());
             } else {
                 Swal.fire('Error!', data.message || 'Something went wrong!', 'error');
             }
@@ -196,15 +241,12 @@
             if (result.isConfirmed) {
                 fetch(`/admin/offer-remove/${offerId}`, {
                     method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
+                    headers: { 'Content-Type': 'application/json' }
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        Swal.fire('Deleted!', data.message, 'success');
-                        setTimeout(() => location.reload(), 1500);
+                        Swal.fire('Deleted!', data.message, 'success').then(() => location.reload());
                     } else {
                         Swal.fire('Error!', data.message, 'error');
                     }

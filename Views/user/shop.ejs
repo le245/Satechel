@@ -500,14 +500,7 @@
                             <h3 class="product-name">
                                 <%= product.productName || 'Unnamed Product' %>
                             </h3>
-                            <!-- <div class="product-rating">
-                                <% for (let i = 1; i <= 5; i++) { %>
-                                    <i class="fas fa-star<%= i <= Math.round(product.rating || 0) ? '' : '-o' %>"></i>
-                                <% } %>
-                                <% if (product.reviews && product.reviews.length > 0) { %>
-                                    <span>(<%= product.reviews.length %>)</span>
-                                <% } %>
-                            </div> -->
+                           
                             <div class="product-price">
                                 <div class="price">
                                     <% if (product.regularPrice > 0) { %>

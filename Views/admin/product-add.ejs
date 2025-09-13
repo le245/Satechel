@@ -1,4 +1,5 @@
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <!-- Load Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
@@ -356,6 +357,7 @@
             </div>
         </div>
     </section>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
         let uploadedImages = [];
@@ -392,7 +394,7 @@ if (selectedProductImages.length < 3) {
 
         for (let i = 0; i < formElements.length; i++) {
             const element = formElements[i];
-            console.log(element,"this is ")
+           
             if (element.name && element.type !== 'file') {
                 payload[element.name] = element.value;
             }
@@ -442,8 +444,18 @@ if (selectedProductImages.length < 3) {
                 .then((data) => {
                   const formError = document.getElementById('formError');
                     formError.textContent = ''; 
-                    if (data.success) {
-                        window.location.href = '/admin/products';
+                  if (data.success) {
+                               Swal.fire({
+                                icon: 'success',
+                                title: 'Product Saved!',
+                                text: 'Redirecting to product list...',
+                                showConfirmButton: false,
+                                     timer: 2000
+    }); 
+    setTimeout(() => {
+        window.location.href = '/admin/products';
+    }, 2000);
+
                     } else {
                       formError.textContent = data.error || 'An error occurred while saving the product'
                     }
@@ -551,7 +563,7 @@ if (selectedProductImages.length < 3) {
         function handleImageUpload(event) {
             const files = event.target.files;
             if (!files || files.length === 0) {
-                console.log('No files selected');
+              
                 return;
             }
 
@@ -561,7 +573,7 @@ if (selectedProductImages.length < 3) {
             renderPreviews();
 
             event.target.value = '';
-            console.log('Selected images:', selectedProductImages.length);
+            
         }
 
         function renderPreviews() {
@@ -818,39 +830,7 @@ if (selectedProductImages.length < 3) {
             renderPreviews();
         }
 
-        function removeProduct() {
-            const productId = new URLSearchParams(window.location.search).get('id');
-            if (!productId) return;
-
-            fetch(`/admin/product/${productId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            })
-                .then((response) => {
-                   const messageBox = document.getElementById('removeProductMessage');
-                    messageBox.textContent = ''; 
-                    messageBox.style.color = 'red'; 
-
-                    if (response.ok) {
-                       messageBox.style.color = 'green';
-                       messageBox.textContent = 'Product successfully removed. Redirecting...';
-                       setTimeout(() => {
-                       window.location.href = '/admin/products';
-                        }, 1500);
-                        } else {
-                       throw new Error('Failed to remove product');
-                        }
-                       })
-.catch((error) => {
-    console.error('Error removing product:', error);
-    const messageBox = document.getElementById('removeProductMessage');
-    messageBox.style.color = 'red';
-    messageBox.textContent = 'Failed to remove product. Please try again.';
-});
-        }
-
+    
         
         function setupFormValidation() {
         const form = document.getElementById('productForm');

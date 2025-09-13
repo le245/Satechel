@@ -428,22 +428,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        // Enhanced logging for debugging
-        console.log('Order financial data:', {
-            orderId: '<%= order.orderId %>',
-            status: '<%= order.status %>',
-            subTotal: '<%= order.subTotal %>',
-            displaySubTotal: '<%= order.displaySubTotal %>',
-            finalAmount: '<%= order.finalAmount %>',
-            displayFinalAmount: '<%= order.displayFinalAmount %>',
-            originalSubTotal: '<%= order.originalSubTotal %>',
-            originalFinalAmount: '<%= order.originalFinalAmount %>',
-            discount: '<%= order.discount %>',
-            couponApplied: '<%= order.couponApplied %>',
-            calculatedSubTotal: '<%= order.items && Array.isArray(order.items) ? order.items.reduce((sum, item) => sum + (item.cancelStatus === "Cancelled" ? 0 : (item.price || 0) * (item.quantity || 0)), 0).toFixed(2) : "0.00" %>',
-            calculatedTotal: '<%= order.items && Array.isArray(order.items) ? (order.items.reduce((sum, item) => sum + (item.cancelStatus === "Cancelled" ? 0 : (item.price || 0) * (item.quantity || 0)), 0) - (order.discount || 0)).toFixed(2) : "0.00" %>',
-            isDiscountApplied: '<%= (order.displayFinalAmount && order.displayFinalAmount === (order.displaySubTotal || order.subTotal || calculatedSubTotal) - (order.discount || 0)) || (order.finalAmount && order.finalAmount === (order.subTotal || calculatedSubTotal) - (order.discount || 0)) ? "true" : "false" %>'
-        });
+    
 
         window.approveReturn = function(orderId, productId) {
             Swal.fire({

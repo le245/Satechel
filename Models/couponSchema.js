@@ -8,12 +8,7 @@ const couponSchema = new Schema(
       type: String,
       required: true,
       unique: true,
-    },
-    createdOn: {
-      type: Date,
-      default: Date.now,
-      required: true,
-    },
+    },  
     expireOn: {
       type: Date,
       required: true,
@@ -30,12 +25,6 @@ const couponSchema = new Schema(
       type: Boolean,
       required: true,
     },
-   userId: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-      },
-    ],
       usedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }]
 
   },

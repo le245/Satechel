@@ -1,4 +1,3 @@
-
 <%- include("../../views/partials/user/header") %>
 
 <style>
@@ -558,6 +557,37 @@
         font-size: 18px;
         color: #333;
     }
+    
+    .unavailable-message {
+        text-align: center;
+        padding: 40px;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        margin-top: 20px;
+    }
+    
+    .unavailable-message h2 {
+        color: #e74c3c;
+        font-size: 24px;
+        margin-bottom: 10px;
+    }
+    
+    .unavailable-message p {
+        color: #555;
+        font-size: 16px;
+        margin-bottom: 20px;
+    }
+    
+    .unavailable-message a {
+        color: #9370DB;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    
+    .unavailable-message a:hover {
+        text-decoration: underline;
+    }
 </style>
 
 <body>
@@ -566,7 +596,7 @@
         <a href="/">Home</a>
         <span>></span>
         <a href="/shop">Shop</a>
-        <% if (product && product.category && product.category._id) { %>
+        <% if (product && product.category && product.category._id && !product.isBlocked) { %>
             <span>></span>
             <a href="/shop?category=<%= encodeURIComponent(product.category._id) %>">
                 <%= product.category.name || 'Category' %>
@@ -579,214 +609,211 @@
     </nav>
 
     <div class="container">
-        <!-- Product Details -->
-        <div class="product-details">
-            <div class="product-gallery">
-                <div class="thumbnails">
-                    <% if (product && product.productImage && Array.isArray(product.productImage) && product.productImage.length > 1) { %>
-                        <% product.productImage.forEach((image, index) => { %>
+        <% if (product && product.isBlocked) { %>
+            <!-- Unavailable Message -->
+            <div class="unavailable-message">
+                <h2>Product Unavailable</h2>
+                <p>This product is currently not available for purchase.</p>
+                <p><a href="/shop">Continue Shopping</a></p>
+            </div>
+        <% } else { %>
+            <!-- Product Details -->
+            <div class="product-details">
+                <div class="product-gallery">
+                    <div class="thumbnails">
+                        <% if (product && product.productImage && Array.isArray(product.productImage) && product.productImage.length > 1) { %>
+                            <% product.productImage.forEach((image, index) => { %>
+                                <div class="thumbnail">
+                                    <img 
+                                        src="<%= image || '/api/placeholder/100/100' %>" 
+                                        alt="<%= product.productName ? `${product.productName} - View ${index + 1}` : 'No additional views' %>" 
+                                        class="thumbnail-image"
+                                        data-src="<%= image || '/api/placeholder/500/500' %>"
+                                    >
+                                </div>
+                            <% }) %>
+                        <% } else { %>
                             <div class="thumbnail">
-                                <img 
-                                    src="<%= image || '/api/placeholder/100/100' %>" 
-                                    alt="<%= product.productName ? `${product.productName} - View ${index + 1}` : 'No additional views' %>" 
-                                    class="thumbnail-image"
-                                    data-src="<%= image || '/api/placeholder/500/500' %>"
-                                >
+                                <img src="/api/placeholder/100/100" alt="No additional views">
+                            </div>
+                        <% } %>
+                    </div>
+                    
+                    <div class="main-image">
+                        <% if (product && product.productImage && Array.isArray(product.productImage) && product.productImage.length > 0) { %>
+                            <button class="wishlist-btn <%= product.inWishlist ? 'added' : '' %>" onclick="addToWishlist('<%= product._id %>', event)">
+                                <i class="fa fa-heart<%= product.inWishlist ? '' : '-o' %>"></i>
+                            </button>
+                            <img 
+                                id="mainProductImage"  
+                                class="product-image-zoom"
+                                src="<%= product.productImage[0] || '/api/placeholder/500/500' %>" 
+                                alt="<%= product.productName || 'No main image' %>"
+                            >                      
+                        <% } else { %>
+                            <img id="mainProductImage" src="/api/placeholder/500/500" alt="No main image">
+                        <% } %>
+                    </div>
+                </div>
+                
+                <div class="product-info">
+                    <div>
+                        <span class="product-category">
+                            <% if (product && product.category && product.category.name) { %>
+                                <%= product.category.name %>
+                            <% } else { %>
+                                Unknown Category
+                            <% } %>
+                        </span>
+                        <h1 class="product-title"><%= product && product.productName ? product.productName : 'Unnamed Product' %></h1>
+                    </div>
+
+                    <!-- Offer Details -->
+                    <div class="offer-details">
+                        <% if (product && (product.productOffer || product.categoryOffer)) { %>
+                            <% 
+                                const bestDiscount = Math.max(product.productOffer || 0, product.categoryOffer || 0);
+                                const offerType = product.productOffer >= product.categoryOffer ? 'Product Offer' : 'Category Offer';
+                            %>
+                            <span class="offer-type">
+                                <%= offerType %>: <%= bestDiscount %>% Off
+                            </span>
+                        <% } else { %>
+                            <span class="offer-type">No Offer Applied</span>
+                        <% } %>
+                    </div>
+                    
+                    <div>
+                        <span class="product-price">
+                            <% if (product && product.salesPrice !== undefined && product.salesPrice !== null) { %>
+                                ₹<%= product.salesPrice.toFixed(2) %>
+                                <span class="product-discount">
+                                    <del>₹<%= product.regularPrice.toFixed(2) %></del>
+                                </span>
+                            <% } else if (product && product.regularPrice !== undefined) { %>
+                                ₹<%= product.regularPrice.toFixed(2) %>
+                            <% } else { %>
+                                Not Available
+                            <% } %>
+                        </span>
+                    </div>
+                    
+                    <p class="product-description">
+                        <%= product && product.description ? product.description : 'No description available.' %>
+                    </p>
+                    <p class="product-description">
+                        Stock: <%= product && product.quantity ? product.quantity : 'Out of Stock' %>
+                    </p>
+                    
+                    <div class="product-actions">
+                        <div class="quantity-selector flex items-center space-x-2">
+                            <button class="quantity-btn bg-gray-300 text-gray-700 px-3 py-1 rounded hover:bg-gray-400 transition">-</button>
+                            <input type="number" min="1" value="1" class="quantity-input w-16 text-center border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                            <button class="quantity-btn bg-gray-300 text-gray-700 px-3 py-1 rounded hover:bg-gray-400 transition">+</button>
+                        </div>
+                        
+                        <p class="mt-3">
+                            <button 
+                                class="buy-now btn btn-sm height-auto px-4 py-3 btn-primary bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition" 
+                                onclick="handleAddToCartWithValidation('<%= product._id %>')"
+                            >
+                                Add To Cart
+                            </button>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="product-details-tabs">
+                <div class="tabs-nav">
+                    <div class="tab-item active">Description</div>
+                    <div class="tab-item">Specifications</div>
+                </div>
+                
+                <div class="tab-content">
+                    <!-- Description Tab -->
+                    <div class="tab-pane active">
+                        <p><%= product && product.description ? product.description : 'No description available.' %></p>
+                    </div>
+                    
+                    <!-- Specifications Tab -->
+                    <div class="tab-pane">
+                        <div class="specifications">
+                            <div class="spec-label">Status</div>
+                            <div><%= product && product.status ? product.status : 'Unknown' %></div>
+                            
+                            <div class="spec-label">Total Stock</div>
+                            <div><%= product && product.quantity !== undefined ? product.quantity : 0 %></div>
+                            
+                            <div class="spec-label">Regular Price</div>
+                            <div>
+                                <% if (product && product.regularPrice !== undefined && product.regularPrice !== null) { %>
+                                    ₹<%= Number(product.regularPrice).toFixed(2) %>
+                                <% } else { %>
+                                    Not Available
+                                <% } %>
+                            </div>
+                            
+                            <div class="spec-label">Offer Price</div>
+                            <div>
+                                <% if (product && product.salesPrice !== undefined && product.salesPrice !== null) { %>
+                                    ₹<%= Number(product.salesPrice).toFixed(2) %>
+                                <% } else { %>
+                                    Not Available
+                                <% } %>
+                            </div>
+                            
+                            <div class="spec-label">Product Offer</div>
+                            <div>
+                                <% if (product && product.productOffer !== undefined && product.productOffer !== null) { %>
+                                    <%= product.productOffer %>%
+                                <% } else { %>
+                                    No Offer
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Related Products -->
+            <div class="related-products">
+                <h2 class="section-title">You May Also Like</h2>
+                
+                <div class="products-grid">
+                    <% if (relatedProducts && Array.isArray(relatedProducts) && relatedProducts.length > 0) { %>
+                        <% relatedProducts.forEach(relatedProduct => { %>
+                            <div class="product-card">
+                                <div class="product-card-img">
+                                    <button class="wishlist-btn <%= relatedProduct.inWishlist ? 'added' : '' %>" onclick="addToWishlist('<%= relatedProduct._id %>', event)">
+                                        <i class="fa fa-heart<%= relatedProduct.inWishlist ? '' : '-o' %>"></i>
+                                    </button>
+                                    <% if (relatedProduct && relatedProduct.productImage && Array.isArray(relatedProduct.productImage) && relatedProduct.productImage.length > 0) { %>
+                                        <img src="<%= relatedProduct.productImage[0] || '/api/placeholder/300/300' %>" alt="<%= relatedProduct.productName || 'No image' %>">
+                                    <% } else { %>
+                                        <img src="/api/placeholder/300/300" alt="No image">
+                                    <% } %>
+                                </div>
+                                <div class="product-card-info">
+                                    <h3 class="product-card-title"><%= relatedProduct && relatedProduct.productName ? relatedProduct.productName : 'Unnamed Product' %></h3>
+                                    <div class="product-card-price">
+                                        <% if (relatedProduct && relatedProduct.salesPrice !== undefined && relatedProduct.salesPrice !== null) { %>
+                                            ₹<%= Number(relatedProduct.salesPrice).toFixed(2) %>
+                                        <% } else if (relatedProduct && relatedProduct.regularPrice !== undefined) { %>
+                                            ₹<%= Number(relatedProduct.regularPrice).toFixed(2) %>
+                                        <% } else { %>
+                                            Not Available
+                                        <% } %>
+                                    </div>
+                                </div>
                             </div>
                         <% }) %>
                     <% } else { %>
-                        <div class="thumbnail">
-                            <img src="/api/placeholder/100/100" alt="No additional views">
-                        </div>
-                    <% } %>
-                </div>
-                
-                <div class="main-image">
-                    <% if (product && product.productImage && Array.isArray(product.productImage) && product.productImage.length > 0) { %>
-                        <button class="wishlist-btn <%= product.inWishlist ? 'added' : '' %>" onclick="addToWishlist('<%= product._id %>', event)">
-                            <i class="fa fa-heart<%= product.inWishlist ? '' : '-o' %>"></i>
-                        </button>
-                        <img 
-                            id="mainProductImage"  
-                            class="product-image-zoom"
-                            src="<%= product.productImage[0] || '/api/placeholder/500/500' %>" 
-                            alt="<%= product.productName || 'No main image' %>"
-                        >                      
-                    <% } else { %>
-                        <img id="mainProductImage" src="/api/placeholder/500/500" alt="No main image">
+                        <p>No related products available.</p>
                     <% } %>
                 </div>
             </div>
-            
-            <div class="product-info">
-                <div>
-                    <span class="product-category">
-                        <% if (product && product.category && product.category.name) { %>
-                            <%= product.category.name %>
-                        <% } else { %>
-                            Unknown Category
-                        <% } %>
-                    </span>
-                    <h1 class="product-title"><%= product && product.productName ? product.productName : 'Unnamed Product' %></h1>
-                </div>
-
-                <!-- Offer Details -->
-                <div class="offer-details">
-                    <% if (product && (product.productOffer || product.categoryOffer)) { %>
-                        <% 
-                            const bestDiscount = Math.max(product.productOffer || 0, product.categoryOffer || 0);
-                            const offerType = product.productOffer >= product.categoryOffer ? 'Product Offer' : 'Category Offer';
-                        %>
-                        <span class="offer-type">
-                            <%= offerType %>: <%= bestDiscount %>% Off
-                        </span>
-                    <% } else { %>
-                        <span class="offer-type">No Offer Applied</span>
-                    <% } %>
-                </div>
-                
-                <div>
-                    <span class="product-price">
-                        <% if (product && product.salesPrice !== undefined && product.salesPrice !== null) { %>
-                            ₹<%= product.salesPrice.toFixed(2) %>
-                            <span class="product-discount">
-                                <del>₹<%= product.regularPrice.toFixed(2) %></del>
-                            </span>
-                        <% } else if (product && product.regularPrice !== undefined) { %>
-                            ₹<%= product.regularPrice.toFixed(2) %>
-                        <% } else { %>
-                            Not Available
-                        <% } %>
-                    </span>
-                </div>
-                
-                <p class="product-description">
-                    <%= product && product.description ? product.description : 'No description available.' %>
-                </p>
-                <p class="product-description">
-                    Stock: <%= product && product.quantity ? product.quantity : 'Out of Stock' %>
-                </p>
-                
-                <div class="product-actions">
-                    <div class="quantity-selector flex items-center space-x-2">
-                        <button class="quantity-btn bg-gray-300 text-gray-700 px-3 py-1 rounded hover:bg-gray-400 transition">-</button>
-                        <input type="number" min="1" value="1" class="quantity-input w-16 text-center border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-gray-500">
-                        <button class="quantity-btn bg-gray-300 text-gray-700 px-3 py-1 rounded hover:bg-gray-400 transition">+</button>
-                    </div>
-                    
-                    <p class="mt-3">
-                        <button 
-                            class="buy-now btn btn-sm height-auto px-4 py-3 btn-primary bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition" 
-                            onclick="handleAddToCartWithValidation('<%= product._id %>')"
-                        >
-                            Add To Cart
-                        </button>
-                    </p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="product-details-tabs">
-            <div class="tabs-nav">
-                <div class="tab-item active">Description</div>
-                <div class="tab-item">Specifications</div>
-            
-            </div>
-            
-            <div class="tab-content">
-                <!-- Description Tab -->
-                <div class="tab-pane active">
-                    <p><%= product && product.description ? product.description : 'No description available.' %></p>
-                </div>
-                
-                <!-- Specifications Tab -->
-                <div class="tab-pane">
-                    <div class="specifications">
-                        <div class="spec-label">Status</div>
-                        <div><%= product && product.status ? product.status : 'Unknown' %></div>
-                        
-                        <div class="spec-label">Total Stock</div>
-                        <div><%= product && product.quantity !== undefined ? product.quantity : 0 %></div>
-                        
-                        <div class="spec-label">Regular Price</div>
-                        <div>
-                            <% if (product && product.regularPrice !== undefined && product.regularPrice !== null) { %>
-                                ₹<%= Number(product.regularPrice).toFixed(2) %>
-                            <% } else { %>
-                                Not Available
-                            <% } %>
-                        </div>
-                        
-                        <div class="spec-label">Offer Price</div>
-                        <div>
-                            <% if (product && product.salesPrice !== undefined && product.salesPrice !== null) { %>
-                                ₹<%= Number(product.salesPrice).toFixed(2) %>
-                            <% } else { %>
-                                Not Available
-                            <% } %>
-                        </div>
-                        
-                        <div class="spec-label">Product Offer</div>
-                        <div>
-                            <% if (product && product.productOffer !== undefined && product.productOffer !== null) { %>
-                                <%= product.productOffer %>%
-                            <% } else { %>
-                                No Offer
-                            <% } %>
-                        </div>
-                        
-                      
-                        
-                        
-                    
-                  
-                        
-                        
-                    </div>
-                </div>
-                
-               
-              
-            </div>
-        </div>
-        
-        <!-- Related Products -->
-        <div class="related-products">
-            <h2 class="section-title">You May Also Like</h2>
-            
-            <div class="products-grid">
-                <% if (relatedProducts && Array.isArray(relatedProducts) && relatedProducts.length > 0) { %>
-                    <% relatedProducts.forEach(relatedProduct => { %>
-                        <div class="product-card">
-                            <div class="product-card-img">
-                                <button class="wishlist-btn <%= relatedProduct.inWishlist ? 'added' : '' %>" onclick="addToWishlist('<%= relatedProduct._id %>', event)">
-                                    <i class="fa fa-heart<%= relatedProduct.inWishlist ? '' : '-o' %>"></i>
-                                </button>
-                                <% if (relatedProduct && relatedProduct.productImage && Array.isArray(relatedProduct.productImage) && relatedProduct.productImage.length > 0) { %>
-                                    <img src="<%= relatedProduct.productImage[0] || '/api/placeholder/300/300' %>" alt="<%= relatedProduct.productName || 'No image' %>">
-                                <% } else { %>
-                                    <img src="/api/placeholder/300/300" alt="No image">
-                                <% } %>
-                            </div>
-                            <div class="product-card-info">
-                                <h3 class="product-card-title"><%= relatedProduct && relatedProduct.productName ? relatedProduct.productName : 'Unnamed Product' %></h3>
-                                <div class="product-card-price">
-                                    <% if (relatedProduct && relatedProduct.salesPrice !== undefined && relatedProduct.salesPrice !== null) { %>
-                                        ₹<%= Number(relatedProduct.salesPrice).toFixed(2) %>
-                                    <% } else if (relatedProduct && relatedProduct.regularPrice !== undefined) { %>
-                                        ₹<%= Number(relatedProduct.regularPrice).toFixed(2) %>
-                                    <% } else { %>
-                                        Not Available
-                                    <% } %>
-                                </div>
-                            </div>
-                        </div>
-                    <% }) %>
-                <% } else { %>
-                    <p>No related products available.</p>
-                <% } %>
-            </div>
-        </div>
+        <% } %>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -994,22 +1021,6 @@
             }
         }
 
-        function showToast(message, type) {
-            Swal.fire({
-                toast: true,
-                position: 'top-end',
-                icon: type,
-                title: message,
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true,
-                didOpen: (toast) => {
-                    toast.addEventListener('mouseenter', Swal.stopTimer);
-                    toast.addEventListener('mouseleave', Swal.resumeTimer);
-                }
-            });
-        }
-
         async function addToWishlist(productId, event) {
             event.preventDefault();
             const button = event.target.closest('.wishlist-btn');
@@ -1043,6 +1054,22 @@
                 console.error('Error:', error);
                 showToast('Something went wrong. Please try again.', 'error');
             }
+        }
+
+        function showToast(message, type) {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: type,
+                title: message,
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                }
+            });
         }
     </script>
 

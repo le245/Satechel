@@ -40,7 +40,7 @@ const getCheckOut = async (req, res) => {
     const coupons = await Coupon.find({
       isList: true,
       expireOn: { $gt: new Date() },
-      userId: { $ne: userId },
+      usedBy: { $nin: [userId] }, 
     });
 
     res.render("checkout", {
@@ -50,22 +50,20 @@ const getCheckOut = async (req, res) => {
       Coupon: coupons,
     });
   } catch (error) {
-   
     res
-      .status(STATUS_SERVER_ERROR)
+      .status(STATUS_CODES.SERVER_ERROR)
       .render("pageNotFound", {
         message: "Server error, please try again later",
       });
   }
 };
-
 const placeOrder = async (req, res) => {
   try {
     const userId = req.session.user;
     const { addressId, subTotal, orderTotal, paymentMethod, couponCode } = req.body;
 
     if (!addressId || !paymentMethod) {
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         message: "Address and payment method are required",
       });
@@ -73,30 +71,30 @@ const placeOrder = async (req, res) => {
 
     const userAddress = await Address.findOne({ userId });
     if (!userAddress) {
-      return res.status(400).json({ success: false, message: "User address not found" });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "User address not found" });
     }
 
     const selectedAddress = userAddress.address.find(
       (addr) => addr._id.toString() === addressId
     );
     if (!selectedAddress) {
-      return res.status(400).json({ success: false, message: "Selected address not found" });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Selected address not found" });
     }
 
     const cart = await Cart.findOne({ userId }).populate("items.productId");
     if (!cart || cart.items.length === 0) {
-      return res.status(400).json({ success: false, message: "Cart is empty" });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Cart is empty" });
     }
 
     for (const item of cart.items) {
       if (!item.productId) {
-        return res.status(400).json({
+        return res.status(STATUS_CODES.BAD_REQUEST).json({
           success: false,
           message: `Product not found for item: ${item.productName || "Unknown"}`,
         });
       }
       if (item.productId.quantity < item.quantity) {
-        return res.status(400).json({
+        return res.status(STATUS_CODES.BAD_REQUEST).json({
           success: false,
           message: `Not enough stock for ${item.productId.productName}`,
         });
@@ -112,7 +110,7 @@ const placeOrder = async (req, res) => {
       });
 
       if (!coupon) {
-        return res.status(400).json({ success: false, message: "Invalid or expired coupon" });
+        return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Invalid or expired coupon" });
       }
 
       const alreadyUsed = coupon.usedBy.some(
@@ -120,11 +118,11 @@ const placeOrder = async (req, res) => {
       );
 
       if (alreadyUsed) {
-        return res.status(400).json({ success: false, message: "Coupon already used" });
+        return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Coupon already used" });
       }
 
       if (subTotal < coupon.minimumPrice) {
-        return res.status(400).json({
+        return res.status(STATUS_CODES.BAD_REQUEST).json({
           success: false,
           message: `Order total must be at least ₹${coupon.minimumPrice} to use this coupon`,
         });
@@ -138,15 +136,15 @@ const placeOrder = async (req, res) => {
     const finalAmount = subTotalNum - discount;
 
     if (isNaN(subTotalNum) || isNaN(orderTotalNum)) {
-      return res.status(400).json({ success: false, message: "Invalid subtotal or order total" });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Invalid subtotal or order total" });
     }
 
     if (Math.abs(orderTotalNum - finalAmount) > 0.01) {
-      return res.status(400).json({ success: false, message: "Order total mismatch" });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Order total mismatch" });
     }
 
     if (paymentMethod === "cod" && finalAmount > 1000) {
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         message: "COD not allowed for orders above ₹1000",
       });
@@ -155,13 +153,13 @@ const placeOrder = async (req, res) => {
     if (paymentMethod === "wallet") {
       const user = await User.findById(userId);
       if (!user || user.wallet < finalAmount) {
-        return res.status(400).json({ success: false, message: "Insufficient wallet balance" });
+        return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Insufficient wallet balance" });
       }
     }
 
     for (const item of cart.items) {
       item.productId.quantity -= item.quantity;
-      item.productId.totalSold = (item.productId.totalSold || 256) + item.quantity;
+      item.productId.totalSold = (item.productId.totalSold || 0) + item.quantity;
       await item.productId.save();
     }
 
@@ -184,7 +182,7 @@ const placeOrder = async (req, res) => {
       finalAmount: orderTotalNum,
       subTotal: subTotalNum,
       discount,
-      status: "Processing",
+      status: paymentMethod === "razorpay" ? "PaymentPending" : "Processing",
       couponApplied: !!couponCode,
       selectedAddressId: addressId,
     });
@@ -202,12 +200,8 @@ const placeOrder = async (req, res) => {
       delete req.session.coupon;
       await new Promise((resolve, reject) => {
         req.session.save((err) => {
-          if (err) {
-         
-            reject(err);
-          } else {
-            resolve();
-          }
+          if (err) reject(err);
+          else resolve();
         });
       });
     }
@@ -220,7 +214,6 @@ const placeOrder = async (req, res) => {
         date: new Date(),
       };
 
-      // If single product, set productId; otherwise, set description
       if (cart.items.length === 1) {
         transaction.productId = cart.items[0].productId._id;
       } else {
@@ -238,14 +231,31 @@ const placeOrder = async (req, res) => {
 
     await Cart.findOneAndDelete({ userId });
 
-    return res.status(200).json({
+    if (paymentMethod === "razorpay") {
+      const razorpayOrder = await razorpayInstance.orders.create({
+        amount: Math.round(finalAmount * 100),
+        currency: "INR",
+        receipt: `receipt_${newOrder._id}`,
+      });
+
+      return res.status(STATUS_CODES.OK).json({
+        success: true,
+        message: "Order created, proceed with payment",
+        razorpaykeyId: process.env.RAZORPAY_KEY_ID,
+        razorpayOrderId: razorpayOrder.id,
+        amount: razorpayOrder.amount,
+        orderId: newOrder._id.toString(),
+      });
+    }
+
+    return res.status(STATUS_CODES.OK).json({
       success: true,
       message: "Order placed successfully",
       orderId: newOrder.orderId,
     });
   } catch (error) {
-  
-    return res.status(500).json({ success: false, message: error.message || "Server error" });
+    console.error("Order placement error:", error);
+    return res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, message: error.message || "Server error" });
   }
 };
 
@@ -459,7 +469,7 @@ const createRazorpayOrder = async (req, res) => {
       });
 
       if (!coupon) {
-        return res.status(400).json({ success: false, message: "Invalid or expired coupon" });
+        return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Invalid or expired coupon" });
       }
 
       const alreadyUsed = coupon.usedBy.some(
@@ -467,11 +477,11 @@ const createRazorpayOrder = async (req, res) => {
       );
 
       if (alreadyUsed) {
-        return res.status(400).json({ success: false, message: "Coupon already used" });
+        return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Coupon already used" });
       }
 
       if (subTotal < coupon.minimumPrice) {
-        return res.status(400).json({
+        return res.status(STATUS_CODES.BAD_REQUEST).json({
           success: false,
           message: `Order total must be at least ₹${coupon.minimumPrice} to use this coupon`,
         });
@@ -538,7 +548,7 @@ const createRazorpayOrder = async (req, res) => {
       receipt: `receipt_${newOrder._id}`,
     });
 
-    res.status(200).json({
+    res.status(STATUS_CODES.OK).json({
       success: true,
       razorpaykeyId: process.env.RAZORPAY_KEY_ID,
       razorpayOrderId: razorpayOrder.id,
@@ -713,7 +723,7 @@ const handlePaymentFailure = async (req, res) => {
     const order = await Order.findByIdAndUpdate(
       orderId,
       {
-        status: "Payment Failed",
+        status: "PaymentFailed",
         "paymentDetails.failureReason": failureReason || "Payment failed",
         "paymentDetails.succeededAt": null,
       },
@@ -727,16 +737,15 @@ const handlePaymentFailure = async (req, res) => {
     }
 
     res
-      .status(200)
+      .status(STATUS_CODES.OK)
       .json({ success: true, message: "Payment failure recorded" });
   } catch (error) {
-  
+    console.error("Payment failure handling error:", error);
     res
       .status(STATUS_SERVER_ERROR)
       .json({ success: false, message: "Failed to handle payment failure" });
   }
 };
-
 const retryPayment = async (req, res) => {
   try {
     const { orderId } = req.body;
@@ -757,17 +766,18 @@ const retryPayment = async (req, res) => {
         .json({ success: false, message: "Order not found" });
     }
 
-    // Check eligible statuses
-    const eligibleStatuses = ["Payment Failed", "Pending", "Payment Pending"];
+  
+
+    const eligibleStatuses = ["PaymentFailed", "Pending", "Payment Pending"];
     if (!eligibleStatuses.includes(order.status)) {
       return res
         .status(STATUS_CODES.BAD_REQUEST)
         .json({ success: false, message: "Order is not eligible for retry" });
     }
 
-    // Update order status and payment method
-    order.status = "Payment Pending"; // Set to a pending state during retry
-    order.paymentMethod = "razorpay"; // Set payment method for retry
+    
+    order.status = "PaymentPending";
+    order.paymentMethod = "razorpay";
     await order.save();
 
     const razorpayOrder = await razorpayInstance.orders.create({
@@ -780,7 +790,7 @@ const retryPayment = async (req, res) => {
       key: process.env.RAZORPAY_KEY_ID,
       amount: razorpayOrder.amount,
       currency: "INR",
-      name: "Male Fashion",
+      name: "Satchel",
       description: `Retry Payment for Order #${order.orderId}`,
       order_id: razorpayOrder.id,
       prefill: {
@@ -796,15 +806,15 @@ const retryPayment = async (req, res) => {
       },
     };
 
-    res.status(200).json({
+    res.status(STATUS_CODES.OK).json({
       success: true,
       paymentMethod: "razorpay",
       razorpayOptions,
     });
   } catch (error) {
-
+    console.error("Retry payment error:", error);
     res
-      .status(STATUS_SERVER_ERROR)
+      .status(STATUS_CODES.SERVER_ERROR) 
       .json({ success: false, message: "Server error: " + error.message });
   }
 };

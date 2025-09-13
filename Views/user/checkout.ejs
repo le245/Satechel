@@ -139,9 +139,7 @@
             <h2 class="text-2xl font-bold text-gray-800 mb-4">Your Order</h2>
             <div class="bg-white rounded-lg shadow-md p-6">
               <!-- Debug Cart Data -->
-              <div class="order-summary-debug" style="display: none;">
-                <% console.log('Cart Data:', JSON.stringify(cart, null, 2)); %>
-              </div>
+          
 
               <!-- Coupon Section -->
               <div class="border-t border-gray-300 pt-4 mb-6">
@@ -269,7 +267,7 @@
       let appliedCoupon = null;
 
       document.addEventListener('DOMContentLoaded', () => {
-        console.log('DOM fully loaded, setting up event listeners');
+      
 
         // Retrieve subtotal from sessionStorage
         const storedSubtotal = sessionStorage.getItem('cartSubtotal');
@@ -434,14 +432,14 @@
         });
 
         document.getElementById('checkoutForm').addEventListener('submit', (event) => {
-          console.log('Form submission triggered');
+         
           event.preventDefault();
           placeOrder(event);
         });
 
         async function placeOrder(event) {
           event.preventDefault();
-          console.log('Starting placeOrder function');
+      
 
           try {
             const selectedAddress = document.querySelector('input[name="deliveryAddressId"]:checked');
@@ -478,11 +476,11 @@
 
             const couponCode = appliedCoupon ? appliedCoupon.code : '';
 
-            console.log('Placing order with:', { paymentMethod, addressId, subTotal, orderTotal, couponCode });
+          
 
             if (paymentMethod === 'razorpay') {
               const success = await handleRazorpayPayment(addressId, orderTotal, paymentMethod, couponCode);
-              console.log('Razorpay payment result:', success);
+        
               if (!success) {
                 console.log('Razorpay payment failed or was cancelled. Staying on checkout page.');
                
@@ -505,7 +503,7 @@
 
               const result = await response.json();
               if (response.ok) {
-                console.log('Order placed successfully. Redirecting to order-success:', result.orderId);
+            
 
                 if (result.clearCoupon && appliedCoupon) {
                   removeCoupon();
@@ -518,7 +516,7 @@
                 });
                 window.location.href = `/order-success/${result.orderId}`;
               } else {
-                console.log('Order failed:', result.message);
+             
                 throw new Error(result.message || 'Failed to place order.');
               }
             } else {
@@ -531,14 +529,14 @@
               title: 'Error',
               text: error.message || 'Failed to place order. Please try again.'
             });
-            console.log('Error occurred. Staying on checkout page.');
+         
           }
         }
 
         async function handleRazorpayPayment(addressId, amount, paymentMethod, couponCode) {
           try {
             const amountInPaise = Math.round(amount * 100);
-            console.log('Initiating Razorpay payment with:', { addressId, amountInPaise, paymentMethod, couponCode });
+     
 
             const res = await fetch(`/create-razorpay-order`, {
               method: 'POST',
@@ -555,7 +553,7 @@
             });
 
             const data = await res.json();
-            console.log('Response from /create-razorpay-order:', data);
+       
 
             if (!data.success || !data.razorpayOrderId || !data.razorpaykeyId) {
               console.error('Failed to create Razorpay order:', data.message);
@@ -577,7 +575,7 @@
                 order_id: data.razorpayOrderId,
                 handler: async (response) => {
                   try {
-                    console.log('Verifying payment:', response);
+                  
                     const verifyRes = await fetch('/verify-razorpay-payment', {
                       method: 'POST',
                       headers: {
@@ -593,10 +591,10 @@
                     });
 
                     const verifyData = await verifyRes.json();
-                    console.log('Response from /verify-razorpay-payment:', verifyData);
+                 
 
                     if (verifyData.success) {
-                      console.log('Payment verified successfully. Redirecting to order-success:', verifyData.orderId);
+                      
                       await Swal.fire({
                         icon: 'success',
                         title: 'Success',
@@ -632,7 +630,7 @@
                 },
                 modal: {
                   ondismiss: async () => {
-                    console.log('Razorpay modal closed without completing payment');
+                   
                     try {
                       const dismissalRes = await fetch('/handle-payment-dismissal', {
                         method: 'POST',
@@ -640,7 +638,7 @@
                         body: JSON.stringify({ orderId: data.orderId }),
                       });
                       const dismissalData = await dismissalRes.json();
-                      console.log('Response from /handle-payment-dismissal:', dismissalData);
+                    
                       Swal.fire({
                         icon: 'info',
                         title: 'Payment Cancelled',
@@ -660,10 +658,9 @@
                 },
               };
 
-              // Handle payment failure
               options.handler.payment = {
                 failed: async (response) => {
-                  console.log('Payment failed:', response);
+                
                   try {
                     const failureRes = await fetch('/handle-payment-failure', {
                       method: 'POST',
@@ -674,7 +671,7 @@
                       }),
                     });
                     const failureData = await failureRes.json();
-                    console.log('Response from /handle-payment-failure:', failureData);
+             
                     Swal.fire({
                       icon: 'error',
                       title: 'Payment Failed',
@@ -695,7 +692,7 @@
               };
 
               try {
-                console.log('Opening Razorpay modal with options:', options);
+      
                 const razorpayObject = new Razorpay(options);
                 razorpayObject.on('payment.failed', options.handler.payment.failed);
                 razorpayObject.open();
@@ -720,6 +717,7 @@
           }
         }
       });
+      
     </script>
 </body>
 </html>

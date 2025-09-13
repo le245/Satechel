@@ -337,7 +337,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             const data = await response.json();
-            console.log('Server Response:', data);
+          
 
             if (response.ok) {
                 const input = document.querySelector(`.quantity-input[data-item-id="${itemId}"]`);
@@ -373,7 +373,7 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             const response = await fetch('/cart');
             const data = await response.json();
-            console.log('Sync Cart Response:', data);
+         
 
             if (response.ok && data.success && data.cartItems) {
                 const tbody = document.querySelector('.cart-table tbody');

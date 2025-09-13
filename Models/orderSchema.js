@@ -37,8 +37,13 @@ const orderSchema = new Schema({
                 enum: ['Not Requested', 'Requested', 'Approved', 'Rejected'],
                 default: 'Not Requested',
             },
-            returnReason: { type: String },
-            returnRequestedAt: { type: Date },
+            returnReason:{ 
+                type: String 
+
+             },
+            returnRequestedAt:  { 
+                type: Date 
+            },
         },
     ],
     subTotal: {
@@ -76,12 +81,12 @@ const orderSchema = new Schema({
         required: true,
         enum: [
             'Pending',
-            'Payment Pending',
+            'PaymentPending',
             'Processing',
             'Shipped',
             'Delivered',
             'Cancelled',
-            'ReturnRequest', // Changed from 'Return Requested'
+            'ReturnRequest', 
             'Returned',
         ],
     },

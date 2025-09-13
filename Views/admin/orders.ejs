@@ -369,7 +369,7 @@
         const displayFinalAmount = parseFloat(row.dataset.displayFinalAmount) || 0;
         const calculatedTotal = parseFloat(row.dataset.calculatedTotal) || 0;
 
-        console.log('Sending orderId:', cleanOrderId, 'Body:', body); // Debug log
+
 
         fetch(`/admin/updateOrderStatus/${cleanOrderId}`, {
             method: 'POST',
@@ -380,12 +380,12 @@
         })
             .then(response => response.json())
             .then(data => {
-                console.log('Response:', data); // Debug log
+               
                 if (data.success) {
                     selectElement.className = `status-select ${newStatus.toLowerCase().replace(/\s+/g, '')}`;
                     selectElement.dataset.previousStatus = newStatus;
 
-                    // Update the Total column dynamically
+           
                     const totalCell = row.cells[3];
                     const displayTotal = (newStatus === 'Cancelled' || newStatus === 'Returned' || newStatus === 'ReturnRequest') && originalTotal
                         ? originalTotal.toFixed(2)
@@ -417,7 +417,7 @@
                 }
             })
             .catch(error => {
-                console.log('Error:', error); // Debug log
+               
                 selectElement.value = selectElement.dataset.previousStatus;
                 Swal.fire({
                     icon: 'error',

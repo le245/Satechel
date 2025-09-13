@@ -660,7 +660,7 @@ const getAnalyticsData = async (req, res) => {
     res.json({ bestSellingProducts, bestCategories, salesData });
   } catch (error) {
     console.error('Error fetching analytics:', error);
-    res.status(500).json({ error: error.message });
+    res.status(STATUS_CODES.SERVER_ERROR).json({ error: error.message });
   }
 };
 const getTopPerformers = async (req, res) => {

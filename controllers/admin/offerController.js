@@ -88,7 +88,7 @@ const addoffer = async (req, res) => {
 
     
     if (!discount || discount <= 0 || discount > 90) {
-      return res.status(400).json({ success: false, message: 'Discount is not correct ' });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Discount must be a number between 1 and 90' });
     }
 
     const  offerData = new Offer({
@@ -107,7 +107,7 @@ const addoffer = async (req, res) => {
      
       const regularPrice = product.regularPrice;
       if (!regularPrice || isNaN(regularPrice) || regularPrice <= 0) {
-        return res.status(400).json({ success: false, message: 'Invalid regular price for the product' });
+        return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Invalid regular price for the product' });
       }
 
       const discountedPrice = regularPrice - (regularPrice * discount) / 100;
@@ -160,7 +160,7 @@ const addoffer = async (req, res) => {
       });
     }
 
-    return res.status(400).json({ success: false, message: 'Invalid offer type or missing ID' });
+    return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Invalid offer type or missing ID' });
   } catch (error) {
     return res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, message: 'Server Error' });
   }
@@ -175,7 +175,7 @@ const updateOffer = async (req, res) => {
 
   
     if (!discount || discount <= 0 || discount > 100) {
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         message: 'Discount must be between 1% and 100%',
       });
@@ -202,7 +202,7 @@ const updateOffer = async (req, res) => {
      
       const regularPrice = product.regularPrice;
       if (!regularPrice || isNaN(regularPrice) || regularPrice <= 0) {
-        return res.status(400).json({ success: false, message: 'Invalid regular price for the product' });
+        return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Invalid regular price for the product' });
       }
 
       const newPrice = regularPrice - (regularPrice * discount) / 100;
@@ -232,7 +232,7 @@ const updateOffer = async (req, res) => {
 
     await offer.save();
 
-    return res.status(200).json({
+    return res.status(STATUS_CODES.OK).json({
       success: true,
       message: `offer updated successfully`,
       offer,
@@ -276,7 +276,7 @@ const removeOffer = async (req, res) => {
 
     await Offer.findByIdAndDelete(offerId);
 
-    return res.status(200).json({ success: true, message: 'Offer removed successfully' });
+    return res.status(STATUS_CODES.NOT_FOUND).json({ success: true, message: 'Offer removed successfully' });
 
   } catch (error) {
     return res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, message: 'Server error while removing offer' });

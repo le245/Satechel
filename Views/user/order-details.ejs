@@ -8,7 +8,6 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
     <style>
-        /* Existing styles remain unchanged */
         body {
             background-color: #f5f5f5;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -206,20 +205,21 @@
     </style>
 </head>
 <body>
+    <%
+        // Define displaySubTotal and displayFinalAmount once at the top
+        const displaySubTotal = (
+            order.subTotal && order.subTotal > 0 ? order.subTotal :
+            order.originalSubTotal && order.originalSubTotal > 0 ? order.originalSubTotal :
+            order.displaySubTotal && order.displaySubTotal > 0 ? order.displaySubTotal : 0
+        ).toFixed(2);
+        const displayFinalAmount = (
+            order.finalAmount && order.finalAmount > 0 ? order.finalAmount :
+            order.originalFinalAmount && order.originalFinalAmount > 0 ? order.originalFinalAmount :
+            order.displayFinalAmount && order.displayFinalAmount > 0 ? order.displayFinalAmount : 0
+        ).toFixed(2);
+    %>
     <div class="container">
         <div class="order-container">
-            <!-- Calculate totals once at the top -->
-            <% 
-                let calculatedSubTotal = 0;
-                let calculatedTotal = 0;
-                if (order.items && order.items.length > 0) {
-                    calculatedSubTotal = order.items.reduce((sum, item) => {
-                        return sum + (item.cancelStatus === 'Cancelled' ? 0 : (item.price || 0) * (item.quantity || 0));
-                    }, 0);
-                    calculatedTotal = calculatedSubTotal - (order.discount || 0);
-                }
-            %>
-
             <!-- Order Header -->
             <div class="order-header">
                 <div class="row align-items-center">
@@ -280,7 +280,9 @@
                     <div class="card">
                         <div class="card-body">
                             <h5 class="card-title"><i class="fas fa-shopping-cart me-2"></i>Total Items</h5>
-                            <p class="card-text"><%= order.items.length %> items</p>
+                            <p class="card-text" id="total-items">
+                                <%= order.items.filter(item => item.cancelStatus !== 'Cancelled').length %> items
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -289,10 +291,7 @@
                         <div class="card-body">
                             <h5 class="card-title"><i class="fas fa-money-bill-wave me-2"></i>Total Amount</h5>
                             <p class="card-text" id="total-amount">
-                                <% 
-                                    const displayTotal = (order.displayFinalAmount || order.originalFinalAmount || order.finalAmount || calculatedTotal || 0).toFixed(2);
-                                %>
-                                ₹<%= displayTotal %>
+                                ₹<%= displayFinalAmount %>
                             </p>
                         </div>
                     </div>
@@ -408,11 +407,6 @@
                     <h4 class="section-title">Payment Summary</h4>
                     <div class="card price-details">
                         <div class="card-body">
-                            <% 
-                                const displaySubTotal = (order.displaySubTotal || order.originalSubTotal || order.subTotal || calculatedSubTotal || 0).toFixed(2);
-                                const displayFinalAmount = (order.displayFinalAmount || order.originalFinalAmount || order.finalAmount || calculatedTotal || 0).toFixed(2);
-                                const refundAmount = (order.refundedAmount || 0).toFixed(2);
-                            %>
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Subtotal</span>
                                 <span id="subtotal-amount">₹<%= displaySubTotal %></span>
@@ -436,20 +430,28 @@
                             </div>
                             <div class="d-flex justify-content-between mt-2">
                                 <span>Payment Status</span>
-                                <span class="<%= order.status === 'PaymentFailed' ? 'text-danger' : 'text-success' %>">
-                                    <%= order.status === 'PaymentFailed' ? 'Failed' : 'Completed' %>
+                                <span class="<% if (order.status === 'PaymentFailed') { %>text-danger<% } else if (order.status === 'Cancelled') { %>text-danger<% } else if (order.status === 'Returned') { %>text-muted<% } else { %>text-success<% } %>">
+                                    <% if (order.status === 'PaymentFailed') { %>
+                                        Failed
+                                    <% } else if (order.status === 'Cancelled') { %>
+                                        Cancelled
+                                    <% } else if (order.status === 'Returned') { %>
+                                        Returned
+                                    <% } else { %>
+                                        Completed
+                                    <% } %>
                                 </span>
                             </div>
-                            <% if (order.status === 'Cancelled' && refundAmount > 0) { %>
+                            <% if (order.status === 'Cancelled' && order.refundedAmount > 0) { %>
                             <div class="d-flex justify-content-between mt-2 text-success">
                                 <span>Refunded to Wallet</span>
-                                <span>₹<%= refundAmount %></span>
+                                <span>₹<%= (order.refundedAmount || 0).toFixed(2) %></span>
                             </div>
                             <% } %>
-                            <% if (['ReturnRequest', 'Returned'].includes(order.status) && refundAmount > 0) { %>
+                            <% if (['ReturnRequest', 'Returned'].includes(order.status) && order.refundedAmount > 0) { %>
                             <div class="d-flex justify-content-between mt-2 text-success refund-pending">
                                 <span>Refund Pending for Return</span>
-                                <span>₹<%= refundAmount %></span>
+                                <span>₹<%= (order.refundedAmount || 0).toFixed(2) %></span>
                             </div>
                             <% } %>
                         </div>
@@ -553,7 +555,7 @@
                         </button>
                     <% } %>
                     <% if (order.status && order.status.toLowerCase() === 'paymentfailed' && order.paymentMethod && order.paymentMethod.toLowerCase() === 'razorpay') { %>
-                        <button class="btn btn-warning me-2" onclick="retryPayment('<%= order._id.toString() %>', <%= displayFinalAmount || 0 %>)">
+                        <button class="btn btn-warning me-2" onclick="retryPayment('<%= order._id.toString() %>', <%= displayFinalAmount %>)">
                             <i class="fas fa-redo me-1"></i> Retry Payment
                         </button>
                     <% } %>
@@ -575,25 +577,7 @@
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
     <script>
-        // Log order financial data for debugging
-        console.log('Order financial data:', {
-            orderId: '<%= order.orderId %>',
-            status: '<%= order.status %>',
-            subTotal: '<%= order.subTotal %>',
-            displaySubTotal: '<%= order.displaySubTotal %>',
-            finalAmount: '<%= order.finalAmount %>',
-            displayFinalAmount: '<%= order.displayFinalAmount %>',
-            originalSubTotal: '<%= order.originalSubTotal %>',
-            originalFinalAmount: '<%= order.originalFinalAmount %>',
-            discount: '<%= order.discount %>',
-            couponApplied: '<%= order.couponApplied %>',
-            refundedAmount: '<%= order.refundedAmount %>',
-            calculatedSubTotal: '<%= calculatedSubTotal %>',
-            calculatedTotal: '<%= calculatedTotal %>'
-        });
-
         async function cancelOrder(orderId, currentStatus) {
-            console.log('Cancel Order called with orderId:', orderId, 'Current Status:', currentStatus);
             if (!['Pending', 'Processing'].includes(currentStatus)) {
                 Swal.fire({
                     icon: 'error',
@@ -617,7 +601,6 @@
                 if (statusResponse.ok) {
                     const statusData = await statusResponse.json();
                     apiStatus = statusData.status;
-                    console.log('Fetched order status:', apiStatus);
                     if (!['Pending', 'Processing'].includes(apiStatus)) {
                         Swal.fire({
                             icon: 'error',
@@ -656,6 +639,101 @@
                     const data = await response.json();
 
                     if (data.success) {
+                        // Update order status
+                        const orderStatusBadge = document.querySelector('.status-badge');
+                        orderStatusBadge.textContent = 'Cancelled';
+                        orderStatusBadge.className = 'status-badge status-Cancelled';
+
+                        // Update timeline
+                        const timelineContainer = document.querySelector('.tracking-timeline');
+                        timelineContainer.innerHTML = `
+                            <div class="timeline-item">
+                                <div class="timeline-dot timeline-dot-Cancelled"></div>
+                                <div class="timeline-content">
+                                    <h5 class="mb-1">Cancelled</h5>
+                                    <p class="text-muted mb-0">Order was cancelled</p>
+                                </div>
+                            </div>
+                        `;
+
+                        // Update item statuses
+                        document.querySelectorAll('#order-items .product-item').forEach(row => {
+                            const statusCell = row.querySelector('.item-status');
+                            const actionsCell = row.querySelector('.item-actions');
+                            if (statusCell.textContent !== 'Cancelled') {
+                                statusCell.textContent = 'Cancelled';
+                                statusCell.classList.remove('hidden');
+                                statusCell.classList.add('text-danger');
+                                actionsCell.innerHTML = '';
+                            }
+                        });
+
+                        // Update payment summary
+                        const subtotalElement = document.getElementById('subtotal-amount');
+                        const totalElement = document.getElementById('final-amount');
+                        const totalAmountElement = document.getElementById('total-amount');
+                        const discountElement = document.getElementById('discount-amount');
+                        const totalItemsElement = document.getElementById('total-items');
+
+                        // Use backend-provided values
+                        const newSubTotal = data.updatedOrder.subTotal !== undefined ? data.updatedOrder.subTotal : 0;
+                        const newFinalAmount = data.updatedOrder.finalAmount !== undefined ? data.updatedOrder.finalAmount : 0;
+                        const refundAmount = data.updatedOrder.cancelledItems.reduce((sum, item) => sum + (item.refundAmount || 0), 0);
+
+                        if (data.updatedOrder.subTotal === undefined || data.updatedOrder.finalAmount === undefined) {
+                            console.error('Backend response missing subTotal or finalAmount:', data.updatedOrder);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Invalid response from server. Please refresh the page.',
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 3000,
+                                timerProgressBar: true
+                            });
+                            return;
+                        }
+
+                        subtotalElement.textContent = `₹${newSubTotal.toFixed(2)}`;
+                        totalElement.textContent = `₹${newFinalAmount.toFixed(2)}`;
+                        totalAmountElement.textContent = `₹${newFinalAmount.toFixed(2)}`;
+                        if (discountElement && data.updatedOrder.discount !== undefined) {
+                            discountElement.textContent = `₹${data.updatedOrder.discount.toFixed(2)}`;
+                        }
+                        totalItemsElement.textContent = '0 items';
+
+                        // Update payment status
+                        const paymentStatusElement = document.querySelector('.price-details .card-body .d-flex.justify-content-between.mt-2 span:last-child');
+                        paymentStatusElement.textContent = 'Cancelled';
+                        paymentStatusElement.classList.remove('text-success', 'text-muted');
+                        paymentStatusElement.classList.add('text-danger');
+
+                        // Handle refund display
+                        if (refundAmount > 0) {
+                            const priceDetails = document.querySelector('.price-details .card-body');
+                            const existingRefund = priceDetails.querySelector('.text-success:not(.refund-pending)');
+                            if (!existingRefund) {
+                                const refundDiv = document.createElement('div');
+                                refundDiv.className = 'd-flex justify-content-between mt-2 text-success';
+                                refundDiv.innerHTML = `
+                                    <span>Refunded to Wallet</span>
+                                    <span>₹${refundAmount.toFixed(2)}</span>
+                                `;
+                                priceDetails.appendChild(refundDiv);
+                            } else {
+                                existingRefund.innerHTML = `
+                                    <span>Refunded to Wallet</span>
+                                    <span>₹${refundAmount.toFixed(2)}</span>
+                                `;
+                            }
+                        }
+
+                        // Remove action buttons
+                        const cancelOrderBtn = document.getElementById('cancelOrderBtn');
+                        if (cancelOrderBtn) cancelOrderBtn.remove();
+                        document.querySelectorAll('.cancel-item-btn').forEach(btn => btn.remove());
+
                         Swal.fire({
                             icon: 'success',
                             title: 'Order Cancelled',
@@ -695,7 +773,6 @@
         }
 
         async function cancelItem(button, orderId, itemId, currentStatus) {
-            console.log('Cancel Item called with orderId:', orderId, 'itemId:', itemId, 'Current Status:', currentStatus);
             button.classList.add('btn-loading');
             button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Cancelling...';
 
@@ -763,29 +840,42 @@
 
                         const subtotalElement = document.getElementById('subtotal-amount');
                         const totalElement = document.getElementById('final-amount');
-                        const discountElement = document.getElementById('discount-amount');
                         const totalAmountElement = document.getElementById('total-amount');
+                        const discountElement = document.getElementById('discount-amount');
+                        const totalItemsElement = document.getElementById('total-items');
 
-                        // Use API-provided values if available, otherwise calculate client-side
-                        let newSubTotal = data.updatedOrder.displaySubTotal !== undefined 
-                            ? data.updatedOrder.displaySubTotal 
-                            : data.updatedOrder.subTotal;
-                        let newFinalAmount = data.updatedOrder.displayFinalAmount !== undefined 
-                            ? data.updatedOrder.displayFinalAmount 
-                            : data.updatedOrder.finalAmount;
-                        
-                        if (newSubTotal === undefined || newFinalAmount === undefined) {
-                            newSubTotal = <%= calculatedSubTotal %>;
-                            newFinalAmount = <%= calculatedTotal %>;
+                        // Use backend-provided values
+                        const newSubTotal = data.updatedOrder.subTotal !== undefined ? data.updatedOrder.subTotal : parseFloat(subtotalElement.textContent.replace('₹', '')) || 0;
+                        const newFinalAmount = data.updatedOrder.finalAmount !== undefined ? data.updatedOrder.finalAmount : parseFloat(totalElement.textContent.replace('₹', '')) || 0;
+                        const refundAmount = data.updatedOrder.cancelledItems.find(item => item.itemId === itemId)?.refundAmount || 0;
+
+                        if (data.updatedOrder.subTotal === undefined || data.updatedOrder.finalAmount === undefined) {
+                            console.error('Backend response missing subTotal or finalAmount:', data.updatedOrder);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Invalid response from server. Please refresh the page.',
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 3000,
+                                timerProgressBar: true
+                            });
+                            return;
                         }
 
                         subtotalElement.textContent = `₹${newSubTotal.toFixed(2)}`;
                         totalElement.textContent = `₹${newFinalAmount.toFixed(2)}`;
                         totalAmountElement.textContent = `₹${newFinalAmount.toFixed(2)}`;
                         if (discountElement && data.updatedOrder.discount !== undefined) {
-                            discountElement.textContent = `₹${(data.updatedOrder.discount || 0).toFixed(2)}`;
+                            discountElement.textContent = `₹${data.updatedOrder.discount.toFixed(2)}`;
                         }
 
+                        const remainingItems = Array.from(document.querySelectorAll('#order-items .product-item'))
+                            .filter(row => row.querySelector('.item-status').textContent !== 'Cancelled').length;
+                        totalItemsElement.textContent = `${remainingItems} items`;
+
+                        // Handle full order cancellation
                         if (data.updatedOrder.status === 'Cancelled') {
                             const orderStatusBadge = document.querySelector('.status-badge');
                             orderStatusBadge.textContent = 'Cancelled';
@@ -802,16 +892,34 @@
                                 </div>
                             `;
 
+                            const paymentStatusElement = document.querySelector('.price-details .card-body .d-flex.justify-content-between.mt-2 span:last-child');
+                            paymentStatusElement.textContent = 'Cancelled';
+                            paymentStatusElement.classList.remove('text-success', 'text-muted');
+                            paymentStatusElement.classList.add('text-danger');
+
+                            if (refundAmount > 0) {
+                                const priceDetails = document.querySelector('.price-details .card-body');
+                                const existingRefund = priceDetails.querySelector('.text-success:not(.refund-pending)');
+                                if (!existingRefund) {
+                                    const refundDiv = document.createElement('div');
+                                    refundDiv.className = 'd-flex justify-content-between mt-2 text-success';
+                                    refundDiv.innerHTML = `
+                                        <span>Refunded to Wallet</span>
+                                        <span>₹${refundAmount.toFixed(2)}</span>
+                                    `;
+                                    priceDetails.appendChild(refundDiv);
+                                } else {
+                                    existingRefund.innerHTML = `
+                                        <span>Refunded to Wallet</span>
+                                        <span>₹${refundAmount.toFixed(2)}</span>
+                                    `;
+                                }
+                            }
+
                             const cancelOrderBtn = document.getElementById('cancelOrderBtn');
                             if (cancelOrderBtn) cancelOrderBtn.remove();
-
                             document.querySelectorAll('.cancel-item-btn').forEach(btn => btn.remove());
                         }
-
-                        const totalItemsElement = document.querySelector('.card-body p.card-text');
-                        const remainingItems = Array.from(document.querySelectorAll('#order-items .product-item'))
-                            .filter(row => row.querySelector('.item-status').textContent !== 'Cancelled').length;
-                        totalItemsElement.textContent = `${remainingItems} items`;
 
                         Swal.fire({
                             icon: 'success',
@@ -822,6 +930,9 @@
                             showConfirmButton: false,
                             timer: 3000,
                             timerProgressBar: true
+                        }).then(() => {
+                            // Reload to ensure UI is in sync with server
+                            location.reload();
                         });
                     } else {
                         Swal.fire({
@@ -858,7 +969,6 @@
         }
 
         async function returnItem(button, orderId, itemId, itemName) {
-            console.log('Return Item called with orderId:', orderId, 'itemId:', itemId, 'itemName:', itemName);
             button.classList.add('btn-loading');
             button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Processing...';
 
@@ -928,8 +1038,6 @@
                     });
                     const data = await response.json();
 
-                    console.log('Return response:', data);
-
                     if (data.success) {
                         const row = button.closest('tr');
                         const statusCell = row.querySelector('.item-status');
@@ -961,24 +1069,38 @@
                         const totalElement = document.getElementById('final-amount');
                         const totalAmountElement = document.getElementById('total-amount');
                         const discountElement = document.getElementById('discount-amount');
+                        const totalItemsElement = document.getElementById('total-items');
 
-                        // Use API-provided display values
-                        const newSubTotal = data.updatedOrder.displaySubTotal !== undefined 
-                            ? data.updatedOrder.displaySubTotal 
-                            : data.updatedOrder.originalSubTotal || data.updatedOrder.subTotal;
-                        const newFinalAmount = data.updatedOrder.displayFinalAmount !== undefined 
-                            ? data.updatedOrder.displayFinalAmount 
-                            : data.updatedOrder.originalFinalAmount || data.updatedOrder.finalAmount;
-                        const refundAmount = data.updatedOrder.refundedAmount || 0;
+                        const newSubTotal = data.updatedOrder.subTotal !== undefined ? data.updatedOrder.subTotal : parseFloat(subtotalElement.textContent.replace('₹', '')) || 0;
+                        const newFinalAmount = data.updatedOrder.finalAmount !== undefined ? data.updatedOrder.finalAmount : parseFloat(totalElement.textContent.replace('₹', '')) || 0;
+                        const refundAmount = data.updatedOrder.refundedAmount !== undefined ? data.updatedOrder.refundedAmount : 0;
+
+                        if (data.updatedOrder.subTotal === undefined || data.updatedOrder.finalAmount === undefined) {
+                            console.error('Backend response missing subTotal or finalAmount:', data.updatedOrder);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Invalid response from server. Please refresh the page.',
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 3000,
+                                timerProgressBar: true
+                            });
+                            return;
+                        }
 
                         subtotalElement.textContent = `₹${newSubTotal.toFixed(2)}`;
                         totalElement.textContent = `₹${newFinalAmount.toFixed(2)}`;
                         totalAmountElement.textContent = `₹${newFinalAmount.toFixed(2)}`;
                         if (discountElement && data.updatedOrder.discount !== undefined) {
-                            discountElement.textContent = `₹${(data.updatedOrder.discount || 0).toFixed(2)}`;
+                            discountElement.textContent = `₹${data.updatedOrder.discount.toFixed(2)}`;
                         }
 
-                        // Update refund amount display
+                        const remainingItems = Array.from(document.querySelectorAll('#order-items .product-item'))
+                            .filter(row => row.querySelector('.item-status').textContent !== 'Cancelled').length;
+                        totalItemsElement.textContent = `${remainingItems} items`;
+
                         if (['ReturnRequest', 'Returned'].includes(data.updatedOrder.status) && refundAmount > 0) {
                             const priceDetails = document.querySelector('.price-details .card-body');
                             const existingRefundPending = priceDetails.querySelector('.refund-pending');
@@ -998,8 +1120,7 @@
                             }
                         }
 
-                        // Update Coupon Applied display
-                        if (data.updatedOrder.couponApplied || <%= order.couponApplied ? 'true' : 'false' %>) {
+                        if (data.updatedOrder.couponApplied) {
                             const priceDetails = document.querySelector('.price-details .card-body');
                             let couponAppliedDiv = priceDetails.querySelector('.coupon-applied');
                             if (!couponAppliedDiv && data.updatedOrder.discount > 0) {
@@ -1020,24 +1141,19 @@
                             status.textContent === 'Returned' || 
                             status.textContent === 'Cancelled'
                         );
-                        console.log('All items returned or cancelled:', allReturnedOrCancelled, 'Item statuses:', Array.from(allItems).map(s => s.textContent));
+
                         if (allReturnedOrCancelled) {
                             const returnOrderBtn = document.getElementById('returnOrderBtn');
                             if (returnOrderBtn) {
-                                console.log('Removing Return Entire Order button');
                                 returnOrderBtn.remove();
                             }
-                        } else {
-                            console.log('Keeping Return Entire Order button: eligible items remain');
-                            const eligibleItems = Array.from(document.querySelectorAll('#order-items .product-item'))
-                                .filter(row => {
-                                    const status = row.querySelector('.item-status').textContent;
-                                    return status !== 'Cancelled' && status !== 'Return Requested' && status !== 'Returned';
-                                });
-                            console.log('Eligible items for return:', eligibleItems.map(row => ({
-                                itemId: row.dataset.itemId,
-                                status: row.querySelector('.item-status').textContent
-                            })));
+                        }
+
+                        if (data.updatedOrder.status === 'Returned') {
+                            const paymentStatusElement = document.querySelector('.price-details .card-body .d-flex.justify-content-between.mt-2 span:last-child');
+                            paymentStatusElement.textContent = 'Returned';
+                            paymentStatusElement.classList.remove('text-success', 'text-danger');
+                            paymentStatusElement.classList.add('text-muted');
                         }
 
                         Swal.fire({
@@ -1050,7 +1166,6 @@
                             timer: 3000,
                             timerProgressBar: true
                         }).then(() => {
-                            console.log('Reloading page after return request');
                             location.reload();
                         });
                     } else {
@@ -1085,7 +1200,6 @@
         }
 
         async function returnEntireOrder(orderId) {
-            console.log('Return Entire Order called with orderId:', orderId);
             const button = document.getElementById('returnOrderBtn');
             button.classList.add('btn-loading');
             button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Processing...';
@@ -1111,9 +1225,6 @@
                 const status = row.querySelector('.item-status').textContent;
                 return status !== 'Cancelled' && status !== 'Return Requested' && status !== 'Returned';
             });
-
-            console.log('Has returnable items:', hasReturnableItems, 'Item statuses:', 
-                items.map(row => row.querySelector('.item-status').textContent));
 
             if (!hasReturnableItems) {
                 Swal.fire({
@@ -1181,8 +1292,6 @@
                     });
                     const data = await response.json();
 
-                    console.log('Return entire order response:', data);
-
                     if (data.success) {
                         document.querySelectorAll('#order-items .product-item').forEach(row => {
                             const statusCell = row.querySelector('.item-status');
@@ -1214,24 +1323,38 @@
                         const totalElement = document.getElementById('final-amount');
                         const totalAmountElement = document.getElementById('total-amount');
                         const discountElement = document.getElementById('discount-amount');
+                        const totalItemsElement = document.getElementById('total-items');
 
-                        // Use API-provided display values
-                        const newSubTotal = data.updatedOrder.displaySubTotal !== undefined 
-                            ? data.updatedOrder.displaySubTotal 
-                            : data.updatedOrder.originalSubTotal || data.updatedOrder.subTotal;
-                        const newFinalAmount = data.updatedOrder.displayFinalAmount !== undefined 
-                            ? data.updatedOrder.displayFinalAmount 
-                            : data.updatedOrder.originalFinalAmount || data.updatedOrder.finalAmount;
-                        const refundAmount = data.updatedOrder.refundedAmount || 0;
+                        const newSubTotal = data.updatedOrder.subTotal !== undefined ? data.updatedOrder.subTotal : parseFloat(subtotalElement.textContent.replace('₹', '')) || 0;
+                        const newFinalAmount = data.updatedOrder.finalAmount !== undefined ? data.updatedOrder.finalAmount : parseFloat(totalElement.textContent.replace('₹', '')) || 0;
+                        const refundAmount = data.updatedOrder.refundedAmount !== undefined ? data.updatedOrder.refundedAmount : 0;
+
+                        if (data.updatedOrder.subTotal === undefined || data.updatedOrder.finalAmount === undefined) {
+                            console.error('Backend response missing subTotal or finalAmount:', data.updatedOrder);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Invalid response from server. Please refresh the page.',
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 3000,
+                                timerProgressBar: true
+                            });
+                            return;
+                        }
 
                         subtotalElement.textContent = `₹${newSubTotal.toFixed(2)}`;
                         totalElement.textContent = `₹${newFinalAmount.toFixed(2)}`;
                         totalAmountElement.textContent = `₹${newFinalAmount.toFixed(2)}`;
                         if (discountElement && data.updatedOrder.discount !== undefined) {
-                            discountElement.textContent = `₹${(data.updatedOrder.discount || 0).toFixed(2)}`;
+                            discountElement.textContent = `₹${data.updatedOrder.discount.toFixed(2)}`;
                         }
 
-                        // Update refund amount display
+                        const remainingItems = Array.from(document.querySelectorAll('#order-items .product-item'))
+                            .filter(row => row.querySelector('.item-status').textContent !== 'Cancelled').length;
+                        totalItemsElement.textContent = `${remainingItems} items`;
+
                         if (['ReturnRequest', 'Returned'].includes(data.updatedOrder.status) && refundAmount > 0) {
                             const priceDetails = document.querySelector('.price-details .card-body');
                             const existingRefundPending = priceDetails.querySelector('.refund-pending');
@@ -1251,8 +1374,7 @@
                             }
                         }
 
-                        // Update Coupon Applied display
-                        if (data.updatedOrder.couponApplied || <%= order.couponApplied ? 'true' : 'false' %>) {
+                        if (data.updatedOrder.couponApplied) {
                             const priceDetails = document.querySelector('.price-details .card-body');
                             let couponAppliedDiv = priceDetails.querySelector('.coupon-applied');
                             if (!couponAppliedDiv && data.updatedOrder.discount > 0) {
@@ -1267,6 +1389,13 @@
                             }
                         }
 
+                        if (data.updatedOrder.status === 'Returned') {
+                            const paymentStatusElement = document.querySelector('.price-details .card-body .d-flex.justify-content-between.mt-2 span:last-child');
+                            paymentStatusElement.textContent = 'Returned';
+                            paymentStatusElement.classList.remove('text-success', 'text-danger');
+                            paymentStatusElement.classList.add('text-muted');
+                        }
+
                         button.remove();
 
                         Swal.fire({
@@ -1279,7 +1408,6 @@
                             timer: 3000,
                             timerProgressBar: true
                         }).then(() => {
-                            console.log('Reloading page after entire order return');
                             location.reload();
                         });
                     } else {
@@ -1314,7 +1442,6 @@
         }
 
         async function retryPayment(orderId, amount) {
-            console.log('Retry Payment called with orderId:', orderId, 'Amount:', amount);
             try {
                 if (!orderId || typeof orderId !== 'string' || isNaN(amount) || amount <= 0) {
                     throw new Error('Invalid order ID or amount');
@@ -1332,13 +1459,11 @@
                 }
 
                 const data = await response.json();
-                console.log('Retry payment response:', data);
 
                 if (data.success && data.paymentMethod === 'razorpay') {
                     const rzp = new Razorpay({
                         ...data.razorpayOptions,
                         handler: async (response) => {
-                            console.log('Razorpay payment response:', response);
                             const verifyResponse = await fetch('/verify-razorpay-payment', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
@@ -1350,14 +1475,13 @@
                                 })
                             });
                             const verifyData = await verifyResponse.json();
-                            console.log('Verification response:', verifyData);
+
                             if (verifyData.success) {
                                 Swal.fire({
                                     icon: 'success',
                                     title: 'Payment Successful',
                                     text: 'Redirecting to order success page...'
                                 }).then(() => {
-                                    console.log('Redirecting to order-success page with orderId:', orderId);
                                     window.location.href = `/order-success/${orderId}`;
                                 });
                             } else {
@@ -1373,7 +1497,6 @@
                     });
 
                     rzp.on('payment.failed', async (response) => {
-                        console.log('Payment failed:', response);
                         await fetch('/handle-payment-failure', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -1391,10 +1514,8 @@
                         });
                     });
 
-                    console.log('Opening Razorpay payment modal');
                     rzp.open();
                 } else {
-                    console.log('Retry payment failed:', data.message);
                     Swal.fire({
                         icon: 'error',
                         title: 'Error',

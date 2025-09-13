@@ -180,7 +180,7 @@
     <script>
         async function retryPayment(orderId) {
             try {
-                console.log('Initiating retry payment for orderId:', orderId);
+    
                 const response = await fetch('/retry-payment', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -192,13 +192,13 @@
                 }
 
                 const data = await response.json();
-                console.log('Response data:', data);
+          
 
                 if (data.success && data.paymentMethod === 'razorpay') {
                     const rzp = new Razorpay({
                         ...data.razorpayOptions,
                         handler: async (response) => {
-                            console.log('Razorpay payment response:', response);
+                      
                             const verifyResponse = await fetch('/verify-razorpay-payment', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
@@ -210,14 +210,14 @@
                                 })
                             });
                             const verifyData = await verifyResponse.json();
-                            console.log('Verification response:', verifyData);
+                         
                             if (verifyData.success) {
                                 Swal.fire({
                                     icon: 'success',
                                     title: 'Payment Successful',
                                     text: 'Redirecting to order success page...'
                                 }).then(() => {
-                                    console.log('Redirecting to order-success page with orderId:', orderId);
+                               
                                     window.location.href = `/order-success/${orderId}`;
                                 });
                             } else {
@@ -233,7 +233,7 @@
                     });
 
                     rzp.on('payment.failed', async (response) => {
-                        console.log('Payment failed:', response);
+                   
                         await fetch('/handle-payment-failure', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -251,10 +251,10 @@
                         });
                     });
 
-                    console.log('Opening Razorpay payment modal');
+                
                     rzp.open();
                 } else {
-                    console.log('Retry payment failed:', data.message);
+                   
                     Swal.fire({
                         icon: 'error',
                         title: 'Error',

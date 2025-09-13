@@ -483,7 +483,7 @@
                 }
             });
 
-            console.log('Sending request to /admin/addCategory with:', { name, description });
+    
             const response = await fetch('/admin/addCategory', {
                 method: 'POST',
                 headers: {
@@ -493,7 +493,7 @@
             });
 
             const data = await response.json().catch(() => ({}));
-            console.log('Server response:', data);
+          
 
             if (!response.ok) {
                 Swal.close();
