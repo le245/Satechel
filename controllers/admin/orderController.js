@@ -69,19 +69,19 @@ const updateStatus = async (req, res) => {
 
        
         if (!orderId || typeof orderId !== 'string') {
-            return res.status(400).json({ success: false, message: 'Invalid order ID format' });
+            return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Invalid order ID format' });
         }
 
         const order = await Order.findOne({ orderId });
         if (!order) {
-            return res.status(404).json({ success: false, message: 'Order not found' });
+            return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: 'Order not found' });
         }
 
         const currentStatus = order.status;
         const validStatuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled', 'ReturnRequest', 'Returned', 'PaymentFailed'];
 
         if (currentStatus === 'PaymentFailed') {
-            return res.status(403).json({
+            return res.status(STATUS_CODES.FORBIDDEN).json({
                 success: false,
                 message: 'This order failed due to payment failure and is not editable by admins.'
             });
@@ -89,7 +89,7 @@ const updateStatus = async (req, res) => {
 
         
         if (['Pending', 'Delivered', 'Cancelled', 'ReturnRequest', 'Returned'].includes(currentStatus)) {
-            return res.status(403).json({
+            return res.status(STATUS_CODES.FORBIDDEN).json({
                 success: false,
                 message: `Orders in ${currentStatus} status cannot be changed to another status`
             });
@@ -97,13 +97,13 @@ const updateStatus = async (req, res) => {
 
       
         if (status && !validStatuses.includes(status)) {
-            return res.status(400).json({ success: false, message: `Invalid status. Must be one of: ${validStatuses.join(', ')}` });
+            return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: `Invalid status. Must be one of: ${validStatuses.join(', ')}` });
         }
 
     
         if (status && currentStatus === 'Processing') {
             if (!['Shipped', 'Delivered'].includes(status)) {
-                return res.status(400).json({
+                return res.status(STATUS_CODES.BAD_REQUEST).json({
                     success: false,
                     message: 'Processing orders can only be changed to Shipped or Delivered'
                 });
@@ -122,20 +122,20 @@ const updateStatus = async (req, res) => {
    
         if (action === 'cancelItem' && itemId) {
             if (!mongoose.Types.ObjectId.isValid(itemId)) {
-                return res.status(400).json({ success: false, message: 'Invalid item ID format' });
+                return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Invalid item ID format' });
             }
 
             const item = order.items.id(itemId);
             if (!item) {
-                return res.status(404).json({ success: false, message: 'Item not found in order' });
+                return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: 'Item not found in order' });
             }
 
             if (item.cancelStatus === 'Cancelled') {
-                return res.status(400).json({ success: false, message: 'Item is already cancelled' });
+                return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Item is already cancelled' });
             }
 
             if (item.returnStatus !== 'Not Requested') {
-                return res.status(400).json({ success: false, message: 'Cannot cancel an item with an active return request' });
+                return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Cannot cancel an item with an active return request' });
             }
 
             item.cancelStatus = 'Cancelled';
@@ -143,7 +143,7 @@ const updateStatus = async (req, res) => {
         } 
    
         else if (action === 'initiateReturn') {
-            return res.status(403).json({
+            return res.status(STATUS_CODES.FORBIDDEN).json({
                 success: false,
                 message: 'Return requests are not allowed as Delivered orders cannot change status'
             });
@@ -163,7 +163,7 @@ const updateStatus = async (req, res) => {
                 order.invoiceDate = new Date();
             }
         } else {
-            return res.status(400).json({ success: false, message: 'No valid status or action provided' });
+            return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'No valid status or action provided' });
         }
 
         await order.save();
@@ -176,7 +176,7 @@ const updateStatus = async (req, res) => {
     } catch (error) {
         const orderId = req.params.orderId || 'unknown';
         console.error(`Error updating order ${orderId}:`, error);
-        res.status(500).json({ success: false, message: `Server error:   ${error.message}` });
+        res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, message: `Server error: ${error.message}` });
     }
 };
 
