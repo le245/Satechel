@@ -6,21 +6,22 @@ const Cart=require("../../Models/cartSchema")
 const Address=require("../../Models/addressSchema")
 const STATUS_CODES= require("../../Models/status")
 
-
 const getListOfOrders = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = 6;
     const skip = (page - 1) * limit;
 
-    const orders = await Order.find()
+
+    const orders = await Order.find({ status: { $ne: 'PaymentFailed' } })
       .populate('userId', 'name email')
       .populate('address')
       .sort({ createOn: -1 })
       .skip(skip)
       .limit(limit)
       .lean();
-    const totalOrders = await Order.countDocuments();
+
+    const totalOrders = await Order.countDocuments({ status: { $ne: 'PaymentFailed' } });
     const totalPages = Math.ceil(totalOrders / limit);
 
     res.render('orders', {
@@ -29,8 +30,8 @@ const getListOfOrders = async (req, res) => {
       currentPage: page
     });
   } catch (error) {
-
-    res.redirect('/admin/pageerror'); 
+    console.error('Error fetching orders:', error);
+    res.redirect('/admin/pageerror');
   }
 };
 
@@ -78,17 +79,17 @@ const updateStatus = async (req, res) => {
         }
 
         const currentStatus = order.status;
-        const validStatuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled', 'ReturnRequest', 'Returned', 'PaymentFailed'];
+        const validStatuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled', 'ReturnRequest', 'Returned',];
 
-        if (currentStatus === 'PaymentFailed') {
-            return res.status(STATUS_CODES.FORBIDDEN).json({
-                success: false,
-                message: 'This order failed due to payment failure and is not editable by admins.'
-            });
-        }
+        // if (currentStatus === 'PaymentFailed') {
+        //     return res.status(STATUS_CODES.FORBIDDEN).json({
+        //         success: false,
+        //         message: 'This order failed due to payment failure and is not editable by admins.'
+        //     });
+        // }
 
         
-        if (['Pending', 'Delivered', 'Cancelled', 'ReturnRequest', 'Returned'].includes(currentStatus)) {
+        if (['Delivered', 'Cancelled', 'ReturnRequest', 'Returned','PaymentFailed'].includes(currentStatus)) {
             return res.status(STATUS_CODES.FORBIDDEN).json({
                 success: false,
                 message: `Orders in ${currentStatus} status cannot be changed to another status`

@@ -1,5 +1,4 @@
 const Category = require("../../Models/categorySchema");
-const Product =require("../../Models/productSchema")
 const STATUS_CODES= require("../../Models/status")
 
 const categoryInfo = async (req, res) => {
@@ -7,7 +6,7 @@ const categoryInfo = async (req, res) => {
         let search = "";
         if (req.query.search) {
             search = req.query.search;
-        }
+        }   
 
         const page = parseInt(req.query.page) || 1;
         const limit = 5;

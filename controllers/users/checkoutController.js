@@ -759,7 +759,8 @@ const retryPayment = async (req, res) => {
         });
     }
 
-    const order = await Order.findById(orderId);
+    const order = await Order.findById(orderId).populate("items.productId");
+    
     if (!order) {
       return res
         .status(STATUS_NOT_FOUND)
@@ -775,7 +776,26 @@ const retryPayment = async (req, res) => {
         .json({ success: false, message: "Order is not eligible for retry" });
     }
 
-    
+    for (const item of order.items) {
+      
+      
+      const product = item.productId;
+      if (!product || product.isDeleted || product.isBlocked) {
+        return res.status(STATUS_CODES.BAD_REQUEST).json({
+          success: false,
+          message: `Product ${product?.productName || "Unknown"} is not available`,
+        });
+      }
+
+      if (product.quantity < item.quantity) {
+        return res.status(STATUS_CODES.BAD_REQUEST).json({
+          success: false,
+          message: `Insufficient stock for ${product.productName}. Only ${product.quantity} left.`,
+        });
+      }
+    }
+
+
     order.status = "PaymentPending";
     order.paymentMethod = "razorpay";
     await order.save();

@@ -24,8 +24,11 @@ const calculateDiscountedPrice = async (product) => {
     }).lean();
 
     const productDiscount = productOffer ? productOffer.discount : 0;
+
     const categoryDiscount = categoryOffer ? categoryOffer.discount : 0;
     const bestDiscount = Math.max(productDiscount, categoryDiscount);
+
+    
 
     let salesPrice = product.regularPrice || 0;
     if (bestDiscount > 0 && product.regularPrice) {
@@ -77,8 +80,7 @@ const getCartPage = async (req, res) => {
 
     if (cart && cart.items) {
       cart.items = cart.items.filter(
-        (item) => item.productId && !item.productId.isBlocked
-      );
+        (item) => item.productId && !item.productId.isBlocked);
      
       for (let item of cart.items) {
         item.price = await calculateDiscountedPrice(item.productId);

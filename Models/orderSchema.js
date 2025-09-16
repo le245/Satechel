@@ -88,6 +88,7 @@ const orderSchema = new Schema({
             'Cancelled',
             'ReturnRequest', 
             'Returned',
+            'PaymentFailed',
         ],
     },
     createOn: {
