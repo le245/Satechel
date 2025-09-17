@@ -25,10 +25,7 @@ const productSchema = new Schema(
       type: Boolean,
       default: false,
     },
-    isDeleted: {
-      type: Boolean,
-      default: false,
-    },
+
     status: {
       type: String,
       enum: ['Available', 'Out of stock', 'Discontinued'],
@@ -52,8 +49,13 @@ const productSchema = new Schema(
       min: 0,
       max: 100,
     },
-   
-  
+      categoryOffer: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
+    },
+    
  
   },
   

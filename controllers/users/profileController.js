@@ -641,8 +641,3 @@ module.exports = {
     changeEmailOtpPage
 
 };
-
-
-
-
-

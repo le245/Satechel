@@ -549,7 +549,7 @@
         function addToWishlist(productId, event) {
             event.preventDefault();
             event.stopPropagation();
-
+            
             const button = event.target.closest('.wishlist-btn');
             const icon = button.querySelector('i');
             const isWishlisted = button.classList.contains('active');

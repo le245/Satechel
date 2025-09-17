@@ -34,7 +34,8 @@ const getProductDetailPage = async (req, res) => {
     const categoryDiscount = categoryOffer ? categoryOffer.discount : 0;
 
     const bestDiscount = Math.max(productDiscount, categoryDiscount);
-
+  
+    
     if (bestDiscount > 0 && product.regularPrice) {
       product.salesPrice = product.regularPrice * (1 - bestDiscount / 100);
     } else {
