@@ -587,18 +587,20 @@ const getOrderDetailsPage = async (req, res) => {
                 path: 'address',
                 model: 'Address',
             });
+            console.log('orders',order);
 
         if (!order) {
             return res.status(STATUS_CODES.NOT_FOUND).render('page-404', { message: 'Order not found' });
         }
+let selectedAddress = null;
 
-        let selectedAddress = null;
-        if (order.address && order.selectedAddressId) {
-            selectedAddress = order.address.address.find(
-                (addr) => addr._id.toString() === order.selectedAddressId.toString()
-            );
-        }
+if (order?.address?.address && order.selectedAddressId) {
+  selectedAddress = order.address.address.find(
+    (addr) => addr._id.toString() === order.selectedAddressId.toString()
+  ) || null;
+}
 
+        console.log(order,"===============")
         res.render('order-details', {
             order,
             user: userId,
@@ -641,8 +643,4 @@ module.exports = {
     changeEmailOtpPage
 
 };
-
-
-
-
 

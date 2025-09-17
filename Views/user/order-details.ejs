@@ -316,21 +316,21 @@
                                         </tr>
                                     </thead>
                                     <tbody id="order-items">
-                                        <% order.items.forEach((item, index) => { %>
-                                        <tr class="product-item" data-item-id="<%= item.productId._id %>">
+                                        <% order?.items?.forEach((item, index) => { %>
+                                        <tr class="product-item" data-item-id="<%= item?.productId?._id %>">
                                             <td>
                                                 <div class="d-flex align-items-center">
-                                                    <% if (item.productId && item.productId.productImage && item.productId.productImage.length > 0) { %>
-                                                        <img src="<%= item.productId.productImage[0] %>" alt="<%= (item.productId.productName || item.name || 'Product') %>" class="item-img me-3 img-fluid" style="width: 60px; height: 60px; object-fit: cover;">
+                                                    <% if (item?.productId && item?.productId?.productImage && item?.productId?.productImage.length > 0) { %>
+                                                        <img src="<%= item?.productId?.productImage[0] %>" alt="<%= (item?.productId?.productName || item?.name || 'Product') %>" class="item-img me-3 img-fluid" style="width: 60px; height: 60px; object-fit: cover;">
                                                     <% } else { %>
                                                         <div class="bg-light me-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
                                                             <i class="fas fa-box text-muted"></i>
                                                         </div>
                                                     <% } %>
                                                     <div>
-                                                        <h6 class="mb-0"><%= item.productId?.productName || item.name || 'Unknown Product' %></h6>
-                                                        <% if (item.sku) { %>
-                                                            <small class="text-muted">SKU: <%= item.sku %></small>
+                                                        <h6 class="mb-0"><%= item.productId?.productName || item?.name || 'Unknown Product' %></h6>
+                                                        <% if (item?.sku) { %>
+                                                            <small class="text-muted">SKU: <%= item?.sku %></small>
                                                         <% } %>
                                                         <% if (item.cancelStatus === 'Cancelled') { %>
                                                             <span class="text-danger item-status">Cancelled</span>
@@ -343,29 +343,29 @@
                                                         <% } %>
                                                     </div>
                                                 </td>
-                                                <td class="item-price">₹<%= item.price ? item.price.toFixed(2) : '0.00' %></td>
-                                                <td class="item-quantity"><%= item.quantity %></td>
-                                                <td class="text-end item-subtotal">₹<%= item.price && item.quantity ? (item.price * item.quantity).toFixed(2) : '0.00' %></td>
+                                                <td class="item-price">₹<%= item?.price ? item?.price.toFixed(2) : '0.00' %></td>
+                                                <td class="item-quantity"><%= item?.quantity %></td>
+                                                <td class="text-end item-subtotal">₹<%= item?.price && item?.quantity ? (item?.price * item?.quantity).toFixed(2) : '0.00' %></td>
                                                 <td class="text-end item-actions">
-                                                    <% if (order.status !== 'PaymentFailed' && ['Pending', 'Processing'].includes(order.status) && item.cancelStatus !== 'Cancelled') { %>
+                                                    <% if (order?.status !== 'PaymentFailed' && ['Pending', 'Processing'].includes(order?.status) && item?.cancelStatus !== 'Cancelled') { %>
                                                         <button class="btn btn-danger btn-sm cancel-item-btn" 
-                                                                data-order-id="<%= order.orderId || '' %>" 
-                                                                data-item-id="<%= item.productId._id || '' %>" 
-                                                                onclick="cancelItem(this, '<%= order.orderId || '' %>', '<%= item.productId._id || '' %>', '<%= order.status %>')">
+                                                                data-order-id="<%= order?.orderId || '' %>" 
+                                                                data-item-id="<%= item.productId?._id || '' %>" 
+                                                                onclick="cancelItem(this, '<%= order?.orderId || '' %>', '<%= item?.productId?._id || '' %>', '<%= order?.status %>')">
                                                             <i class="fas fa-times me-1"></i> Cancel
                                                         </button>
                                                     <% } %>
                                                     <% 
-                                                        const orderStatusLower = order.status ? order.status.toLowerCase() : '';
-                                                        const returnStatus = item.returnStatus || 'Not Requested';
-                                                        const cancelStatus = item.cancelStatus || 'Not Cancelled';
-                                                        console.log(`Item ${item.productId._id}: orderStatus=${orderStatusLower}, returnStatus=${returnStatus}, cancelStatus=${cancelStatus}`);
+                                                        const orderStatusLower = order?.status ? order?.status.toLowerCase() : '';
+                                                        const returnStatus = item?.returnStatus || 'Not Requested';
+                                                        const cancelStatus = item?.cancelStatus || 'Not Cancelled';
+                                                        console.log(`Item ${item.productId?._id}: orderStatus=${orderStatusLower}, returnStatus=${returnStatus}, cancelStatus=${cancelStatus}`);
                                                     %>
                                                     <% if (['delivered', 'returnrequest'].includes(orderStatusLower) && returnStatus === 'Not Requested' && cancelStatus !== 'Cancelled') { %>
                                                         <button class="btn btn-warning btn-sm return-item-btn" 
-                                                                data-order-id="<%= order.orderId || '' %>" 
-                                                                data-item-id="<%= item.productId._id || '' %>" 
-                                                                onclick="returnItem(this, '<%= order.orderId || '' %>', '<%= item.productId._id || '' %>', '<%= item.productId?.productName || item.name || '' %>')">
+                                                                data-order-id="<%= order?.orderId || '' %>" 
+                                                                data-item-id="<%= item?.productId?._id || '' %>" 
+                                                                onclick="returnItem(this, '<%= order?.orderId || '' %>', '<%= item?.productId?._id || '' %>', '<%= item?.productId?.productName || item?.name || '' %>')">
                                                             <i class="fas fa-undo me-1"></i> Return
                                                         </button>
                                                     <% } %>
