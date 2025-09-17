@@ -569,6 +569,7 @@ res.redirect("/userProfile")
   res.redirect("/pageNotFound")
 }
 }
+
 const getOrderDetailsPage = async (req, res) => {
     try {
         const { orderId } = req.params;
@@ -609,7 +610,6 @@ const getOrderDetailsPage = async (req, res) => {
         res.status(STATUS_CODES.SERVER_ERROR).render('error', { message: 'Internal Server Error' });
     }
 };
-
 
 
 
