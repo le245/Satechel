@@ -23,17 +23,10 @@ const cancelOrder = async (req, res) => {
             return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Cannot cancel this order now' });
         }
 
-        if (!order.originalSubTotal) {
-            order.originalSubTotal = order.subTotal;
-        }
-        if (!order.originalFinalAmount) {
-            order.originalFinalAmount = order.finalAmount;
-        }
-
         let refundAmount = 0;
         let cancelledItems = [];
 
-        const discountFactor = order.originalSubTotal > 0 ? (order.originalFinalAmount / order.originalSubTotal) : 1;
+        const discountFactor = order.subTotal > 0 ? (order.finalAmount / order.subTotal) : 1;
 
         if (itemId) {
             const item = order.items.find(i => i.productId._id.toString() === itemId);
@@ -94,11 +87,6 @@ const cancelOrder = async (req, res) => {
             }
         }
 
-        order.subTotal = order.items
-            .filter(i => i.cancelStatus !== 'Cancelled')
-            .reduce((sum, i) => sum + (i.price * i.quantity), 0);
-        order.finalAmount = order.subTotal * discountFactor;
-
         await order.save();
 
         if (order.paymentMethod !== 'cod' && refundAmount > 0) {
@@ -128,10 +116,8 @@ const cancelOrder = async (req, res) => {
             message: itemId ? 'Item cancelled successfully' : 'Order cancelled successfully',
             updatedOrder: {
                 subTotal: order.subTotal,
-                originalSubTotal: order.originalSubTotal,
                 discount: order.discount,
                 finalAmount: order.finalAmount,
-                originalFinalAmount: order.originalFinalAmount,
                 status: order.status,
                 cancelledItems
             }
@@ -141,6 +127,10 @@ const cancelOrder = async (req, res) => {
         res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, message: 'Something went wrong' });
     }
 };
+
+
+
+
 
 const returnOrder = async (req, res) => {
   try {
@@ -171,24 +161,11 @@ const returnOrder = async (req, res) => {
       });
     }
 
-    
-    if (!order.originalSubTotal || order.originalSubTotal === 0) {
-      order.originalSubTotal = order.items.reduce((sum, item) => {
-        const price = item.price || (item.productId?.price || 0);
-        const quantity = item.quantity || 1;
-        return sum + price * quantity;
-      }, 0);
-    }
-
-    if (!order.originalFinalAmount) {
-      order.originalFinalAmount = order.finalAmount || order.originalSubTotal - (order.discount || 0);
-    }
-
     let returnedItems = [];
     let refundAmount = 0;
 
     if (itemId) {
-   
+     
       if (!mongoose.Types.ObjectId.isValid(itemId)) {
         return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Invalid item ID format' });
       }
@@ -197,9 +174,6 @@ const returnOrder = async (req, res) => {
       if (!item) {
         return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: 'Item not found in order' });
       }
-
-      item.returnStatus = item.returnStatus || 'Not Requested';
-      item.cancelStatus = item.cancelStatus || 'Not Cancelled';
 
       if (item.returnStatus !== 'Not Requested') {
         return res.status(STATUS_CODES.BAD_REQUEST).json({
@@ -219,23 +193,21 @@ const returnOrder = async (req, res) => {
       item.returnReason = reason.trim();
       item.returnRequestedAt = new Date();
 
-      const itemSubTotal = (item.price * item.quantity).toFixed(2);
-      const discountRatio = order.originalSubTotal > 0 ? (order.discount || 0) / order.originalSubTotal : 0;
-      refundAmount = (itemSubTotal - itemSubTotal * discountRatio).toFixed(2);
+      const itemTotal = item.price * item.quantity;
+      const discountRatio = order.subTotal > 0 ? (order.discount || 0) / order.subTotal : 0;
+      refundAmount = itemTotal - itemTotal * discountRatio;
 
       returnedItems.push({
         itemId: item.productId._id.toString(),
-        name: item.productId ? item.productId.productName : 'Unknown',
+        name: item.productId?.productName || 'Unknown',
         quantity: item.quantity,
-        refundAmount: parseFloat(refundAmount),
+        refundAmount,
       });
     } else {
-    
-      const hasReturnableItems = order.items.some((item) => {
-        const returnStatus = item.returnStatus || 'Not Requested';
-        const cancelStatus = item.cancelStatus || 'Not Cancelled';
-        return returnStatus === 'Not Requested' && cancelStatus !== 'Cancelled';
-      });
+      
+      const hasReturnableItems = order.items.some(
+        (item) => item.returnStatus === 'Not Requested' && item.cancelStatus !== 'Cancelled'
+      );
 
       if (!hasReturnableItems) {
         return res.status(STATUS_CODES.BAD_REQUEST).json({
@@ -245,58 +217,31 @@ const returnOrder = async (req, res) => {
       }
 
       order.items.forEach((item) => {
-        item.returnStatus = item.returnStatus || 'Not Requested';
-        item.cancelStatus = item.cancelStatus || 'Not Cancelled';
         if (item.returnStatus === 'Not Requested' && item.cancelStatus !== 'Cancelled') {
           item.returnStatus = 'Requested';
           item.returnReason = reason.trim();
           item.returnRequestedAt = new Date();
           returnedItems.push({
             itemId: item.productId._id.toString(),
-            name: item.productId ? item.productId.productName : 'Unknown',
+            name: item.productId?.productName || 'Unknown',
             quantity: item.quantity,
           });
         }
       });
 
-      refundAmount = order.finalAmount.toFixed(2);
+      refundAmount = order.finalAmount;
     }
 
-    
-    const activeItems = order.items.filter((item) => {
-      const returnStatus = item.returnStatus || 'Not Requested';
-      const cancelStatus = item.cancelStatus || 'Not Cancelled';
-      return cancelStatus !== 'Cancelled' && returnStatus !== 'Returned';
-    });
+  
+    order.refundedAmount = (order.refundedAmount || 0) + refundAmount;
 
-    order.subTotal = activeItems.reduce((sum, item) => {
-      const price = item.price || (item.productId?.price || 0);
-      const quantity = item.quantity || 1;
-      return sum + price * quantity;
-    }, 0);
-
-    order.finalAmount = Math.max(0, order.subTotal - (order.discount || 0));
-
-    
-    order.displaySubTotal = order.originalSubTotal;
-    order.displayFinalAmount = order.originalFinalAmount;
-    order.refundedAmount = (order.refundedAmount || 0) + parseFloat(refundAmount);
-
-    const determineOrderStatus = (items) => {
-      const activeItems = items.filter((item) => (item.cancelStatus || 'Not Cancelled') !== 'Cancelled');
-      if (activeItems.length === 0) return 'Cancelled';
-      if (activeItems.every((item) => (item.returnStatus || 'Not Requested') === 'Returned')) {
-        return 'Returned';
-      }
-      if (activeItems.some((item) => (item.returnStatus || 'Not Requested') === 'Requested')) {
-        return activeItems.every((item) => (item.returnStatus || 'Not Requested') === 'Requested' || (item.returnStatus || 'Not Requested') === 'Returned')
-          ? 'ReturnRequest'
-          : 'Delivered';
-      }
-      return 'Delivered';
-    };
-
-    order.status = determineOrderStatus(order.items);
+   
+    const activeItems = order.items.filter((i) => i.cancelStatus !== 'Cancelled');
+    if (activeItems.every((i) => i.returnStatus === 'Returned')) {
+      order.status = 'Returned';
+    } else if (activeItems.some((i) => i.returnStatus === 'Requested')) {
+      order.status = 'ReturnRequest';
+    }
 
     await order.save();
 
@@ -305,19 +250,15 @@ const returnOrder = async (req, res) => {
       message: itemId ? 'Item return requested successfully' : 'Order return requested successfully',
       updatedStatus: order.status,
       updatedOrder: {
-        subTotal: order.subTotal,
-        finalAmount: order.finalAmount,
-        discount: order.discount || 0,
-        couponApplied: order.couponApplied || false,
-        originalSubTotal: order.originalSubTotal,
-        originalFinalAmount: order.originalFinalAmount,
-        displaySubTotal: order.displaySubTotal,
-        displayFinalAmount: order.displayFinalAmount,
-        refundedAmount: order.refundedAmount,
-        items: order.items.map((item) => ({
+      subTotal: order.subTotal,
+      finalAmount: order.finalAmount,
+      discount: order.discount || 0,
+      couponApplied: order.couponApplied || false,
+      refundedAmount: order.refundedAmount,
+      items: order.items.map((item) => ({
           productId: item.productId._id.toString(),
-          returnStatus: item.returnStatus || 'Not Requested',
-          cancelStatus: item.cancelStatus || 'Not Cancelled',
+          returnStatus: item.returnStatus,
+          cancelStatus: item.cancelStatus,
         })),
       },
       returnedItems,
@@ -327,6 +268,7 @@ const returnOrder = async (req, res) => {
     res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, message: `Server error: ${error.message}` });
   }
 };
+
 
 
 

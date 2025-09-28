@@ -7,7 +7,7 @@
 
 
     .sidebar a:hover {
-        background: #34495e;
+        background: #001000;
     }
 
     .content-area {
@@ -34,7 +34,7 @@
     }
 
     .btn-primary {
-        background: #007bff;
+        background:  #001000;
         color: white;
         border: none;
         padding: 5px 15px;
@@ -42,7 +42,7 @@
     }
 
     .btn-primary:hover {
-        background: #0056b3;
+        background: #001000;
     }
 
     .search-container {
@@ -90,7 +90,7 @@
     .pagination-container a {
         margin: 0 5px;
         text-decoration: none;
-        color: #007bff;
+        color: #001000;
     }
 
     .pagination-container .current-page {
@@ -119,7 +119,7 @@
                         <th>Offer Name</th>
                         <th>Type</th>
                         <th>Discount (%)</th>
-                        <th>Product Id</th>
+                        <th>Name</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -131,14 +131,15 @@
                                 <td><%= (offer.type && offer.type.charAt(0).toUpperCase() + offer.type.slice(1)) || 'N/A' %></td>
                                 <td><%= offer.discount || 'N/A' %></td>
                                 <td>
-                                    <% if (offer.type === 'product') { %>
-                                        <%= offer.productId || 'N/A' %>
-                                    <% } else if (offer.type === 'category') { %>
-                                        <%= offer.categoryId || 'N/A' %>
-                                    <% } else { %>
-                                        <%= offer.referralCode || 'N/A' %>
-                                    <% } %>
-                                </td>
+                              <% if (offer.type === 'product' && offer.productId) { %>
+                              <%= offer.productId.productName %>
+                              <% } else if (offer.type === 'category' && offer.categoryId) { %>
+                              <%= offer.categoryId.name %>
+                              <% } else { %>
+                                 N/A
+                             <% } %>
+                             </td>
+
                                 <td class="actions">
                                     <button class="btn btn-primary btn-sm" onclick="editOffer('<%= JSON.stringify(offer) %>')">Edit</button>
                                     <button class="btn btn-danger btn-sm" onclick="removeOffer('<%= offer._id %>')">Remove</button>

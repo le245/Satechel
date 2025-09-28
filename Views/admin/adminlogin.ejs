@@ -26,7 +26,7 @@
       max-width: 500px;
       padding: 20px;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      background-color: hsl(193, 80%, 17%);
+      background-color: #010612;
       border-radius: 8px;
     }
     .login-container label,
@@ -56,6 +56,11 @@
       border-color: #007bff;
       box-shadow: none;
       color: white;
+    }
+    .custom-btn {
+    background-color: white ; 
+    color: black ;
+    border: 1px solid #ccc ;
     }
   </style>
 </head>
@@ -91,7 +96,7 @@
         />
         <div id="passwordError" class="error-message"></div>
       </div>
-      <button type="submit" class="btn btn-primary btn-block">Log In</button>
+      <button type="submit" class="btn btn-block custom-btn">Log In</button>
     </form>
   </div>
   <script src="/js/jquery.min.js"></script>

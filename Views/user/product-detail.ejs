@@ -217,12 +217,12 @@
     .product-price {
         font-size: 24px;
         font-weight: bold;
-        color: #9370DB;
+        color: #333;
     }
     
     .product-discount {
         font-size: 16px;
-        color: #e74c3c;
+        color: gray;
         text-decoration: line-through;
         margin-left: 10px;
     }
@@ -324,7 +324,7 @@
     }
     
     .tab-item.active {
-        color: #9370DB;
+        color: #333;
         border-bottom: 3px solid #9370DB;
     }
     
@@ -417,7 +417,7 @@
     .product-card-price {
         font-size: 18px;
         font-weight: bold;
-        color: #9370DB;
+        color: #333;
     }
     
     .footer {
@@ -449,7 +449,7 @@
         left: 0;
         width: 40px;
         height: 2px;
-        background-color: #9370DB;
+        background-color: #333;
     }
     
     .footer-links {
@@ -478,36 +478,38 @@
         font-size: 14px;
     }
     
-    .wishlist-btn {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: rgba(255, 255, 255, 0.8);
-        border: none;
-        border-radius: 50%;
-        width: 36px;
-        height: 36px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        z-index: 2;
-    }
-    
-    .wishlist-btn:hover {
-        background: #fff;
-        transform: scale(1.1);
-    }
-    
-    .wishlist-btn i {
-        color: #ff5757;
-        font-size: 18px;
-    }
-    
-    .wishlist-btn.added i {
-        color: #ff0000; /* Brighter red for active state */
-    }
+.wishlist-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #333;  
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 2;
+}
+
+.wishlist-btn i {
+    color: #fff;  /* white heart before adding */
+    font-size: 18px;
+}
+
+.wishlist-btn.added {
+    background: #fff;   
+   
+}
+
+.wishlist-btn.added i {
+    color: #333; 
+}
+
+
     
     .product-badge {
         position: absolute;
@@ -542,11 +544,11 @@
         margin: 10px 0;
         font-size: 16px;
         font-weight: 500;
-        color: #e74c3c; /* Red color for offer text */
+        color: #333; 
     }
     
     .offer-type {
-        background-color: #ffe6e6; /* Light red background */
+        background-color: #ffe6e6; 
         padding: 5px 10px;
         border-radius: 4px;
         display: inline-block;
@@ -580,7 +582,7 @@
     }
     
     .unavailable-message a {
-        color: #9370DB;
+        color: #333;
         text-decoration: none;
         font-weight: 500;
     }
@@ -588,12 +590,146 @@
     .unavailable-message a:hover {
         text-decoration: underline;
     }
+
+
+
+    .review-section {
+        margin-top: 60px;
+        background-color: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+
+    .review-section h2 {
+        font-size: 24px;
+        margin-bottom: 20px;
+        position: relative;
+        padding-bottom: 10px;
+    }
+
+    .review-section h2::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 60px;
+        height: 3px;
+        background-color: #333;
+    }
+
+    .review-form {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        margin-bottom: 40px;
+    }
+
+    .star-rating {
+        display: flex;
+        gap: 5px;
+        font-size: 24px;
+        color: #ccc;
+        cursor: pointer;
+    }
+
+    .star-rating .star {
+        transition: color 0.2s;
+    }
+
+    .star-rating .star.filled {
+        color: #f1c40f;
+    }
+
+    .star-rating .star:hover,
+    .star-rating .star:hover ~ .star {
+        color: #f1c40f;
+    }
+
+    .review-form textarea {
+        width: 100%;
+        min-height: 100px;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 16px;
+        resize: vertical;
+    }
+
+    .review-form button {
+        padding: 12px 20px;
+        background-color: #333;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    .review-form button:hover {
+        background-color: gray;
+    }
+
+    .reviews-list {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .review-item {
+        border-bottom: 1px solid #eee;
+        padding-bottom: 20px;
+    }
+
+    .review-item:last-child {
+        border-bottom: none;
+    }
+
+    .review-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .review-author {
+        font-weight: 500;
+        font-size: 16px;
+        color: #333;
+    }
+
+    .review-date {
+        font-size: 14px;
+        color: #777;
+    }
+
+    .review-stars {
+        color: #f1c40f;
+        font-size: 16px;
+        margin-bottom: 10px;
+    }
+
+    .review-text {
+        font-size: 15px;
+        line-height: 1.6;
+        color: #555;
+    }
+
+    .no-reviews {
+        font-size: 16px;
+        color: #777;
+        text-align: center;
+        padding: 20px;
+    }
+
 </style>
 
 <body>
     <!-- Breadcrumbs -->
     <nav class="breadcrumbs">
-        <a href="/">Home</a>
+        <a href="/home">Home</a>
         <span>></span>
         <a href="/shop">Shop</a>
         <% if (product && product.category && product.category._id && !product.isBlocked) { %>
@@ -641,9 +777,12 @@
                     
                     <div class="main-image">
                         <% if (product && product.productImage && Array.isArray(product.productImage) && product.productImage.length > 0) { %>
-                            <button class="wishlist-btn <%= product.inWishlist ? 'added' : '' %>" onclick="addToWishlist('<%= product._id %>', event)">
-                                <i class="fa fa-heart<%= product.inWishlist ? '' : '-o' %>"></i>
-                            </button>
+ <button 
+  class="wishlist-btn <%= isInWishlist ? 'added' : '' %>" 
+  onclick="addToWishlist('<%= product._id %>', event)">
+    <i class="fa <%= isInWishlist ? 'fa-heart' : 'fa-heart-o' %>"></i>
+</button>
+
                             <img 
                                 id="mainProductImage"  
                                 class="product-image-zoom"
@@ -668,35 +807,44 @@
                         <h1 class="product-title"><%= product && product.productName ? product.productName : 'Unnamed Product' %></h1>
                     </div>
 
-                    <!-- Offer Details -->
-                    <div class="offer-details">
-                        <% if (product && (product.productOffer || product.categoryOffer)) { %>
-                            <% 
-                                const bestDiscount = Math.max(product.productOffer || 0, product.categoryOffer || 0);
-                                const offerType = product.productOffer >= product.categoryOffer ? 'Product Offer' : 'Category Offer';
-                            %>
-                            <span class="offer-type">
-                                <%= offerType %>: <%= bestDiscount %>% Off
-                            </span>
-                        <% } else { %>
-                            <span class="offer-type">No Offer Applied</span>
-                        <% } %>
-                    </div>
+                  <!-- Offer Details -->
+<div class="offer-details">
+  <% if (product) { %>
+    <% 
+      const productOffer = product.productOffer || 0;
+      const categoryOffer = product.category?.categoryOffer || 0;
+      const bestDiscount = Math.max(productOffer, categoryOffer);
+    %>
+
+    <% if (bestDiscount > 0) { %>
+      <% const offerType = (productOffer >= categoryOffer) ? 'Product Offer' : 'Category Offer'; %>
+      <span class="offer-type">
+        <%= offerType %>: <%= bestDiscount %>% Off
+      </span>
+    <% } else { %>
+      <span class="offer-type">No Offer Applied</span>
+    <% } %>
+  <% } %>
+</div>
+
+
                     
-                    <div>
-                        <span class="product-price">
-                            <% if (product && product.salesPrice !== undefined && product.salesPrice !== null) { %>
-                                ₹<%= product.salesPrice.toFixed(2) %>
-                                <span class="product-discount">
-                                    <del>₹<%= product.regularPrice.toFixed(2) %></del>
-                                </span>
-                            <% } else if (product && product.regularPrice !== undefined) { %>
-                                ₹<%= product.regularPrice.toFixed(2) %>
-                            <% } else { %>
-                                Not Available
-                            <% } %>
-                        </span>
-                    </div>
+<div>
+    <span class="product-price">
+        <% if (product.salesPrice && product.salesPrice < product.regularPrice) { %>
+            ₹<%= product.salesPrice.toFixed(2) %>
+            <span class="product-discount">
+                <del>₹<%= product.regularPrice.toFixed(2) %></del>
+            </span>
+        <% } else if (product.regularPrice !== undefined && product.regularPrice !== null) { %>
+            ₹<%= product.regularPrice.toFixed(2) %>
+        <% } else { %>
+            Not Available
+        <% } %>
+    </span>
+</div>
+
+    
                     
                     <p class="product-description">
                         <%= product && product.description ? product.description : 'No description available.' %>
@@ -776,6 +924,61 @@
                 </div>
             </div>
             
+
+
+
+
+
+<div class="review-section" id="reviews">
+    <h2>Customer Reviews</h2>
+
+    <!-- Review Form -->
+    <% if (user) { %>
+        <form id="reviewForm" class="review-form">
+            <div class="star-rating" id="starRating">
+                <% for (let i = 1; i <= 5; i++) { %>
+                    <span class="star <%= i <= 0 ? 'selected' : '' %>" data-value="<%= i %>">&#9733;</span>
+                <% } %>
+            </div>
+            <input type="hidden" name="rating" id="rating" required>
+            <textarea id="review" name="review" placeholder="Write your review here..." required></textarea>
+            <button type="submit">Submit Review</button>
+        </form>
+    <% } else { %>
+        <p>Please <a href="/login">login</a> to write a review.</p>
+    <% } %>
+
+    <!-- Reviews List -->
+    <div class="reviews-list" id="reviewsList">
+        <% if (product.reviews && product.reviews.length > 0) { %>
+            <% product.reviews.forEach(review => { %>
+                <div class="review-item">
+                    <div class="review-header">
+                     
+                        <span class="review-rating">
+                            <% for (let i = 1; i <= 5; i++) { %>
+                                <span class="star <%= i <= review.rating ? 'selected' : '' %>">&#9733;</span>
+                            <% } %>
+                        </span>
+                    </div>
+                    <p class="review-text"><%= review.review %></p>
+                   <small class="review-date">
+  <% if (review.createdAt) { %>
+    <%= new Date(review.createdAt).toLocaleDateString('en-GB') %>
+  <% } else { %>
+    -
+  <% } %>
+</small>
+
+                </div>
+            <% }) %>
+        <% } else { %>
+            <p>No reviews yet. Be the first to review this product!</p>
+        <% } %>
+    </div>
+</div>
+
+
             <!-- Related Products -->
             <div class="related-products">
                 <h2 class="section-title">You May Also Like</h2>
@@ -819,6 +1022,12 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-zoom/1.7.21/jquery.zoom.min.js"></script>
+
+    
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
 
     <script>
         const tabs = document.querySelectorAll('.tab-item');
@@ -1021,40 +1230,38 @@
             }
         }
 
-        async function addToWishlist(productId, event) {
-            event.preventDefault();
-            const button = event.target.closest('.wishlist-btn');
-            const isAdded = button.classList.contains('added');
+       async function addToWishlist(productId, event) {
+    event.preventDefault();
+    const button = event.target.closest('.wishlist-btn');
+    const isAdded = button.classList.contains('added');
 
-            try {
-                const response = await fetch(isAdded ? '/removeWishlist' : '/addWishlist', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ productId })
-                });
+    try {
+          const response = await fetch(isAdded ? '/removeFromWishlist' : '/addWishlist', {
+            method: isAdded ? 'DELETE' : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productId })
+        });
 
-                const data = await response.json();
+        const data = await response.json();
 
-                if (data.success) {
-                    if (isAdded) {
-                        button.classList.remove('added');
-                        button.querySelector('i').classList.replace('fa-heart', 'fa-heart-o');
-                        showToast('Product removed from wishlist!', 'success');
-                    } else {
-                        button.classList.add('added');
-                        button.querySelector('i').classList.replace('fa-heart-o', 'fa-heart');
-                        showToast('Product added to wishlist!', 'success');
-                    }
-                } else {
-                    showToast(data.message || 'Failed to update wishlist', 'error');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showToast('Something went wrong. Please try again.', 'error');
+        if (data.success) {
+            if (isAdded) {
+                button.classList.remove('added');
+                button.querySelector('i').classList.replace('fa-heart', 'fa-heart-o');
+                showToast('Product removed from wishlist!', 'success');
+            } else {
+                button.classList.add('added');
+                button.querySelector('i').classList.replace('fa-heart-o', 'fa-heart');
+                showToast('Product added to wishlist!', 'success');
             }
+        } else {
+            showToast(data.message || 'Failed to update wishlist', 'error');
         }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Something went wrong. Please try again.', 'error');
+    }
+}
 
         function showToast(message, type) {
             Swal.fire({
@@ -1071,6 +1278,161 @@
                 }
             });
         }
+
+  
+   
+    // Star rating functionality
+    const stars = document.querySelectorAll('#starRating .star');
+    const ratingInput = document.getElementById('rating');
+
+    stars.forEach(star => {
+        star.addEventListener('click', () => {
+            const value = Number(star.getAttribute('data-value'));
+            ratingInput.value = value;
+            stars.forEach(s => {
+                const val = Number(s.getAttribute('data-value'));
+                s.classList.toggle('filled', val <= value);
+            });
+        });
+
+        star.addEventListener('mouseover', () => {
+            const value = Number(star.getAttribute('data-value'));
+            stars.forEach(s => {
+                const val = Number(s.getAttribute('data-value'));
+                s.classList.toggle('filled', val <= value);
+            });
+        });
+
+        star.addEventListener('mouseout', () => {
+            const value = Number(ratingInput.value) || 0;
+            stars.forEach(s => {
+                const val = Number(s.getAttribute('data-value'));
+                s.classList.toggle('filled', val <= value);
+            });
+        });
+    });
+
+    // Form submission
+    const reviewForm = document.getElementById('reviewForm');
+    const reviewsList = document.getElementById('reviewsList');
+
+    async function fetchReviews(productId) {
+        try {
+            const response = await fetch(`/product-details/reviews/${productId}`);
+            const data = await response.json();
+            if (data.success && data.reviews) {
+                renderReviews(data.reviews);
+            } else {
+                reviewsList.innerHTML = '<p class="no-reviews">No reviews yet. Be the first to review this product!</p>';
+            }
+        } catch (error) {
+            console.error('Error fetching reviews:', error);
+            reviewsList.innerHTML = '<p class="no-reviews">Failed to load reviews. Please try again later.</p>';
+        }
+    }
+
+    function renderReviews(reviews) {
+        reviewsList.innerHTML = '';
+        if (reviews.length === 0) {
+            reviewsList.innerHTML = '<p class="no-reviews">No reviews yet. Be the first to review this product!</p>';
+            return;
+        }
+
+        reviews.forEach(review => {
+            const reviewElement = document.createElement('div');
+            reviewElement.classList.add('review-item');
+            reviewElement.innerHTML = `
+                <div class="review-header">
+                    <span class="review-author">${review.userId?.name || 'Anonymous'}</span>
+                    <span class="review-date">${review.createdAt ? new Date(review.createdAt).toLocaleDateString('en-GB') : '-'}</span>
+                </div>
+                <div class="review-stars">${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</div>
+                <p class="review-text">${review.review}</p>
+            `;
+            reviewsList.appendChild(reviewElement);
+        });
+    }
+
+    reviewForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const productId = '<%= product._id %>';
+        const rating = ratingInput.value;
+        const review = document.getElementById('review').value.trim();
+
+        if (!rating) {
+            Swal.fire({
+                title: 'Missing Rating',
+                text: 'Please select a star rating.',
+                icon: 'warning',
+                confirmButtonColor: '#4b5563'
+            });
+            return;
+        }
+
+        if (!review) {
+            Swal.fire({
+                title: 'Missing Review',
+                text: 'Please write a review.',
+                icon: 'warning',
+                confirmButtonColor: '#4b5563'
+            });
+            return;
+        }
+
+        try {
+            const response = await fetch(`/product-details/add-review/${productId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ rating, review })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'Review submitted successfully.',
+                    icon: 'success',
+                    confirmButtonColor: '#4b5563',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+
+                // Reset form
+                reviewForm.reset();
+                ratingInput.value = '';
+                stars.forEach(s => s.classList.remove('filled'));
+
+                // Fetch and render updated reviews
+                fetchReviews(productId);
+            } else {
+                Swal.fire({
+                    title: 'Error',
+                    text: data.message || 'Failed to submit review.',
+                    icon: 'error',
+                    confirmButtonColor: '#4b5563'
+                });
+            }
+        } catch (error) {
+            console.error('Error submitting review:', error);
+            Swal.fire({
+                title: 'Error',
+                text: 'Something went wrong. Please try again.',
+                icon: 'error',
+                confirmButtonColor: '#4b5563'
+            });
+        }
+    });
+
+    // Load reviews on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        const productId = '<%= product._id %>';
+        fetchReviews(productId);
+    });
+
+
     </script>
 
     <%- include("../../views/partials/user/footer") %>

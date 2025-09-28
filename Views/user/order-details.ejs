@@ -206,15 +206,15 @@
 </head>
 <body>
     <%
-        // Define displaySubTotal and displayFinalAmount once at the top
+       
         const displaySubTotal = (
             order.subTotal && order.subTotal > 0 ? order.subTotal :
-            order.originalSubTotal && order.originalSubTotal > 0 ? order.originalSubTotal :
+            <!-- order.subTotal && order.subTotal > 0 ? order.subTotal : -->
             order.displaySubTotal && order.displaySubTotal > 0 ? order.displaySubTotal : 0
         ).toFixed(2);
         const displayFinalAmount = (
             order.finalAmount && order.finalAmount > 0 ? order.finalAmount :
-            order.originalFinalAmount && order.originalFinalAmount > 0 ? order.originalFinalAmount :
+            <!-- order.originalFinalAmount && order.originalFinalAmount > 0 ? order.originalFinalAmount : -->
             order.displayFinalAmount && order.displayFinalAmount > 0 ? order.displayFinalAmount : 0
         ).toFixed(2);
     %>
@@ -639,12 +639,12 @@
                     const data = await response.json();
 
                     if (data.success) {
-                        // Update order status
+                       
                         const orderStatusBadge = document.querySelector('.status-badge');
                         orderStatusBadge.textContent = 'Cancelled';
                         orderStatusBadge.className = 'status-badge status-Cancelled';
 
-                        // Update timeline
+                 
                         const timelineContainer = document.querySelector('.tracking-timeline');
                         timelineContainer.innerHTML = `
                             <div class="timeline-item">
@@ -656,7 +656,7 @@
                             </div>
                         `;
 
-                        // Update item statuses
+                      
                         document.querySelectorAll('#order-items .product-item').forEach(row => {
                             const statusCell = row.querySelector('.item-status');
                             const actionsCell = row.querySelector('.item-actions');
@@ -668,14 +668,14 @@
                             }
                         });
 
-                        // Update payment summary
+                    
                         const subtotalElement = document.getElementById('subtotal-amount');
                         const totalElement = document.getElementById('final-amount');
                         const totalAmountElement = document.getElementById('total-amount');
                         const discountElement = document.getElementById('discount-amount');
                         const totalItemsElement = document.getElementById('total-items');
 
-                        // Use backend-provided values
+                      
                         const newSubTotal = data.updatedOrder.subTotal !== undefined ? data.updatedOrder.subTotal : 0;
                         const newFinalAmount = data.updatedOrder.finalAmount !== undefined ? data.updatedOrder.finalAmount : 0;
                         const refundAmount = data.updatedOrder.cancelledItems.reduce((sum, item) => sum + (item.refundAmount || 0), 0);
@@ -703,13 +703,12 @@
                         }
                         totalItemsElement.textContent = '0 items';
 
-                        // Update payment status
+                      
                         const paymentStatusElement = document.querySelector('.price-details .card-body .d-flex.justify-content-between.mt-2 span:last-child');
                         paymentStatusElement.textContent = 'Cancelled';
                         paymentStatusElement.classList.remove('text-success', 'text-muted');
                         paymentStatusElement.classList.add('text-danger');
 
-                        // Handle refund display
                         if (refundAmount > 0) {
                             const priceDetails = document.querySelector('.price-details .card-body');
                             const existingRefund = priceDetails.querySelector('.text-success:not(.refund-pending)');
@@ -729,7 +728,7 @@
                             }
                         }
 
-                        // Remove action buttons
+                        
                         const cancelOrderBtn = document.getElementById('cancelOrderBtn');
                         if (cancelOrderBtn) cancelOrderBtn.remove();
                         document.querySelectorAll('.cancel-item-btn').forEach(btn => btn.remove());

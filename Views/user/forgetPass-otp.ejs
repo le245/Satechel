@@ -80,21 +80,30 @@
             margin-bottom: 8px;
             font-weight: 500;
         }
-        
-        .form-control {
-            display: block;
-            width: 100%;
-            padding: 10px 15px;
-            font-size: 1rem;
-            line-height: 1.5;
-            color: #495057;
-            background-color: #fff;
-            background-clip: padding-box;
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-            margin-bottom: 15px;
-        }
+     .form-control {
+    display: block;
+    width: 100%;
+    padding: 12px; /* same padding as button */
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #495057;
+    background-color: #fff;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    box-sizing: border-box; 
+    margin-bottom: 15px;
+}
+
+.btn-primary {
+    color: #fff;
+    background-color: #001f3f;
+    border-color: #001f3f;
+    width: 100%;
+    padding: 12px;  
+    margin-top: 15px;
+    box-sizing: border-box;
+}
+
         
         .form-control:focus {
             border-color: #80bdff;
@@ -121,17 +130,19 @@
 
         .btn-primary {
             color: #fff;
-            background-color: #0d6efd;
-            border-color: #0d6efd;
+            background-color:#001f3f;
+            border-color: #001f3f;
             width: 100%;
             padding: 12px;
             margin-top: 15px;
-        }
+        }                                                     
         
         .btn-primary:hover {
-            background-color: #0b5ed7;
-            border-color: #0a58ca;
+            background-color: #001f3f;
+            border-color: #001f3f;
         }
+
+
 
         .btn-link {
             font-weight: 400;
@@ -193,7 +204,7 @@
                 <form onsubmit="return validateOtpForm()">
                     <div class="form-group">
                         <label for="otp">Enter OTP:</label>
-                        <input type="text" id="otp" name="otp" class="form-control" required>
+                        <input type="text" id="otp" name="otp" class="form-control" >
                     </div>
                     <div class="form-group">
                         <button type="submit" class="btn btn-primary">Verify OTP</button>

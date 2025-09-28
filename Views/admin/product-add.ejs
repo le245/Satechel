@@ -334,11 +334,7 @@
                                                         <input name="regularPrice" type="number" class="form-control variant-regular-price" placeholder="$" id="regularPrice">
                                                           <div id="regularPrice-error" class="error-message"></div>
                                                     </div>
-                                                    <!-- <div class="col-md-6 mb-2">
-                                                        <label class="form-label">Sale Price</label>
-                                                        <input name="salesPrice" type="number"class="form-control variant-sales-price" placeholder="$" id="salesPrice">
-                                                          <div id="salesPrice-error" class="error-message"></div>
-                                                    </div> -->
+                                                 
                                                 </div>
                                             </div>
                                         </div>
@@ -349,7 +345,7 @@
                                 <button type="button" class="btn btn-secondary me-2" onclick="resetForm()">Reset</button>
                                 <div id="removeProductMessage" style="margin-top: 10px; font-size: 14px;"></div>
                                 <button type="button" class="btn btn-danger me-2" id="removeProduct" style="display: none;">Remove Product</button>
-                                <button class="btn btn-primary" type="submit">Publish Product</button>
+                                <button class="btn btn-primary" type="submit" style="background-color: #333;">Publish Product</button>
                             </div>
                         </form>
                     </div>
@@ -561,20 +557,33 @@ if (selectedProductImages.length < 3) {
         }
 
         function handleImageUpload(event) {
-            const files = event.target.files;
-            if (!files || files.length === 0) {
-              
-                return;
+    const files = event.target.files;
+    if (!files || files.length === 0) {
+        return;
+    }
+
+    const newFiles = Array.from(files);
+
+   
+    const validImages = newFiles.filter(file => {
+        if (!['image/png', 'image/jpeg', 'image/jpg'].includes(file.type)) {
+            const fileReadError = document.getElementById('fileReadError');
+            if (fileReadError) {
+                fileReadError.textContent = `File "${file.name}" is not a valid image. Please upload only PNG or JPEG images.`;
+            } else {
+                alert(`File "${file.name}" is not a valid image. Please upload only PNG or JPEG images.`);
             }
-
-            const newFiles = Array.from(files);
-            selectedProductImages = [...selectedProductImages, ...newFiles];
-
-            renderPreviews();
-
-            event.target.value = '';
-            
+            return false;
         }
+        return true;
+    });
+
+    selectedProductImages = [...selectedProductImages, ...validImages];
+
+    renderPreviews();
+
+    event.target.value = '';
+}
 
         function renderPreviews() {
             const container = document.getElementById('imagesPreviewContainer');

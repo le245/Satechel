@@ -12,63 +12,76 @@ const orderSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'User',
     },
+
+
     items: [
         {
             productId: {
                 type: Schema.Types.ObjectId,
-                ref: 'Product',
+                ref : 'Product',
                 required: true,
             },
+
             quantity: {
                 type: Number,
                 required: true,
             },
+
             price: {
                 type: Number,
                 default: 0,
             },
+
             cancelStatus: {
                 type: String,
                 enum: ['Pending', 'Completed', 'Cancelled'],
                 default: 'Completed',
             },
+
             returnStatus: {
                 type: String,
                 enum: ['Not Requested', 'Requested', 'Approved', 'Rejected'],
                 default: 'Not Requested',
             },
+
             returnReason:{ 
                 type: String 
 
              },
+
             returnRequestedAt:  { 
                 type: Date 
             },
         },
     ],
+
     subTotal: {
         type: Number,
         required: true,
     },
     discount: {
         type: Number,
+        required: true,
         default: 0,
     },
     finalAmount: {
         type: Number,
         required: true,
     },
-    originalSubTotal: {
-        type: Number,
-        required: true,
-        default: 0,
-    },
-    originalFinalAmount: {
-        type: Number,
-        required: true,
-        default: 0,
-    },
-    address: { type: Schema.Types.ObjectId, ref: 'Address' },
+    // originalSubTotal: {
+    //     type: Number,
+    //     required: true,
+    //     default: 0,
+    // },
+    // originalFinalAmount: {
+    //     type: Number,
+    //     required: true,
+    //     default: 0,
+    // },
+    address: { 
+        
+        type: Schema.Types.ObjectId,
+        ref: 'Address' },
     selectedAddressId: { type: Schema.Types.ObjectId },
     invoiceDate: {
         type: Date,

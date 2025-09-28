@@ -38,9 +38,10 @@ router.get("/shop",userController.getShop)
 
 
 router.get("/product-details/:id",isUserBlocked,userAuth,productController.getProductDetailPage)
+router.post("/product-details/add-review/:id", isUserBlocked, productController.addProductReview)
+router.get('/product-details/reviews/:id',isUserBlocked, productController.getProductReview);
 
-
-
+    
 
 //profile
 router.get("/forgot-password",profileController.getForgotPassPage)
@@ -52,12 +53,15 @@ router.post("/reset-password",profileController.postNewPassword);
 router.get("/userProfile",userAuth,profileController.userProfile)
 // router.get("/change-email",profileController.changeEmail)
 // router.post("/change-email",profileController.changeEmailValid)
-router.post("/verify-email-otp", profileController.verifyEmailOtp)
-router.post("/update-email",profileController.updateEmail)
- router.get("/change-password",profileController.changePassword)
-router.post("/change-password",profileController.changePasswordValid)
-router.get("/change-password-otp",profileController.changePassOtpPage)
-router.get("/change-email-otp",profileController.changeEmailOtpPage)
+router.post("/update-name", profileController.updateName);
+// router.post("/verify-email-otp", profileController.verifyEmailOtp)
+// router.post("/update-email",profileController.updateEmail)
+router.get("/change-password", profileController.changePassword);
+router.post("/change-password", profileController.postChangePassword)
+//  router.get("/change-password",profileController.changePassword)
+// router.post("/change-password",profileController.changePasswordValid)
+// router.get("/change-password-otp",profileController.changePassOtpPage)
+// router.get("/change-email-otp",profileController.changeEmailOtpPage)
 router.post("/verify-changepassword-otp",profileController.verifychangePassOtp)
 
 
@@ -66,14 +70,15 @@ router.get("/addAddress",userAuth,profileController.addAddress)
 router.post("/addAddress",userAuth,profileController.postAddAddress)
 router.get("/editAddress",userAuth,profileController.editAddress)
 router.post("/editAddress",userAuth,profileController.postEditAddress)
-router.get("/deleteAddress",userAuth,profileController.deleteAddress);
+router.delete("/deleteAddress",profileController.deleteAddress);
 
 // cartPage
 
 router.get("/cart",userAuth,cartController.getCartPage)
 router.post('/add-to-cart', userAuth, cartController.addToCart);
 router.put('/cart/update/:itemId', userAuth, cartController.updateCart);
-router.delete('/cart/update/:productId', userAuth, cartController.deleteItemFromCart);
+router.delete('/cart/update/:itemId', userAuth, cartController.deleteItemFromCart);
+
 
 router.get("/checkout",userAuth,checkoutController.getCheckOut)
 router.post("/placeorder",checkoutController.placeOrder)
@@ -103,8 +108,8 @@ router.post('/orders/return/:orderId',orderController.returnOrder)
 
 
 //wishlist
-router.get('/wishlist',userAuth,wishlistController.loadWishlist)
+router.get('/wishlist', userAuth, wishlistController.loadWishlist);
 router.post('/addWishlist', userAuth, wishlistController.addWishlist);
-router.post('/removeFromWishlist',userAuth,wishlistController.removeFromWishlist)
+router.delete('/removeFromWishlist', userAuth, wishlistController.removeFromWishlist);
 
 module.exports = router;

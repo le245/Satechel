@@ -28,6 +28,15 @@ const getCheckOut = async (req, res) => {
       return res.redirect("/login");
     }
 
+    const email = req.session.userEmail;
+    const userData = await User.findOne({ email, isBlocked: false }).lean();
+     if (!userData) {
+       return res.render("blocked", { message: "User is blocked by admin" });
+           
+      }
+
+
+
     const cart = await Cart.findOne({ userId }).populate("items.productId");
     if (!cart || cart.items.length === 0) {
       return res.redirect("/cart");
@@ -57,6 +66,8 @@ const getCheckOut = async (req, res) => {
       });
   }
 };
+
+
 const placeOrder = async (req, res) => {
   try {
     const userId = req.session.user;
@@ -454,6 +465,8 @@ const createRazorpayOrder = async (req, res) => {
         });
       }
     }
+   
+    
 
     const subTotal = cart.items.reduce(
       (total, item) => total + item.price * item.quantity,
@@ -574,6 +587,7 @@ const razorPayment = async (req, res) => {
       currency: "INR",
       receipt: `receipt_${Date.now()}`,
     });
+
     res.json({ success: true, order });
   } catch (error) {
 
@@ -583,8 +597,7 @@ const razorPayment = async (req, res) => {
 
 const verifyRazorPayment = async (req, res) => {
   try {
-    const { razorpayPaymentId, razorpayOrderId, razorpaySignature, orderId } =
-      req.body;
+    const { razorpayPaymentId, razorpayOrderId, razorpaySignature, orderId } =req.body;
 
     const secret = process.env.RAZORPAY_KEY_SECRET;
     const generated_signature = crypto
@@ -947,7 +960,7 @@ const downloadInvoice = async (req, res) => {
           price: item.price,
         })),
       bottomNotice:
-        `Subtotal: ₹${order.originalSubTotal.toFixed(2)}\n` +
+        `Subtotal: ₹${order.subTotal.toFixed(2)}\n` +
         (order.discount > 0
           ? `Discount: -₹${order.discount.toFixed(2)}\n`
           : "") +

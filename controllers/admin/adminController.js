@@ -430,7 +430,7 @@ const generateSalesReport = async (req, res) => {
       },
     ]);
 
-    res.render('admin/sales-report', {
+    res.render('admin/dashboard', {
       filter,
       startDate,
       endDate,

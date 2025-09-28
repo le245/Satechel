@@ -4,6 +4,7 @@ const Product = require("../../Models/productSchema");
 const Category = require("../../Models/categorySchema");
 const Wishlist = require("../../Models/wishlistSchema");
 const Offer = require("../../Models/offerSchema");
+const mongoose = require("mongoose");
 const STATUS_CODES= require("../../Models/status")
 
  
@@ -67,11 +68,20 @@ const calculateCartTotals = (items) => {
 
 const getCartPage = async (req, res) => {
   try {
-    if (!req.session.user) {
-      return res.redirect('/login');
+    
+     const email = req.session.userEmail;
+     const userData = await User.findOne({ email, isBlocked: false }).lean();
+      if (!userData) {
+      return res.render("blocked", { message: "User is blocked by admin" });
+           
+    
     }
+   
 
     const userId = req.session.user;
+    if (!userId) {
+      return res.redirect('/login');
+    }
     const user = await User.findById(userId);
 
     const cart = await Cart.findOne({ userId }).populate({
@@ -280,23 +290,30 @@ const updateCart = async (req, res) => {
 const deleteItemFromCart = async (req, res) => {
   try {
     const userId = req.session.user;
-    const productId = req.params.productId;
+    const itemId = req.params.itemId;
 
-    if (!userId || !productId) {
+    if (!userId || !itemId) {
       return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Missing user or product ID' });
     }
-
+ 
     const cart = await Cart.findOne({ userId: userId });
 
     if (!cart) {
       return res.status(STATUS_NOT_FOUND).json({ success: false, message: 'Cart not found' });
     }
 
-    cart.items = cart.items.filter((item) => item.productId !== productId);
+ await Cart.updateOne(
+      { userId },
+      { $pull: { items: { _id: new mongoose.Types.ObjectId(itemId) } } }
+    );
 
-    await cart.save();
 
-    res.json({ success: true, message: 'Item removed from cart' });
+ const updatedCart = await Cart.findOne({ userId }).populate("items.productId");
+ updatedCart.subTotal = updatedCart.items.reduce((sum, item) =>sum + item.quantity * item.productId.regularPrice,0);
+ await updatedCart.save();
+
+
+   res.json({ success: true, message: 'Item removed from cart' });
   } catch (error) {
 
     res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, message: 'Server error' });

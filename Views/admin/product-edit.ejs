@@ -330,10 +330,10 @@
     </div>
 </section>
 
-<!-- Load Bootstrap JS (with Popper.js) -->
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- Load Cropper.js JS -->
+
 <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.12/dist/cropper.min.js"></script>
 
 <script>
@@ -507,43 +507,69 @@
             }
         });
     }
+function loadExistingImages() {
+    const container = document.getElementById('imagesPreviewContainer');
 
-    function loadExistingImages() {
-        existingImages.forEach((imageUrl, index) => {
-            fetch(imageUrl)
-                .then((res) => res.blob())
-                .then((blob) => {
-                    const file = new File([blob], `existing-image-${index}.jpg`, { type: 'image/jpeg' });
-                    selectedProductImages.push(file);
-                    renderPreviews();
-                })
-                .catch((error) => {
-                    console.error('Error loading image:', imageUrl, error);
-                });
-
-            uploadedImages.push({
-                id: `existing-img-${index}`,
-                cloudinaryUrl: imageUrl,
-                isExisting: true,
-            });
-        });
-    }
-
-    function handleImageUpload(event) {
-        const files = event.target.files;
-        if (!files || files.length === 0) {
-           
-            return;
-        }
-
-        const newFiles = Array.from(files);
-        selectedProductImages = [...selectedProductImages, ...newFiles];
-
-        renderPreviews();
-
-        event.target.value = '';
+    existingImages.forEach((imageUrl, index) => {
        
+        fetch(imageUrl)
+            .then(res => res.blob())
+            .then(blob => {
+                const file = new File([blob], `existing-image-${index}.jpg`, { type: 'image/jpeg' });
+                selectedProductImages.push(file);
+
+               
+                if (index === existingImages.length - 1) {
+                    renderPreviews();
+                }
+            })
+            .catch(error => {
+                console.error('Error loading image:', imageUrl, error);
+            });
+
+        uploadedImages.push({
+            id: `existing-img-${index}`,
+            cloudinaryUrl: imageUrl,
+            isExisting: true,
+        });
+    });
+
+    
+    if (existingImages.length === 0) {
+        renderPreviews();
     }
+}
+
+
+   function handleImageUpload(event) {
+    const files = event.target.files;
+    if (!files || files.length === 0) {
+        return;
+    }
+
+    const newFiles = Array.from(files);
+
+    
+    const validImages = newFiles.filter(file => {
+        if (!['image/png', 'image/jpeg', 'image/jpg'].includes(file.type)) {
+            const fileReadError = document.getElementById('fileReadError');
+            if (fileReadError) {
+                fileReadError.textContent = `File "${file.name}" is not a valid image. Please upload only PNG or JPEG images.`;
+            } else {
+                alert(`File "${file.name}" is not a valid image. Please upload only PNG or JPEG images.`);
+            }
+            return false;
+        }
+        return true;
+    });
+
+    
+    selectedProductImages = [...selectedProductImages, ...validImages];
+
+    renderPreviews();
+
+    event.target.value = '';
+}
 
     function renderPreviews() {
         const container = document.getElementById('imagesPreviewContainer');

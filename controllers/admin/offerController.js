@@ -59,17 +59,16 @@ const offerList = async (req, res) => {
     const totalOffers = await Offer.countDocuments(query);
     const totalPages = Math.ceil(totalOffers / limit);
 
-    const offers = await Offer.find(query).skip(skip).limit(limit);
+    const offers = await Offer.find(query)
+    .populate('productId','productName')
+    .populate('categoryId','name')
+    .skip(skip)
+    .limit(limit);
 
-    let productName = null;
-    if (offers.length > 0 && offers[0].productId) {
-      const product = await Product.findById(offers[0].productId);
-      productName = product?.productName || null;
-    }
+    
 
     res.render('offerList', {
       offers,
-      productName,
       currentPage: page,
       totalPages,
       totalOffers,
@@ -86,28 +85,36 @@ const addoffer = async (req, res) => {
   try {
     const { name, type, discount, productId, categoryId } = req.body;
 
-    
-    if (!discount || discount <= 0 || discount > 90) {
-      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Discount must be a number between 1 and 90' });
+    if (!discount || discount <= 0 || discount > 99) {
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ 
+        success: false, 
+        message: 'Discount must be a number between 1 and 99' 
+      });
     }
 
-    const  offerData = new Offer({
+    const offerData = new Offer({
       name,
       type,
       discount,
       status: true,
     });
 
+   
     if (type === 'product' && productId) {
-      const product = await Product.findById(productId);
+      const product = await Product.findById(productId).populate('category');
       if (!product) {
-        return res.status(STATUS_NOT_FOUND).json({ success: false, message: 'Product not found' });
+        return res.status(STATUS_CODES.NOT_FOUND).json({ 
+          success: false, 
+          message: 'Product not found' 
+        });
       }
 
-     
       const regularPrice = product.regularPrice;
       if (!regularPrice || isNaN(regularPrice) || regularPrice <= 0) {
-        return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Invalid regular price for the product' });
+        return res.status(STATUS_CODES.BAD_REQUEST).json({ 
+          success: false, 
+          message: 'Invalid regular price for the product' 
+        });
       }
 
       const discountedPrice = regularPrice - (regularPrice * discount) / 100;
@@ -118,8 +125,11 @@ const addoffer = async (req, res) => {
 
       const newOffer = await offerData.save();
 
+      product.productOffer = discount;
+    
+      const bestDiscount = Math.max(product.productOffer || 0, product.category?.categoryOffer || 0);
+      product.discountedPrice = product.regularPrice - (product.regularPrice * bestDiscount) / 100;
 
-      product.productOffer = discount; 
       await product.save();
 
       return res.status(201).json({
@@ -132,24 +142,26 @@ const addoffer = async (req, res) => {
     if (type === 'category' && categoryId) {
       const category = await Category.findById(categoryId);
       if (!category) {
-        return res.status(STATUS_NOT_FOUND).json({ success: false, message: 'Category not found' });
+        return res.status(STATUS_CODES.NOT_FOUND).json({ 
+          success: false, 
+          message: 'Category not found' 
+        });
       }
 
       offerData.categoryId = categoryId;
+      offerData.originalPrice = null;
+      offerData.discountedPrice = null;
+
       const newOffer = await offerData.save();
 
-      const products = await Product.find({ category: categoryId });
+      category.categoryOffer = discount;
+      await category.save();
 
+
+      const products = await Product.find({ category: categoryId }).populate('category');
       for (let product of products) {
-        const regularPrice = product.regularPrice;
-        if (!regularPrice || isNaN(regularPrice) || regularPrice <= 0) {
-         
-          continue; 
-        }
-
-        const discountedPrice = regularPrice - (regularPrice * discount) / 100;
-        
-        product.categoryOffer = discount;
+        const bestDiscount = Math.max(product.productOffer || 0, category.categoryOffer || 0);
+        product.discountedPrice = product.regularPrice - (product.regularPrice * bestDiscount) / 100;
         await product.save();
       }
 
@@ -160,91 +172,121 @@ const addoffer = async (req, res) => {
       });
     }
 
-    return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Invalid offer type or missing ID' });
+    return res.status(STATUS_CODES.BAD_REQUEST).json({ 
+      success: false, 
+      message: 'Invalid offer type or missing ID' 
+    });
+
   } catch (error) {
-    return res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, message: 'Server Error' });
+    console.error("Error in addoffer:", error);
+    return res.status(STATUS_CODES.SERVER_ERROR).json({ 
+      success: false, 
+      message: 'Server Error' 
+    });
   }
 };
 
 
 
-const updateOffer = async (req, res) => {
+
+
+const updateOffer=async(req,res)=>{
   try {
-    const offerId = req.params.offerId;
-    const { discount, startDate, endDate } = req.body;
+    
+    const offerId=req.params.offerId;
+    const {discount}=req.body;
 
-  
-    if (!discount || discount <= 0 || discount > 100) {
-      return res.status(STATUS_CODES.BAD_REQUEST).json({
-        success: false,
-        message: 'Discount must be between 1% and 100%',
-      });
+    if(!discount||discount<0||discount>99){
+      return res.status(STATUS_CODES.NOT_FOUND).json({
+        success:false,
+        message:'Offer not found'
+      })
+    }
+    const offer= await Offer.findById(offerId);
+    if(!offer){
+      return res.status(STATUS_CODES.NOT_FOUND).json({
+        succes:false,
+        message:'Offer not found'
+      })
     }
 
-    const offer = await Offer.findById(offerId);
-    if (!offer) {
-      return res.status(STATUS_NOT_FOUND).json({
-        success: false,
-        message: 'Offer not found',
-      });
-    }
+    offer.discount=discount;
 
-    offer.discount = discount;
-    offer.startDate = startDate;
-    offer.endDate = endDate;
-
-    if (offer.type === 'product') {
-      const product = await Product.findById(offer.productId);
-      if (!product) {
-        return res.status( STATUS_NOT_FOUND).json({ success: false, message: 'Product not found' });
-      }
-
-     
-      const regularPrice = product.regularPrice;
-      if (!regularPrice || isNaN(regularPrice) || regularPrice <= 0) {
-        return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Invalid regular price for the product' });
-      }
-
-      const newPrice = regularPrice - (regularPrice * discount) / 100;
-      product.productOffer = discount;
-      await product.save();
-    } else if (offer.type === 'category') {
-      const category = await Category.findById(offer.categoryId);
-      if (!category) {
-        return res.status(STATUS_NOT_FOUND).json({ success: false, message: 'Category not found' });
-      }
-
-      const products = await Product.find({ category: offer.categoryId });
-
-      for (let product of products) {
-        const regularPrice = product.regularPrice;
-        if (!regularPrice || isNaN(regularPrice) || regularPrice <= 0) {
-          
-          continue;
+    if(offer.type === 'product'){
+      const product=await Product.findById(offer.productId)
+        if(!product){
+          return res.status(STATUS_CODES.NOT_FOUND).json({
+            success:false,
+            message:"product not found"
+          })
         }
+    
 
-        product.categoryOffer = discount;
-        const bestDiscount = Math.max(product.productOffer || 0, discount);
-        const newPrice = regularPrice - (regularPrice * bestDiscount) / 100;
-        await product.save();
+    const regularPrice = product.regularPrice;
+      if (!regularPrice || isNaN(regularPrice) || regularPrice <= 0) {
+        return res
+          .status(STATUS_CODES.BAD_REQUEST)
+          .json({ 
+            
+            success: false, 
+            message: 'Invalid regular price for the product' 
+          });
       }
+      const discountedPrice=regularPrice-(regularPrice*discount)/100;
+      
+      product.productOffer=discount;
+
+      await product.save()
+
+      offer.originalPrice=regularPrice;
+      offer.discountedPrice=Number(discountedPrice.toFixed(2))
+
+
+    }else if(offer.type === 'category'){
+
+      const category=await Category.findById(offer.categoryId)
+      if(!category){
+        return res.status(STATUS_CODES.NOT_FOUND).json({
+          success:false,
+          message:"category not found"
+        })
+      }
+
+      category.categoryOffer=discount;
+      await category.save();
+       
+      const products= await Product.find({category:offer.categoryId})
+      for(let product of products){
+        const regularPrice=product.regularPrice;
+        if (!regularPrice || isNaN(regularPrice) || regularPrice <= 0) continue;
+
+        product.categoryOffer
+        await product.save()
+      }
+      offer.originalPrice = undefined;
+      offer.discountedPrice = undefined;
+
     }
 
-    await offer.save();
-
+    await  offer.save()
+    
     return res.status(STATUS_CODES.OK).json({
-      success: true,
-      message: `offer updated successfully`,
-      offer,
-    });
+      success:true,
+      message:"Offer updated succesfully"
+    })
+
+    
   } catch (error) {
-  
+     console.error('Error updating offer:', error);
     return res.status(STATUS_CODES.SERVER_ERROR).json({
       success: false,
       message: 'Server Error',
     });
   }
 };
+    
+  
+
 
 const removeOffer = async (req, res) => {
   try {
@@ -255,33 +297,46 @@ const removeOffer = async (req, res) => {
     }
 
     if (offer.type === 'product') {
-      const product = await Product.findById(offer.productId);
+      const product = await Product.findById(offer.productId).populate('category');
       if (product) {
         product.productOffer = 0;
+
+     
+        const categoryOffer = product.category?.categoryOffer || 0;
+        const bestDiscount = Math.max(0, categoryOffer);
+        product.discountedPrice = bestDiscount > 0 ? product.regularPrice - (product.regularPrice * bestDiscount) / 100 : product.regularPrice;
+
         await product.save();
       }
     } else if (offer.type === 'category') {
       const category = await Category.findById(offer.categoryId);
       if (category) {
-        category.offers = (category.offers || []).filter(id => id.toString() !== offerId);
+        category.categoryOffer = 0;
         await category.save();
       }
 
       const products = await Product.find({ category: offer.categoryId });
       for (let product of products) {
         product.categoryOffer = 0;
+
+        
+        const bestDiscount = Math.max(product.productOffer || 0, 0);
+        product.discountedPrice = bestDiscount > 0 ? product.regularPrice - (product.regularPrice * bestDiscount) / 100 : product.regularPrice;
+
         await product.save();
       }
     }
 
     await Offer.findByIdAndDelete(offerId);
 
-    return res.status(STATUS_CODES.NOT_FOUND).json({ success: true, message: 'Offer removed successfully' });
+    return res.status(STATUS_CODES.OK).json({ success: true, message: 'Offer removed successfully' });
 
   } catch (error) {
+    console.error("Error in removeOffer:", error);
     return res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, message: 'Server error while removing offer' });
   }
 };
+
 
 
 

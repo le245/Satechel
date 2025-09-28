@@ -14,7 +14,7 @@ const getProductAddPage = async (req, res) => {
   } catch (error) {
     res.redirect("/pageerror");
   }
-};
+};                        
 
 const addproducts = async (req, res) => {
   try {
@@ -91,15 +91,7 @@ const addproducts = async (req, res) => {
       });
     }
 
-    const productExists = await Product.findOne({
-      productName: productName.trim(),
-    });
-    if (productExists) {
-      return res.status(STATUS_CODES.BAD_REQUEST).json({
-        success: false,
-        error: "Product already exists, please try with another name",
-      });
-    }
+
 
     const imagePaths = [];
     for (const base64Image of productImages) {
@@ -113,6 +105,19 @@ const addproducts = async (req, res) => {
         });
       }
     }
+   const productNameTrimmed = productName.trim();
+
+
+const productExists = await Product.findOne({
+  productName: { $regex: new RegExp(`^${productNameTrimmed}$`, "i") }
+});
+
+if (productExists) {
+  return res.status(STATUS_CODES.BAD_REQUEST).json({
+    success: false,
+    error: "Product already exists, please try with another name",
+  });
+}
 
     const newProduct = new Product({
       productName: productName.trim(),

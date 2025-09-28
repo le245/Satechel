@@ -29,6 +29,7 @@ const offerSchema = new Schema ({
     ref: 'Category',
     default: null,
   },
+  
   discountedPrice:{
     type:Number,
     default:0
