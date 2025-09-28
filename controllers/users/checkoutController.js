@@ -903,22 +903,21 @@ const downloadInvoice = async (req, res) => {
 
     if (!order) {
       return res
-        .status(STATUS_NOT_FOUND)
+        .status(STATUS_CODES.NOT_FOUND)
         .json({ success: false, message: "Order not found" });
     }
 
-    const allowedStatuses = [
-      
-      "Delivered",
-     
-    ];
-    if (!allowedStatuses.includes(order.status)) {
+    if (!order.status || order.status.toLowerCase() !== "delivered") {
       return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
-        message:
-          "Invoice can only be downloaded for orders in  Delivered"
+        message: "Invoice can only be downloaded for orders in Delivered",
       });
     }
+
+    
+    const subTotal = Number(order.subTotal) || 0;
+    const discount = Number(order.discount) || 0;
+    const finalAmount = Number(order.originalFinalAmount) || 0;
 
     const data = {
       documentTitle: "INVOICE",
@@ -937,73 +936,64 @@ const downloadInvoice = async (req, res) => {
       },
       client: {
         company: order.address?.name || "Customer",
-        address: `${order.address?.landMark || ""}, ${
-          order.address?.city || ""
-        }`,
+        address: `${order.address?.landMark || ""}, ${order.address?.city || ""}`,
         zip: order.address?.pincode || "",
         city: order.address?.state || "",
         country: order.address?.country || "India",
       },
       information: {
         number: order.orderId,
-        date: moment(order.createOn).format("YYYY-MM-DD HH:mm:ss"),
+        date: order.createOn ? moment(order.createOn).format("YYYY-MM-DD HH:mm:ss") : moment().format("YYYY-MM-DD HH:mm:ss"),
         dueDate: order.deliveryDate
           ? moment(order.deliveryDate).format("YYYY-MM-DD HH:mm:ss")
           : moment().add(7, "days").format("YYYY-MM-DD HH:mm:ss"),
       },
       products: order.items
-        .filter((item) => item.cancelStatus !== "Cancelled")
-        .map((item) => ({
-          quantity: item.quantity,
+        .filter(item => item.cancelStatus !== "Cancelled")
+        .map(item => ({
+          quantity: item.quantity || 1,
           description: item.productId?.productName || "Product",
           tax: 0,
-          price: item.price,
+          price: Number(item.price) || 0,
         })),
       bottomNotice:
-        `Subtotal: ₹${order.subTotal.toFixed(2)}\n` +
-        (order.discount > 0
-          ? `Discount: -₹${order.discount.toFixed(2)}\n`
-          : "") +
+        `Subtotal: ₹${subTotal.toFixed(2)}\n` +
+        (discount > 0 ? `Discount: -₹${discount.toFixed(2)}\n` : "") +
         (order.couponApplied ? `Coupon Applied: Yes\n` : "") +
-        `Final Amount: ₹${order.originalFinalAmount.toFixed(2)}`,
+        `Final Amount: ₹${finalAmount.toFixed(2)}`,
     };
 
     const result = await easyinvoice.createInvoice(data);
+
     const invoicePath = path.resolve(
       "public/invoice",
       `invoice_${order.orderId}.pdf`
     );
 
-    const invoiceDir = path.dirname(invoicePath);
-    if (!fs.existsSync(invoiceDir)) {
-      fs.mkdirSync(invoiceDir, { recursive: true });
-    }
-
+    fs.mkdirSync(path.dirname(invoicePath), { recursive: true });
     fs.writeFileSync(invoicePath, result.pdf, "base64");
 
-    res.download(invoicePath, `invoice_${order.orderId}.pdf`, (err) => {
+    res.download(invoicePath, `invoice_${order.orderId}.pdf`, err => {
       if (err) {
-      
-        res
-          .status(STATUS_SERVER_ERROR)
-          .json({ success: false, message: "Error downloading the invoice" });
+        console.error("Download error:", err);
+        return res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, message: "Error downloading invoice" });
       }
+      
       try {
         fs.unlinkSync(invoicePath);
       } catch (cleanupError) {
-        console.error("Error cleaning up invoice file:", cleanupError);
+        console.error("Invoice cleanup error:", cleanupError);
       }
     });
   } catch (error) {
     console.error("Error generating invoice:", error);
-    res
-      .status(STATUS_SERVER_ERROR)
-      .json({
-        success: false,
-        message: "An error occurred while generating the invoice",
-      });
+    res.status(STATUS_CODES.SERVER_ERROR).json({
+      success: false,
+      message: "An error occurred while generating the invoice",
+    });
   }
 };
+
 
 module.exports = {
   getCheckOut,
