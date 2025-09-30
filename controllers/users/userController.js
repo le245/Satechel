@@ -357,13 +357,18 @@ const getShop = async (req, res) => {
             const totalPages = Math.ceil(totalProducts / limit);
 
             let products = await Product.find(query)
-                .populate('category')
+                 .populate({
+                   path: 'category',
+                   match: { isListed: true } 
+                 })
                 .sort(sortOption)
                 .skip(skip)
                 .limit(limit)
                 .lean();
 
 
+
+                products = products.filter(p => p.category);
         const wishlist = await Wishlist.findOne({userId:userData._id}).lean()
         const wishlistProductIds= wishlist ?wishlist.products.map(p=>p.productId.toString()):[];
 

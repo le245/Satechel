@@ -1,4 +1,5 @@
 const Category = require("../../Models/categorySchema");
+const Product= require("../../Models/productSchema")
 const STATUS_CODES= require("../../Models/status")
 
 const categoryInfo = async (req, res) => {
@@ -85,24 +86,48 @@ const addCategory = async (req, res) => {
   };
   
 
-const getListCategory = async (req, res) => {
+const unlistCategory = async (req, res) => {
     try {
-        const categoryid = req.query.id;
-   
-        await Category.updateOne({ _id: categoryid }, { $set: { isListed: false } });
+        const categoryId = req.query.id;
+    
+        
+       
+        await Category.updateOne(
+            { _id: categoryId },
+            { $set: { isListed: false } });
+
+        await Product.updateMany(
+            { categoryid: categoryId },
+            { $set: { isListed: false } }
+        );
+
         res.redirect("/admin/category");
     } catch (error) {
+        console.error("Error unlisting category:", error);
         res.redirect("/admin/pageerror");
     }
 };
 
 
-const getUnlistCategory = async (req, res) => {
+const listCategory = async (req, res) => {
     try {
-        const  categoryid = req.query.id;
-        await Category.updateOne({ _id: categoryid }, { $set: { isListed: true } });
+        const categoryId = req.query.id;
+
+     
+        await Category.updateOne(
+            { _id: categoryId },
+            { $set: { isListed: true } }
+        );
+
+   
+        await Product.updateMany(
+            { categoryid: categoryId },
+            { $set: { isListed: true } }
+        );
+
         res.redirect("/admin/category");
     } catch (error) {
+        console.error("Error listing category:", error);
         res.redirect("/admin/pageerror");
     }
 };
@@ -183,8 +208,8 @@ const editCategory = async (req, res) => {
 module.exports = {
     categoryInfo,
     addCategory,
-    getListCategory,
-    getUnlistCategory,
+    unlistCategory,
+    listCategory,
     getEditCategory,
     editCategory
 };

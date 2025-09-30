@@ -4,7 +4,7 @@ const User = require("../../Models/userSchema");
 const { handleUpload } = require("../../config/cloudinary");
 const STATUS_CODES= require("../../Models/status")
 
-
+        
 const getProductAddPage = async (req, res) => {
   try {
     const category = await Category.find({ isListed: true });

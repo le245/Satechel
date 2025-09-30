@@ -45,14 +45,18 @@
                                     <%= category.isListed ? 'Listed' : 'Unlisted' %>
                                 </span>
                             </td>
-                            <td class="actions">
-                                <a href="/admin/editCategory?id=<%= category._id %>" class="btn btn-secondary btn-sm">Edit</a>
-                                <% if(category.isListed) { %>
-                                    <button class="btn btn-danger btn-sm unlist-btn" data-id="<%= category._id %>">Unlist</button>
-                                <% } else { %>
-                                    <a href="/admin/unlistCategory?id=<%= category._id %>" class="btn btn-success btn-sm">List</a>
-                                <% } %>
-                            </td>
+  <td class="actions">
+    <a href="/admin/editCategory?id=<%= category._id %>" class="btn btn-secondary btn-sm">Edit</a>
+    <% if(category.isListed) { %>
+        <!-- If category is listed → show Unlist button -->
+        <button class="btn btn-danger btn-sm unlist-btn" data-id="<%= category._id %>">Unlist</button>
+    <% } else { %>
+        <!-- If category is unlisted → show List button -->
+        <a href="/admin/listCategory?id=<%= category._id %>" class="btn btn-success btn-sm">List</a>
+    <% } %>
+</td>
+
+
                         </tr>
                     <% }); %>
                 <% } else { %>
@@ -377,7 +381,7 @@
     errorElement.innerHTML = message;
     errorElement.style.display = 'block';
 
-    // Mapping error ID to input ID manually
+
     let inputId = '';
     if (elementId === 'name-error') inputId = 'category-name';
     else if (elementId === 'description-error') inputId = 'category-description';
@@ -532,25 +536,26 @@
         }
     });
 
-    document.querySelectorAll('.unlist-btn').forEach(button => {
-        button.addEventListener('click', (event) => {
-            const categoryId = event.target.getAttribute('data-id');
-            Swal.fire({
-                icon: 'warning',
-                title: 'Unlist Category',
-                text: 'Are you sure you want to unlist this category?',
-                showCancelButton: true,
-                confirmButtonText: 'Yes, Unlist',
-                cancelButtonText: 'Cancel',
-                confirmButtonColor: '#dc3545',
-                cancelButtonColor: '#6c757d'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = `/admin/listCategory?id=${categoryId}`;
-                }
-            });
+   document.querySelectorAll('.unlist-btn').forEach(button => {
+    button.addEventListener('click', (event) => {
+        const categoryId = event.target.getAttribute('data-id');
+        Swal.fire({
+            icon: 'warning',
+            title: 'Unlist Category',
+            text: 'Are you sure you want to unlist this category?',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, Unlist',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // ✅ Corrected route
+                window.location.href = `/admin/unlistCategory?id=${categoryId}`;
+            }
         });
     });
+});
 
 
 

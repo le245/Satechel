@@ -5,7 +5,7 @@ const customerInfo = async (req, res) => {
         let search = "";
         if (req.query.search) {
             search = req.query.search;
-        }
+        }                  
 
         let page = 1;
         if (req.query.page) {
