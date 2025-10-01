@@ -478,38 +478,35 @@
         font-size: 14px;
     }
     
-.wishlist-btn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: #333;  
-    border: none;
-    border-radius: 50%;
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    z-index: 2;
-}
-
-.wishlist-btn i {
-    color: #fff;  /* white heart before adding */
-    font-size: 18px;
-}
-
-.wishlist-btn.added {
-    background: #fff;   
-   
-}
-
-.wishlist-btn.added i {
-    color: #333; 
-}
-
-
+    .wishlist-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: #333;  
+        border: none;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        z-index: 2;
+    }
+    
+    .wishlist-btn i {
+        color: #fff;
+        font-size: 18px;
+    }
+    
+    .wishlist-btn.added {
+        background: #fff;
+    }
+    
+    .wishlist-btn.added i {
+        color: #333;
+    }
     
     .product-badge {
         position: absolute;
@@ -544,11 +541,11 @@
         margin: 10px 0;
         font-size: 16px;
         font-weight: 500;
-        color: #333; 
+        color: #333;
     }
     
     .offer-type {
-        background-color: #ffe6e6; 
+        background-color: #ffe6e6;
         padding: 5px 10px;
         border-radius: 4px;
         display: inline-block;
@@ -590,8 +587,6 @@
     .unavailable-message a:hover {
         text-decoration: underline;
     }
-
-
 
     .review-section {
         margin-top: 60px;
@@ -724,6 +719,9 @@
         padding: 20px;
     }
 
+    .zoomContainer {
+        z-index: 1000;
+    }
 </style>
 
 <body>
@@ -777,12 +775,11 @@
                     
                     <div class="main-image">
                         <% if (product && product.productImage && Array.isArray(product.productImage) && product.productImage.length > 0) { %>
- <button 
-  class="wishlist-btn <%= isInWishlist ? 'added' : '' %>" 
-  onclick="addToWishlist('<%= product._id %>', event)">
-    <i class="fa <%= isInWishlist ? 'fa-heart' : 'fa-heart-o' %>"></i>
-</button>
-
+                            <button 
+                                class="wishlist-btn <%= isInWishlist ? 'added' : '' %>" 
+                                onclick="addToWishlist('<%= product._id %>', event)">
+                                <i class="fa <%= isInWishlist ? 'fa-heart' : 'fa-heart-o' %>"></i>
+                            </button>
                             <img 
                                 id="mainProductImage"  
                                 class="product-image-zoom"
@@ -807,44 +804,39 @@
                         <h1 class="product-title"><%= product && product.productName ? product.productName : 'Unnamed Product' %></h1>
                     </div>
 
-                  <!-- Offer Details -->
-<div class="offer-details">
-  <% if (product) { %>
-    <% 
-      const productOffer = product.productOffer || 0;
-      const categoryOffer = product.category?.categoryOffer || 0;
-      const bestDiscount = Math.max(productOffer, categoryOffer);
-    %>
-
-    <% if (bestDiscount > 0) { %>
-      <% const offerType = (productOffer >= categoryOffer) ? 'Product Offer' : 'Category Offer'; %>
-      <span class="offer-type">
-        <%= offerType %>: <%= bestDiscount %>% Off
-      </span>
-    <% } else { %>
-      <span class="offer-type">No Offer Applied</span>
-    <% } %>
-  <% } %>
-</div>
-
-
+                    <!-- Offer Details -->
+                    <div class="offer-details">
+                        <% if (product) { %>
+                            <% 
+                                const productOffer = product.productOffer || 0;
+                                const categoryOffer = product.category?.categoryOffer || 0;
+                                const bestDiscount = Math.max(productOffer, categoryOffer);
+                            %>
+                            <% if (bestDiscount > 0) { %>
+                                <% const offerType = (productOffer >= categoryOffer) ? 'Product Offer' : 'Category Offer'; %>
+                                <span class="offer-type">
+                                    <%= offerType %>: <%= bestDiscount %>% Off
+                                </span>
+                            <% } else { %>
+                                <span class="offer-type">No Offer Applied</span>
+                            <% } %>
+                        <% } %>
+                    </div>
                     
-<div>
-    <span class="product-price">
-        <% if (product.salesPrice && product.salesPrice < product.regularPrice) { %>
-            ₹<%= product.salesPrice.toFixed(2) %>
-            <span class="product-discount">
-                <del>₹<%= product.regularPrice.toFixed(2) %></del>
-            </span>
-        <% } else if (product.regularPrice !== undefined && product.regularPrice !== null) { %>
-            ₹<%= product.regularPrice.toFixed(2) %>
-        <% } else { %>
-            Not Available
-        <% } %>
-    </span>
-</div>
-
-    
+                    <div>
+                        <span class="product-price">
+                            <% if (product.salesPrice && product.salesPrice < product.regularPrice) { %>
+                                ₹<%= product.salesPrice.toFixed(2) %>
+                                <span class="product-discount">
+                                    <del>₹<%= product.regularPrice.toFixed(2) %></del>
+                                </span>
+                            <% } else if (product.regularPrice !== undefined && product.regularPrice !== null) { %>
+                                ₹<%= product.regularPrice.toFixed(2) %>
+                            <% } else { %>
+                                Not Available
+                            <% } %>
+                        </span>
+                    </div>
                     
                     <p class="product-description">
                         <%= product && product.description ? product.description : 'No description available.' %>
@@ -924,97 +916,159 @@
                 </div>
             </div>
             
-
-
-
-
-
-<div class="review-section" id="reviews">
-    <h2>Customer Reviews</h2>
-
-    <!-- Review Form -->
-    <% if (user) { %>
-        <form id="reviewForm" class="review-form">
-            <div class="star-rating" id="starRating">
-                <% for (let i = 1; i <= 5; i++) { %>
-                    <span class="star <%= i <= 0 ? 'selected' : '' %>" data-value="<%= i %>">&#9733;</span>
-                <% } %>
-            </div>
-            <input type="hidden" name="rating" id="rating" required>
-            <textarea id="review" name="review" placeholder="Write your review here..." required></textarea>
-            <button type="submit">Submit Review</button>
-        </form>
-    <% } else { %>
-        <p>Please <a href="/login">login</a> to write a review.</p>
-    <% } %>
-
-    <!-- Reviews List -->
-    <div class="reviews-list" id="reviewsList">
-        <% if (product.reviews && product.reviews.length > 0) { %>
-            <% product.reviews.forEach(review => { %>
-                <div class="review-item">
-                    <div class="review-header">
-                     
-                        <span class="review-rating">
+            <div class="review-section" id="reviews">
+                <h2>Customer Reviews</h2>
+                <!-- Review Form -->
+                <% if (user) { %>
+                    <form id="reviewForm" class="review-form">
+                        <div class="star-rating" id="starRating">
                             <% for (let i = 1; i <= 5; i++) { %>
-                                <span class="star <%= i <= review.rating ? 'selected' : '' %>">&#9733;</span>
+                                <span class="star <%= i <= 0 ? 'selected' : '' %>" data-value="<%= i %>">&#9733;</span>
                             <% } %>
-                        </span>
-                    </div>
-                    <p class="review-text"><%= review.review %></p>
-                   <small class="review-date">
-  <% if (review.createdAt) { %>
-    <%= new Date(review.createdAt).toLocaleDateString('en-GB') %>
-  <% } else { %>
-    -
-  <% } %>
-</small>
-
-                </div>
-            <% }) %>
-        <% } else { %>
-            <p>No reviews yet. Be the first to review this product!</p>
-        <% } %>
-    </div>
-</div>
-
-
-            <!-- Related Products -->
-            <div class="related-products">
-                <h2 class="section-title">You May Also Like</h2>
-                
-                <div class="products-grid">
-                    <% if (relatedProducts && Array.isArray(relatedProducts) && relatedProducts.length > 0) { %>
-                        <% relatedProducts.forEach(relatedProduct => { %>
-                            <div class="product-card">
-                                <div class="product-card-img">
-                                    <button class="wishlist-btn <%= relatedProduct.inWishlist ? 'added' : '' %>" onclick="addToWishlist('<%= relatedProduct._id %>', event)">
-                                        <i class="fa fa-heart<%= relatedProduct.inWishlist ? '' : '-o' %>"></i>
-                                    </button>
-                                    <% if (relatedProduct && relatedProduct.productImage && Array.isArray(relatedProduct.productImage) && relatedProduct.productImage.length > 0) { %>
-                                        <img src="<%= relatedProduct.productImage[0] || '/api/placeholder/300/300' %>" alt="<%= relatedProduct.productName || 'No image' %>">
-                                    <% } else { %>
-                                        <img src="/api/placeholder/300/300" alt="No image">
-                                    <% } %>
-                                </div>
-                                <div class="product-card-info">
-                                    <h3 class="product-card-title"><%= relatedProduct && relatedProduct.productName ? relatedProduct.productName : 'Unnamed Product' %></h3>
-                                    <div class="product-card-price">
-                                        <% if (relatedProduct && relatedProduct.salesPrice !== undefined && relatedProduct.salesPrice !== null) { %>
-                                            ₹<%= Number(relatedProduct.salesPrice).toFixed(2) %>
-                                        <% } else if (relatedProduct && relatedProduct.regularPrice !== undefined) { %>
-                                            ₹<%= Number(relatedProduct.regularPrice).toFixed(2) %>
-                                        <% } else { %>
-                                            Not Available
+                        </div>
+                        <input type="hidden" name="rating" id="rating" required>
+                        <textarea id="review" name="review" placeholder="Write your review here..." required></textarea>
+                        <button type="submit">Submit Review</button>
+                    </form>
+                <% } else { %>
+                    <p>Please <a href="/login">login</a> to write a review.</p>
+                <% } %>
+                <!-- Reviews List -->
+                <div class="reviews-list" id="reviewsList">
+                    <% if (product.reviews && product.reviews.length > 0) { %>
+                        <% product.reviews.forEach(review => { %>
+                            <div class="review-item">
+                                <div class="review-header">
+                                    <span class="review-author"><%= review.userId?.name || 'Anonymous' %></span>
+                                    <span class="review-rating">
+                                        <% for (let i = 1; i <= 5; i++) { %>
+                                            <span class="star <%= i <= review.rating ? 'selected' : '' %>">&#9733;</span>
                                         <% } %>
-                                    </div>
+                                    </span>
                                 </div>
+                                <p class="review-text"><%= review.review %></p>
+                                <small class="review-date">
+                                    <% if (review.createdAt) { %>
+                                        <%= new Date(review.createdAt).toLocaleDateString('en-GB') %>
+                                    <% } else { %>
+                                        -
+                                    <% } %>
+                                </small>
                             </div>
                         <% }) %>
                     <% } else { %>
-                        <p>No related products available.</p>
+                        <p>No reviews yet. Be the first to review this product!</p>
                     <% } %>
                 </div>
+            </div>
+            
+            <!-- Related Products -->
+ 
+<div class="related-products">
+  <h2 class="section-title">You May Also Like</h2>
+
+  <div class="related-products-section">
+    <div class="related-products-container">
+      <% if (relatedProducts && relatedProducts.length > 0) { %>
+        <% relatedProducts.forEach(function(relatedProduct) { %>
+          <div class="product-card">
+            <a href="/product-details/<%= relatedProduct._id %>">
+              
+              <% 
+                // Default image fallback
+                let productImage = '/images/default-product.png';
+                
+                // Check if product has images
+                if (relatedProduct.productImage && relatedProduct.productImage.length > 0) {
+                  productImage = relatedProduct.productImage[0].startsWith('http') 
+                    ? relatedProduct.productImage[0] 
+                    : '/uploads/' + relatedProduct.productImage[0];
+                }
+              %>
+
+              <img src="<%= productImage %>" 
+                   alt="<%= relatedProduct.productName || 'Unnamed Product' %>" 
+                   class="product-card-img">
+
+              <div class="product-card-info">
+                <h3 class="product-card-title">
+                  <%= relatedProduct.productName || 'Unnamed Product' %>
+                </h3>
+                <div class="product-card-price">
+                  <% if (relatedProduct.salesPrice != null) { %>
+                    ₹<%= Number(relatedProduct.salesPrice).toFixed(2) %>
+                  <% } else if (relatedProduct.regularPrice != null) { %>
+                    ₹<%= Number(relatedProduct.regularPrice).toFixed(2) %>
+                  <% } else { %>
+                    Not Available
+                  <% } %>
+                </div>
+              </div>
+            </a>
+          </div>
+        <% }) %>
+      <% } else { %>
+        <p>No related products found.</p>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+
+
+<style>
+.related-products-section {
+  margin-top: 40px;
+}
+
+.related-products-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.product-card {
+  width: 220px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #fff;
+  transition: transform 0.2s ease;
+}
+
+.product-card:hover {
+  transform: scale(1.05);
+}
+
+.product-card a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.product-card-img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
+.product-card-info {
+  padding: 10px;
+  text-align: center;
+}
+
+.product-card-title {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.product-card-price {
+  font-size: 14px;
+  color: #333;
+}
+</style>
+
+
             </div>
         <% } %>
     </div>
@@ -1023,44 +1077,21 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-zoom/1.7.21/jquery.zoom.min.js"></script>
 
-    
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-
-
     <script>
-        const tabs = document.querySelectorAll('.tab-item');
-        const tabPanes = document.querySelectorAll('.tab-pane');
-
-        tabs.forEach((tab, index) => {
-            tab.addEventListener('click', () => {
-                tabs.forEach(t => t.classList.remove('active'));
-                tabPanes.forEach(p => p.classList.remove('active'));
-
-                tab.classList.add('active');
-                tabPanes[index].classList.add('active');
-            });
-        });
-
-        const quantityInput = document.querySelector('.quantity-input');
-        const quantityButtons = document.querySelectorAll('.quantity-btn');
-
-        quantityButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                let currentValue = parseInt(quantityInput.value);
-                if (button.textContent === '-') {
-                    if (currentValue > 1) quantityInput.value = currentValue - 1;
-                } else {
-                    quantityInput.value = currentValue + 1;
-                }
-            });
-        });
-
         document.addEventListener("DOMContentLoaded", () => {
             const thumbnails = document.querySelectorAll('.thumbnail-image');
             const mainImage = document.getElementById('mainProductImage');
             const mainImageContainer = document.querySelector('.main-image');
+
+            // Initialize zoom on the main image
+            if (mainImage && mainImage.src && mainImageContainer) {
+                $(mainImageContainer).zoom({
+                    url: mainImage.src,
+                    magnify: 1.5,
+                    on: 'mouseover',
+                    touch: true
+                });
+            }
 
             thumbnails.forEach(thumbnail => {
                 thumbnail.addEventListener('click', () => {
@@ -1072,54 +1103,65 @@
                         $(mainImageContainer).trigger('zoom.destroy');
                         $(mainImageContainer).zoom({
                             url: newSrc,
-                            magnify: 1.5
+                            magnify: 1.5,
+                            on: 'mouseover',
+                            touch: true
                         });
                     }
                 });
             });
 
-            $('.main-image').zoom({
-                url: document.getElementById('mainProductImage').src,
-                magnify: 1.5 
+            // Tab functionality
+            const tabs = document.querySelectorAll('.tab-item');
+            const tabPanes = document.querySelectorAll('.tab-pane');
+
+            tabs.forEach((tab, index) => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabPanes.forEach(p => p.classList.remove('active'));
+
+                    tab.classList.add('active');
+                    tabPanes[index].classList.add('active');
+                });
             });
-        });
 
-        document.querySelectorAll('.quantity-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const input = this.parentElement.querySelector('.quantity-input');
-                let quantity = parseInt(input.value) || 1;
-                const maxQuantity = 5;
+            // Quantity buttons
+            const quantityInput = document.querySelector('.quantity-input');
+            const quantityButtons = document.querySelectorAll('.quantity-btn');
 
-                if (this.textContent === '+') {
-                    if (quantity >= maxQuantity) {
-                        Swal.fire({
-                            title: 'Quantity Limit Reached',
-                            text: `You can only add up to ${maxQuantity} items.`,
-                            icon: 'warning',
-                            confirmButtonColor: '#4b5563'
-                        });
-                        return;
+            quantityButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    let currentValue = parseInt(quantityInput.value) || 1;
+                    const maxQuantity = 5;
+
+                    if (button.textContent === '-') {
+                        if (currentValue > 1) {
+                            quantityInput.value = currentValue - 1;
+                        } else {
+                            Swal.fire({
+                                title: 'Invalid Quantity',
+                                text: 'Quantity cannot be less than 1.',
+                                icon: 'warning',
+                                confirmButtonColor: '#4b5563'
+                            });
+                        }
+                    } else {
+                        if (currentValue < maxQuantity) {
+                            quantityInput.value = currentValue + 1;
+                        } else {
+                            Swal.fire({
+                                title: 'Quantity Limit Reached',
+                                text: `You can only add up to ${maxQuantity} items.`,
+                                icon: 'warning',
+                                confirmButtonColor: '#4b5563'
+                            });
+                        }
                     }
-                    quantity++;
-                } else if (this.textContent === '-') {
-                    if (quantity <= 1) {
-                        Swal.fire({
-                            title: 'Invalid Quantity',
-                            text: 'Quantity cannot be less than 1.',
-                            icon: 'warning',
-                            confirmButtonColor: '#4b5563'
-                        });
-                        return;
-                    }
-                    quantity--;
-                }
-
-                input.value = quantity;
+                });
             });
-        });
 
-        document.querySelectorAll('.quantity-input').forEach(input => {
-            input.addEventListener('input', function() {
+            // Quantity input validation
+            quantityInput.addEventListener('input', function() {
                 const maxQuantity = 5;
                 let quantity = parseInt(this.value) || 1;
 
@@ -1230,38 +1272,38 @@
             }
         }
 
-       async function addToWishlist(productId, event) {
-    event.preventDefault();
-    const button = event.target.closest('.wishlist-btn');
-    const isAdded = button.classList.contains('added');
+        async function addToWishlist(productId, event) {
+            event.preventDefault();
+            const button = event.target.closest('.wishlist-btn');
+            const isAdded = button.classList.contains('added');
 
-    try {
-          const response = await fetch(isAdded ? '/removeFromWishlist' : '/addWishlist', {
-            method: isAdded ? 'DELETE' : 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ productId })
-        });
+            try {
+                const response = await fetch(isAdded ? '/removeFromWishlist' : '/addWishlist', {
+                    method: isAdded ? 'DELETE' : 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ productId })
+                });
 
-        const data = await response.json();
+                const data = await response.json();
 
-        if (data.success) {
-            if (isAdded) {
-                button.classList.remove('added');
-                button.querySelector('i').classList.replace('fa-heart', 'fa-heart-o');
-                showToast('Product removed from wishlist!', 'success');
-            } else {
-                button.classList.add('added');
-                button.querySelector('i').classList.replace('fa-heart-o', 'fa-heart');
-                showToast('Product added to wishlist!', 'success');
+                if (data.success) {
+                    if (isAdded) {
+                        button.classList.remove('added');
+                        button.querySelector('i').classList.replace('fa-heart', 'fa-heart-o');
+                        showToast('Product removed from wishlist!', 'success');
+                    } else {
+                        button.classList.add('added');
+                        button.querySelector('i').classList.replace('fa-heart-o', 'fa-heart');
+                        showToast('Product added to wishlist!', 'success');
+                    }
+                } else {
+                    showToast(data.message || 'Failed to update wishlist', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('Something went wrong. Please try again.', 'error');
             }
-        } else {
-            showToast(data.message || 'Failed to update wishlist', 'error');
         }
-    } catch (error) {
-        console.error('Error:', error);
-        showToast('Something went wrong. Please try again.', 'error');
-    }
-}
 
         function showToast(message, type) {
             Swal.fire({
@@ -1279,160 +1321,156 @@
             });
         }
 
-  
-   
-    // Star rating functionality
-    const stars = document.querySelectorAll('#starRating .star');
-    const ratingInput = document.getElementById('rating');
+        // Star rating functionality
+        const stars = document.querySelectorAll('#starRating .star');
+        const ratingInput = document.getElementById('rating');
 
-    stars.forEach(star => {
-        star.addEventListener('click', () => {
-            const value = Number(star.getAttribute('data-value'));
-            ratingInput.value = value;
-            stars.forEach(s => {
-                const val = Number(s.getAttribute('data-value'));
-                s.classList.toggle('filled', val <= value);
+        stars.forEach(star => {
+            star.addEventListener('click', () => {
+                const value = Number(star.getAttribute('data-value'));
+                ratingInput.value = value;
+                stars.forEach(s => {
+                    const val = Number(s.getAttribute('data-value'));
+                    s.classList.toggle('filled', val <= value);
+                });
+            });
+
+            star.addEventListener('mouseover', () => {
+                const value = Number(star.getAttribute('data-value'));
+                stars.forEach(s => {
+                    const val = Number(s.getAttribute('data-value'));
+                    s.classList.toggle('filled', val <= value);
+                });
+            });
+
+            star.addEventListener('mouseout', () => {
+                const value = Number(ratingInput.value) || 0;
+                stars.forEach(s => {
+                    const val = Number(s.getAttribute('data-value'));
+                    s.classList.toggle('filled', val <= value);
+                });
             });
         });
 
-        star.addEventListener('mouseover', () => {
-            const value = Number(star.getAttribute('data-value'));
-            stars.forEach(s => {
-                const val = Number(s.getAttribute('data-value'));
-                s.classList.toggle('filled', val <= value);
-            });
-        });
+        // Form submission
+        const reviewForm = document.getElementById('reviewForm');
+        const reviewsList = document.getElementById('reviewsList');
 
-        star.addEventListener('mouseout', () => {
-            const value = Number(ratingInput.value) || 0;
-            stars.forEach(s => {
-                const val = Number(s.getAttribute('data-value'));
-                s.classList.toggle('filled', val <= value);
-            });
-        });
-    });
-
-    // Form submission
-    const reviewForm = document.getElementById('reviewForm');
-    const reviewsList = document.getElementById('reviewsList');
-
-    async function fetchReviews(productId) {
-        try {
-            const response = await fetch(`/product-details/reviews/${productId}`);
-            const data = await response.json();
-            if (data.success && data.reviews) {
-                renderReviews(data.reviews);
-            } else {
-                reviewsList.innerHTML = '<p class="no-reviews">No reviews yet. Be the first to review this product!</p>';
+        async function fetchReviews(productId) {
+            try {
+                const response = await fetch(`/product-details/reviews/${productId}`);
+                const data = await response.json();
+                if (data.success && data.reviews) {
+                    renderReviews(data.reviews);
+                } else {
+                    reviewsList.innerHTML = '<p class="no-reviews">No reviews yet. Be the first to review this product!</p>';
+                }
+            } catch (error) {
+                console.error('Error fetching reviews:', error);
+                reviewsList.innerHTML = '<p class="no-reviews">Failed to load reviews. Please try again later.</p>';
             }
-        } catch (error) {
-            console.error('Error fetching reviews:', error);
-            reviewsList.innerHTML = '<p class="no-reviews">Failed to load reviews. Please try again later.</p>';
-        }
-    }
-
-    function renderReviews(reviews) {
-        reviewsList.innerHTML = '';
-        if (reviews.length === 0) {
-            reviewsList.innerHTML = '<p class="no-reviews">No reviews yet. Be the first to review this product!</p>';
-            return;
         }
 
-        reviews.forEach(review => {
-            const reviewElement = document.createElement('div');
-            reviewElement.classList.add('review-item');
-            reviewElement.innerHTML = `
-                <div class="review-header">
-                    <span class="review-author">${review.userId?.name || 'Anonymous'}</span>
-                    <span class="review-date">${review.createdAt ? new Date(review.createdAt).toLocaleDateString('en-GB') : '-'}</span>
-                </div>
-                <div class="review-stars">${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</div>
-                <p class="review-text">${review.review}</p>
-            `;
-            reviewsList.appendChild(reviewElement);
-        });
-    }
+        function renderReviews(reviews) {
+            reviewsList.innerHTML = '';
+            if (reviews.length === 0) {
+                reviewsList.innerHTML = '<p class="no-reviews">No reviews yet. Be the first to review this product!</p>';
+                return;
+            }
 
-    reviewForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        const productId = '<%= product._id %>';
-        const rating = ratingInput.value;
-        const review = document.getElementById('review').value.trim();
-
-        if (!rating) {
-            Swal.fire({
-                title: 'Missing Rating',
-                text: 'Please select a star rating.',
-                icon: 'warning',
-                confirmButtonColor: '#4b5563'
+            reviews.forEach(review => {
+                const reviewElement = document.createElement('div');
+                reviewElement.classList.add('review-item');
+                reviewElement.innerHTML = `
+                    <div class="review-header">
+                        <span class="review-author">${review.userId?.name || 'Anonymous'}</span>
+                        <span class="review-date">${review.createdAt ? new Date(review.createdAt).toLocaleDateString('en-GB') : '-'}</span>
+                    </div>
+                    <div class="review-stars">${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</div>
+                    <p class="review-text">${review.review}</p>
+                `;
+                reviewsList.appendChild(reviewElement);
             });
-            return;
         }
 
-        if (!review) {
-            Swal.fire({
-                title: 'Missing Review',
-                text: 'Please write a review.',
-                icon: 'warning',
-                confirmButtonColor: '#4b5563'
-            });
-            return;
-        }
+        reviewForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-        try {
-            const response = await fetch(`/product-details/add-review/${productId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ rating, review })
-            });
+            const productId = '<%= product._id %>';
+            const rating = ratingInput.value;
+            const review = document.getElementById('review').value.trim();
 
-            const data = await response.json();
-            if (data.success) {
+            if (!rating) {
                 Swal.fire({
-                    title: 'Success!',
-                    text: 'Review submitted successfully.',
-                    icon: 'success',
-                    confirmButtonColor: '#4b5563',
-                    timer: 2000,
-                    showConfirmButton: false
+                    title: 'Missing Rating',
+                    text: 'Please select a star rating.',
+                    icon: 'warning',
+                    confirmButtonColor: '#4b5563'
+                });
+                return;
+            }
+
+            if (!review) {
+                Swal.fire({
+                    title: 'Missing Review',
+                    text: 'Please write a review.',
+                    icon: 'warning',
+                    confirmButtonColor: '#4b5563'
+                });
+                return;
+            }
+
+            try {
+                const response = await fetch(`/product-details/add-review/${productId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ rating, review })
                 });
 
-                // Reset form
-                reviewForm.reset();
-                ratingInput.value = '';
-                stars.forEach(s => s.classList.remove('filled'));
+                const data = await response.json();
+                if (data.success) {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Review submitted successfully.',
+                        icon: 'success',
+                        confirmButtonColor: '#4b5563',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
 
-                // Fetch and render updated reviews
-                fetchReviews(productId);
-            } else {
+                    // Reset form
+                    reviewForm.reset();
+                    ratingInput.value = '';
+                    stars.forEach(s => s.classList.remove('filled'));
+
+                    // Fetch and render updated reviews
+                    fetchReviews(productId);
+                } else {
+                    Swal.fire({
+                        title: 'Error',
+                        text: data.message || 'Failed to submit review.',
+                        icon: 'error',
+                        confirmButtonColor: '#4b5563'
+                    });
+                }
+            } catch (error) {
+                console.error('Error submitting review:', error);
                 Swal.fire({
                     title: 'Error',
-                    text: data.message || 'Failed to submit review.',
+                    text: 'Something went wrong. Please try again.',
                     icon: 'error',
                     confirmButtonColor: '#4b5563'
                 });
             }
-        } catch (error) {
-            console.error('Error submitting review:', error);
-            Swal.fire({
-                title: 'Error',
-                text: 'Something went wrong. Please try again.',
-                icon: 'error',
-                confirmButtonColor: '#4b5563'
-            });
-        }
-    });
+        });
 
-    // Load reviews on page load
-    document.addEventListener('DOMContentLoaded', () => {
-        const productId = '<%= product._id %>';
-        fetchReviews(productId);
-    });
-
-
+        // Load reviews on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const productId = '<%= product._id %>';
+            fetchReviews(productId);
+        });
     </script>
 
     <%- include("../../views/partials/user/footer") %>

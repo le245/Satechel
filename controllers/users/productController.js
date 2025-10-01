@@ -10,14 +10,15 @@ const STATUS_CODES= require("../../Models/status")
 const getProductDetailPage = async (req, res) => {
   try {
     const email = req.session.userEmail;
+     if (!email) {
+      return res.redirect('/home');
+    }
 
     const userData = await User.findOne({ email, isBlocked: false }).lean();
      if (!userData) {
       return res.render("blocked", { message: "User is blocked by admin" });
-            }
-    if (!email) {
-      return res.redirect('/home');
     }
+   
     const productId = req.params.id;
     const product = await Product.findById(productId).populate('category').lean();
     if (!product) {
@@ -51,9 +52,7 @@ const getProductDetailPage = async (req, res) => {
 
 
    const wishlist = await Wishlist.findOne({ userId: user._id }).lean();
-    const isInWishlist = wishlist
-      ? wishlist.products.some(p => p.productId.toString() === productId)
-      : false;
+    const isInWishlist = wishlist ? wishlist.products.some(p => p.productId.toString() === productId): false;
 
     const relatedProducts = await Product.find({
       category: product.category._id,

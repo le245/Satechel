@@ -177,14 +177,13 @@ const editCategory = async (req, res) => {
 
     
 
-
-        const existingCategory = await Category.findOne({
-            name: categoryName,
-            _id: { $ne: categoryid  }
-        });
-        if (existingCategory) {
-            return res.status(STATUS_CODES.BAD_REQUEST).json({ error: 'A category with this name already exists' });
-        }
+const existingCategory = await Category.findOne({
+  name: { $regex: new RegExp(`^${categoryName}$`, "i") },
+  _id: { $ne: categoryid }
+});
+if (existingCategory) {
+  return res.status(STATUS_CODES.BAD_REQUEST).json({ error: 'A category with this name already exists' });
+}
 
         const updateCategory = await Category.findByIdAndUpdate(
            categoryid ,

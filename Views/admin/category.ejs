@@ -24,7 +24,7 @@
         <table class="categories-table">
             <thead>
                 <tr>
-                    <th>ID</th>
+                   
                     <th>Name</th>
                     <th>Description</th>
                     <th>Created At</th>
@@ -36,7 +36,7 @@
                 <% if (cat && cat.length > 0) { %>
                     <% cat.forEach(category => { %>
                         <tr>
-                            <td><%= category._id %></td>
+                          
                             <td><%= category.name %></td>
                             <td><%= category.description %></td>
                             <td><%= new Date(category.createdAt).toLocaleDateString() %></td>

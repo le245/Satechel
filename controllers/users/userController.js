@@ -297,138 +297,143 @@ const logout=  async(req,res)=>{
 }
 
 const getShop = async (req, res) => {
-        try {
-            const email = req.session.userEmail;
-        
-            if (!email) {
-                return res.redirect('/home');
-            }
+    try {
+        const email = req.session.userEmail;
 
-            const userData = await User.findOne({ email, isBlocked: false }).lean();
-            if (!userData) {
-                return res.render("blocked", { message: "User is blocked by admin" });
-            }
+        if (!email) {
+            return res.redirect('/home');
+        }
 
-            const categories = await Category.find({ isListed: true }).lean();
+        const userData = await User.findOne({ email, isBlocked: false }).lean();
+        if (!userData) {
+            return res.render("blocked", { message: "User is blocked by admin" });
+        }
 
-            const page = parseInt(req.query.page) || 1;
-            const limit = 9;
-            const skip = (page - 1) * limit;
+        const categories = await Category.find({ isListed: true }).lean();
 
-            const searchQuery = req.query.search || ''; 
-            const sortBy = req.query.sort || 'default'; 
-            const categoryFilter = req.query.category || '';
-            const minPrice = parseFloat(req.query.minPrice) || 0;
-            const maxPrice = parseFloat(req.query.maxPrice) || Infinity;
+        const page = parseInt(req.query.page) || 1;
+        const limit = 9;
+        const skip = (page - 1) * limit;
 
-            let query = { isBlocked: false };
+        const searchQuery = req.query.search || '';
+        const sortBy = req.query.sort || 'default';
+        const categoryFilter = req.query.category || '';
+        const minPrice = parseFloat(req.query.minPrice) || 0;
+        const maxPrice = parseFloat(req.query.maxPrice) || Infinity;
 
-            if (searchQuery) {
-                query.productName = { $regex: searchQuery, $options: 'i' };
-            }
+        let query = { isBlocked: false };
 
-            if (categoryFilter) {
-                query.category = categoryFilter;
-            }
+        if (searchQuery) {
+            query.productName = { $regex: searchQuery, $options: 'i' };
+        }
 
-            if (minPrice || maxPrice !== Infinity) {
-                query.regularPrice = { $gte: minPrice, $lte: maxPrice };
-            }
+        if (categoryFilter) {
+            query.category = categoryFilter;
+        }
 
-            let sortOption = {};
-            switch (sortBy) {
-                case 'price-low-to-high':
-                    sortOption = { regularPrice: 1 };
-                    break;
-                case 'price-high-to-low':
-                    sortOption = { regularPrice: -1 };
-                    break;
-                case 'aA-zZ':
-                    sortOption = { productName: 1 };
-                    break;
-                case 'zZ-aA':
-                    sortOption = { productName: -1 };
-                    break;
-                default:
-                    sortOption = { createdAt: -1 }; 
-            }
+        if (minPrice || maxPrice !== Infinity) {
+            query.regularPrice = { $gte: minPrice, $lte: maxPrice };
+        }
 
-            const totalProducts = await Product.countDocuments(query);
-            const totalPages = Math.ceil(totalProducts / limit);
+      
+        let products = await Product.find(query)
+            .populate({
+                path: 'category',
+                match: { isListed: true }
+            })
+            .lean();
 
-            let products = await Product.find(query)
-                 .populate({
-                   path: 'category',
-                   match: { isListed: true } 
-                 })
-                .sort(sortOption)
-                .skip(skip)
-                .limit(limit)
-                .lean();
+       
+        products = products.filter(p => p.category);
 
+      
+        const wishlist = await Wishlist.findOne({ userId: userData._id }).lean();
+        const wishlistProductIds = wishlist ? wishlist.products.map(p => p.productId.toString()) : [];
+        const offers = await Offer.find({ status: true }).lean();
 
-
-                products = products.filter(p => p.category);
-        const wishlist = await Wishlist.findOne({userId:userData._id}).lean()
-        const wishlistProductIds= wishlist ?wishlist.products.map(p=>p.productId.toString()):[];
-
-
-        const  offers= await Offer.find({status:true}).lean()
-
+       
         products = products.map((product) => {
-    let finalPrice = product.regularPrice;
+            let finalPrice = product.regularPrice;
 
-    const productOffer = offers.find(
-        (offer) => offer.type === 'product' && offer.productId?.toString() === product._id.toString()
-    );
+            const productOffer = offers.find(
+                (offer) => offer.type === 'product' && offer.productId?.toString() === product._id.toString()
+            );
 
-    const categoryOffer = offers.find(
-        (offer) => offer.type === 'category' && offer.categoryId?.toString() === product.category?._id.toString()
-    );
+            const categoryOffer = offers.find(
+                (offer) => offer.type === 'category' && offer.categoryId?.toString() === product.category?._id.toString()
+            );
 
-    const productDiscount = productOffer ? productOffer.discount : 0;
-    const categoryDiscount = categoryOffer ? categoryOffer.discount : 0;
+            const productDiscount = productOffer ? productOffer.discount : 0;
+            const categoryDiscount = categoryOffer ? categoryOffer.discount : 0;
 
-    const bestDiscount = Math.max(productDiscount, categoryDiscount);
+            const bestDiscount = Math.max(productDiscount, categoryDiscount);
 
-    if (bestDiscount > 0) {
-        finalPrice = product.regularPrice - (product.regularPrice * bestDiscount) / 100;
-    }
+            if (bestDiscount > 0) {
+                finalPrice = product.regularPrice - (product.regularPrice * bestDiscount) / 100;
+            }
+
+            let offerType = null;
+            if (productOffer && productDiscount >= categoryDiscount) {
+                offerType = 'product';
+            } else if (categoryOffer && categoryDiscount > productDiscount) {
+                offerType = 'category';
+            }
+
+            return {
+                ...product,
+                finalPrice: parseFloat(finalPrice.toFixed(2)),
+                discountPercent: bestDiscount,
+                offerType,
+                inWishlist: wishlistProductIds.includes(product._id.toString())
+            };
+        });
 
     
-    let offerType = null;
-    if (productOffer && productDiscount >= categoryDiscount) {
-        offerType = 'product';
-    } else if (categoryOffer && categoryDiscount > productDiscount) {
-        offerType = 'category';
-    }
-
-    return {
-        ...product,
-        finalPrice: finalPrice.toFixed(2),
-        discountPercent: bestDiscount,
-        offerType,
-        inWishlist: wishlistProductIds.includes(product._id.toString())
-    };
-});
-
-            res.render("shop", {
-                user: userData,
-                products,
-                categories, 
-                currentPage: page,
-                totalPages,
-                searchQuery, 
-                sortBy, 
-                categoryFilter,
-                minPrice,
-                maxPrice, 
-            });
-        } catch (error) {
-            console.error('Error in getShop', error.message);
-            return res.status(STATUS_CODES.SERVER_ERROR).render("page-404", { message: "An error occurred while loading the shop page." });
+        switch (sortBy) {
+            case 'price-low-to-high':
+                products.sort((a, b) => a.finalPrice - b.finalPrice);
+                break;
+            case 'price-high-to-low':
+                products.sort((a, b) => b.finalPrice - a.finalPrice);
+                break;
+            case 'aA-zZ':
+                products.sort((a, b) => a.productName.localeCompare(b.productName));
+                break;
+            case 'zZ-aA':
+                products.sort((a, b) => b.productName.localeCompare(a.productName));
+                break;
+            default:
+                products.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         }
-    };
+
+      
+        
+        const totalProducts = products.length;
+        const totalPages = Math.ceil(totalProducts / limit);
+        const paginatedProducts = products.slice(skip, skip + limit);
+
+    
+        res.render("shop", {
+            user: userData,
+            products: paginatedProducts,
+            categories,
+            currentPage: page,
+            totalPages,
+            searchQuery,
+            sortBy,
+            categoryFilter,
+            minPrice,
+            maxPrice,
+        });
+
+    } catch (error) {
+        console.error('Error in getShop', error.message);
+        return res.status(STATUS_CODES.SERVER_ERROR).render("page-404", {
+            message: "An error occurred while loading the shop page."
+        });
+    }
+};
+
 
 
 module.exports = {

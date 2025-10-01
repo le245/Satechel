@@ -46,6 +46,7 @@ const cancelOrder = async (req, res) => {
 
             const itemTotal = item.price * item.quantity;
             const discountedItemTotal = itemTotal * discountFactor;
+
             refundAmount = discountedItemTotal;
 
             cancelledItems.push({
@@ -195,6 +196,7 @@ const returnOrder = async (req, res) => {
 
       const itemTotal = item.price * item.quantity;
       const discountRatio = order.subTotal > 0 ? (order.discount || 0) / order.subTotal : 0;
+      
       refundAmount = itemTotal - itemTotal * discountRatio;
 
       returnedItems.push({

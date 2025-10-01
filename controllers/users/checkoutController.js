@@ -21,6 +21,8 @@ const razorpayInstance = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
+
+
 const getCheckOut = async (req, res) => {
   try {
     const userId = req.session.user;
@@ -59,11 +61,7 @@ const getCheckOut = async (req, res) => {
       Coupon: coupons,
     });
   } catch (error) {
-    res
-      .status(STATUS_CODES.SERVER_ERROR)
-      .render("pageNotFound", {
-        message: "Server error, please try again later",
-      });
+    res.status(STATUS_CODES.SERVER_ERROR).render("pageNotFound", {message: "Server error, please try again later", });
   }
 };
 
@@ -85,9 +83,7 @@ const placeOrder = async (req, res) => {
       return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "User address not found" });
     }
 
-    const selectedAddress = userAddress.address.find(
-      (addr) => addr._id.toString() === addressId
-    );
+    const selectedAddress = userAddress.address.find((addr) => addr._id.toString() === addressId);
     if (!selectedAddress) {
       return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Selected address not found" });
     }
@@ -124,9 +120,7 @@ const placeOrder = async (req, res) => {
         return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Invalid or expired coupon" });
       }
 
-      const alreadyUsed = coupon.usedBy.some(
-        (id) => id.toString() === userId.toString()
-      );
+      const alreadyUsed = coupon.usedBy.some( (id) => id.toString() === userId.toString());
 
       if (alreadyUsed) {
         return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Coupon already used" });
@@ -433,9 +427,7 @@ const createRazorpayOrder = async (req, res) => {
         .json({ success: false, message: "User address not found" });
     }
 
-    const selectedAddress = userAddress.address.find(
-      (addr) => addr._id.toString() === addressId
-    );
+    const selectedAddress = userAddress.address.find((addr) => addr._id.toString() === addressId);
     if (!selectedAddress) {
       return res
         .status(STATUS_CODES.BAD_REQUEST)
@@ -469,9 +461,7 @@ const createRazorpayOrder = async (req, res) => {
     
 
     const subTotal = cart.items.reduce(
-      (total, item) => total + item.price * item.quantity,
-      0
-    );
+      (total, item) => total + item.price * item.quantity,0 );
    
     let discount = 0;
     if (couponCode) {
@@ -485,9 +475,7 @@ const createRazorpayOrder = async (req, res) => {
         return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Invalid or expired coupon" });
       }
 
-      const alreadyUsed = coupon.usedBy.some(
-        (id) => id.toString() === userId.toString()
-      );
+      const alreadyUsed = coupon.usedBy.some( (id) => id.toString() === userId.toString());
 
       if (alreadyUsed) {
         return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Coupon already used" });
@@ -658,26 +646,18 @@ const orderSuccess = async (req, res) => {
     const { orderId } = req.params;
 
     if (!user) {
-      return res
-        .status(STATUS_CODES.SERVER_ERROR)
-        .json({ success: false, message: "User not authenticated" });
+      return res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, message: "User not authenticated" });
     }
 
     let order;
     if (mongoose.isValidObjectId(orderId)) {
-      order = await Order.findById(orderId)
-        .populate("items.productId")
-        .lean();
+      order = await Order.findById(orderId).populate("items.productId").lean();
     } else {
-      order = await Order.findOne({ orderId })
-        .populate("items.productId")
-        .lean();
+      order = await Order.findOne({ orderId }).populate("items.productId").lean();
     }
 
     if (!order) {
-      return res
-        .status(STATUS_NOT_FOUND)
-        .json({ success: false, message: "Order not found!" });
+      return res.status(STATUS_NOT_FOUND).json({ success: false, message: "Order not found!" });
     }
 
   
@@ -686,11 +666,12 @@ const orderSuccess = async (req, res) => {
 
   } catch (error) {
    
-    return res
-      .status(STATUS_SERVER_ERROR)
-      .json({ success: false, message: "Internal server error" });
+    return res.status(STATUS_SERVER_ERROR).json({ success: false, message: "Internal server error" });
   }
 };
+
+
+
 const handlePaymentDismissal = async (req, res) => {
   try {
     const { orderId } = req.body;
@@ -744,56 +725,44 @@ const handlePaymentFailure = async (req, res) => {
     );
 
     if (!order) {
-      return res
-        .status(STATUS_NOT_FOUND)
-        .json({ success: false, message: "Order not found" });
+      return res.status(STATUS_NOT_FOUND).json({ success: false, message: "Order not found" });
     }
 
-    res
-      .status(STATUS_CODES.OK)
-      .json({ success: true, message: "Payment failure recorded" });
+    res.status(STATUS_CODES.OK).json({ success: true, message: "Payment failure recorded" });
   } catch (error) {
     console.error("Payment failure handling error:", error);
-    res
-      .status(STATUS_SERVER_ERROR)
-      .json({ success: false, message: "Failed to handle payment failure" });
+    res.status(STATUS_SERVER_ERROR).json({ success: false, message: "Failed to handle payment failure" });
   }
 };
+
+
+
 const retryPayment = async (req, res) => {
   try {
     const { orderId } = req.body;
 
     if (!orderId || !mongoose.isValidObjectId(orderId)) {
-      return res
-        .status(STATUS_CODES.BAD_REQUEST)
-        .json({
-          success: false,
-          message: "Order ID is required and must be valid",
-        });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({success: false, message: "Order ID is required and must be valid",});
     }
 
     const order = await Order.findById(orderId).populate("items.productId");
     
     if (!order) {
-      return res
-        .status(STATUS_NOT_FOUND)
-        .json({ success: false, message: "Order not found" });
+      return res.status(STATUS_NOT_FOUND).json({ success: false, message: "Order not found" });
     }
 
   
 
     const eligibleStatuses = ["PaymentFailed", "Pending", "Payment Pending"];
     if (!eligibleStatuses.includes(order.status)) {
-      return res
-        .status(STATUS_CODES.BAD_REQUEST)
-        .json({ success: false, message: "Order is not eligible for retry" });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Order is not eligible for retry" });
     }
 
     for (const item of order.items) {
       
       
       const product = item.productId;
-      if (!product || product.isDeleted || product.isBlocked) {
+      if (!product  || product.isBlocked) {
         return res.status(STATUS_CODES.BAD_REQUEST).json({
           success: false,
           message: `Product ${product?.productName || "Unknown"} is not available`,
@@ -857,20 +826,12 @@ const loadTransactionFailurePage = async (req, res) => {
     const { orderId } = req.query;
 
     if (!orderId || !mongoose.isValidObjectId(orderId)) {
-      return res.status(STATUS_CODES.BAD_REQUEST).render("error", {
-        message: "Invalid or missing order ID",
-        user: req.session.user,
-      });
+      return res.status(STATUS_CODES.BAD_REQUEST).render("error", {message: "Invalid or missing order ID",user: req.session.user,});
     }
-    const order = await Order.findById(orderId)
-      .populate("items.productId")
-      .lean();
+    const order = await Order.findById(orderId).populate("items.productId").lean();
 
     if (!order) {
-      return res.status(STATUS_NOT_FOUND).render("error", {
-        message: "Order not found",
-        user: req.session.user,
-      });
+      return res.status(STATUS_NOT_FOUND).render("error", {message: "Order not found",user: req.session.user});
     }
 
     const user = req.session.user;
@@ -897,14 +858,10 @@ const loadTransactionFailurePage = async (req, res) => {
 const downloadInvoice = async (req, res) => {
   try {
     const orderId = req.params.orderId;
-    const order = await Order.findById(orderId)
-      .populate("items.productId")
-      .populate("address");
+    const order = await Order.findById(orderId).populate("items.productId").populate("address");
 
     if (!order) {
-      return res
-        .status(STATUS_CODES.NOT_FOUND)
-        .json({ success: false, message: "Order not found" });
+      return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: "Order not found" });
     }
 
     if (!order.status || order.status.toLowerCase() !== "delivered") {

@@ -76,6 +76,7 @@ const forgotEmailValid = async (req, res) => {
         const { email } = req.body;
         const findUser = await User.findOne({ email: email });
 
+      
         if (findUser) {
             const otp = generateOtp();
             const emailSent = await sendVerificationEmail(email, otp);
@@ -293,74 +294,7 @@ const userProfile = async (req, res) => {
 };
 
 
-// const changeEmail=async(req,res)=>{
-//     try {
-       
-//         res.render("change-email")
-//     } catch (error) {
-//         res.redirect("/pageNotFound")
-//     }
-// }
 
-// const changeEmailValid=async(req,res)=>{
-//     try {
-//         const {email}=req.body;
-//         const userExists=await User.findOne({email})
-//         if(userExists){
-//             const otp=generateOtp();
-//             const emailSent=await sendVerificationEmail(email,otp);
-//             if(emailSent){
-//                 req.session.userOtp=otp;
-//                 req.session.userData=req.body;
-//                 req.session.email=email;
-//                 res.render("change-email-otp")
-//                 console.log("Email sent:",email);
-//                 console.log("OTP",otp)
-//             }else{
-//                 res.json("email-error")
-//             }
-//         }else{
-//             res.render("change-email",{
-//                 message:"User with this email not exist "
-//             })
-//         }
-//     } catch (error) {
-//         res.redirect("/pageNotFound")
-//     }
-// }
-
-// const  verifyEmailOtp=async(req,res)=>{
-//     try {
-//         const enteredOtp=req.body.otp
-//         if(enteredOtp===req.session.userOtp){
-//             req.sessionuserData=req.body.userData;
-//             req.render("new-email",{
-//                 userData:req.session.userData,
-
-//             })
-//         }else{
-//             res.render("change-email.otp-",{
-//                 message:"OTP not matching",
-//                 userData:req.session.userData
-//             });
-//         }
-//     } catch (error) {
-//         res.redirect("/pageNotFound")
-//     }
-// }
-
-// const updateEmail=async(req,res)=>{
-//     try {
-//         const newEmail = req.body.newEmail;
-//         const userId=req.session.user;
-//         await User.findByIdAndUpdate(userId,{email:newEmail});
-//         return res.redirect("/userProfile")
-
-
-//     } catch (error) {
-//         res.redirect("/pageNotFound")
-//     }
-// }
 const changePassword=async(req,res)=>{
     try {
        
@@ -619,12 +553,12 @@ const getOrderDetailsPage = async (req, res) => {
         if (!order) {
             return res.status(STATUS_CODES.NOT_FOUND).render('page-404', { message: 'Order not found' });
         }
+
+
 let selectedAddress = null;
 
 if (order?.address?.address && order.selectedAddressId) {
-  selectedAddress = order.address.address.find(
-    (addr) => addr._id.toString() === order.selectedAddressId.toString()
-  ) || null;
+  selectedAddress = order.address.address.find((addr) => addr._id.toString() === order.selectedAddressId.toString()) || null;
 }
 
 

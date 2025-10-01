@@ -206,15 +206,12 @@
 </head>
 <body>
     <%
-       
         const displaySubTotal = (
             order.subTotal && order.subTotal > 0 ? order.subTotal :
-            <!-- order.subTotal && order.subTotal > 0 ? order.subTotal : -->
             order.displaySubTotal && order.displaySubTotal > 0 ? order.displaySubTotal : 0
         ).toFixed(2);
         const displayFinalAmount = (
             order.finalAmount && order.finalAmount > 0 ? order.finalAmount :
-            <!-- order.originalFinalAmount && order.originalFinalAmount > 0 ? order.originalFinalAmount : -->
             order.displayFinalAmount && order.displayFinalAmount > 0 ? order.displayFinalAmount : 0
         ).toFixed(2);
     %>
@@ -423,24 +420,16 @@
                                 <span><i class="fas fa-check-circle me-1" style="color: #6b7280;"></i> Yes</span>
                             </div>
                             <% } %>
+                            <% if (order.paymentMethod) { %>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Payment Method</span>
+                                <span><%= order.paymentMethod %></span>
+                            </div>
+                            <% } %>
                             <hr class="my-2">
                             <div class="d-flex justify-content-between fw-bold">
                                 <span>Total</span>
                                 <span id="final-amount">₹<%= displayFinalAmount %></span>
-                            </div>
-                            <div class="d-flex justify-content-between mt-2">
-                                <span>Payment Status</span>
-                                <span class="<% if (order.status === 'PaymentFailed') { %>text-danger<% } else if (order.status === 'Cancelled') { %>text-danger<% } else if (order.status === 'Returned') { %>text-muted<% } else { %>text-success<% } %>">
-                                    <% if (order.status === 'PaymentFailed') { %>
-                                        Failed
-                                    <% } else if (order.status === 'Cancelled') { %>
-                                        Cancelled
-                                    <% } else if (order.status === 'Returned') { %>
-                                        Returned
-                                    <% } else { %>
-                                        Completed
-                                    <% } %>
-                                </span>
                             </div>
                             <% if (order.status === 'Cancelled' && order.refundedAmount > 0) { %>
                             <div class="d-flex justify-content-between mt-2 text-success">
@@ -639,12 +628,10 @@
                     const data = await response.json();
 
                     if (data.success) {
-                       
                         const orderStatusBadge = document.querySelector('.status-badge');
                         orderStatusBadge.textContent = 'Cancelled';
                         orderStatusBadge.className = 'status-badge status-Cancelled';
 
-                 
                         const timelineContainer = document.querySelector('.tracking-timeline');
                         timelineContainer.innerHTML = `
                             <div class="timeline-item">
@@ -656,7 +643,6 @@
                             </div>
                         `;
 
-                      
                         document.querySelectorAll('#order-items .product-item').forEach(row => {
                             const statusCell = row.querySelector('.item-status');
                             const actionsCell = row.querySelector('.item-actions');
@@ -668,14 +654,12 @@
                             }
                         });
 
-                    
                         const subtotalElement = document.getElementById('subtotal-amount');
                         const totalElement = document.getElementById('final-amount');
                         const totalAmountElement = document.getElementById('total-amount');
                         const discountElement = document.getElementById('discount-amount');
                         const totalItemsElement = document.getElementById('total-items');
 
-                      
                         const newSubTotal = data.updatedOrder.subTotal !== undefined ? data.updatedOrder.subTotal : 0;
                         const newFinalAmount = data.updatedOrder.finalAmount !== undefined ? data.updatedOrder.finalAmount : 0;
                         const refundAmount = data.updatedOrder.cancelledItems.reduce((sum, item) => sum + (item.refundAmount || 0), 0);
@@ -703,12 +687,6 @@
                         }
                         totalItemsElement.textContent = '0 items';
 
-                      
-                        const paymentStatusElement = document.querySelector('.price-details .card-body .d-flex.justify-content-between.mt-2 span:last-child');
-                        paymentStatusElement.textContent = 'Cancelled';
-                        paymentStatusElement.classList.remove('text-success', 'text-muted');
-                        paymentStatusElement.classList.add('text-danger');
-
                         if (refundAmount > 0) {
                             const priceDetails = document.querySelector('.price-details .card-body');
                             const existingRefund = priceDetails.querySelector('.text-success:not(.refund-pending)');
@@ -728,7 +706,6 @@
                             }
                         }
 
-                        
                         const cancelOrderBtn = document.getElementById('cancelOrderBtn');
                         if (cancelOrderBtn) cancelOrderBtn.remove();
                         document.querySelectorAll('.cancel-item-btn').forEach(btn => btn.remove());
@@ -843,7 +820,6 @@
                         const discountElement = document.getElementById('discount-amount');
                         const totalItemsElement = document.getElementById('total-items');
 
-                        // Use backend-provided values
                         const newSubTotal = data.updatedOrder.subTotal !== undefined ? data.updatedOrder.subTotal : parseFloat(subtotalElement.textContent.replace('₹', '')) || 0;
                         const newFinalAmount = data.updatedOrder.finalAmount !== undefined ? data.updatedOrder.finalAmount : parseFloat(totalElement.textContent.replace('₹', '')) || 0;
                         const refundAmount = data.updatedOrder.cancelledItems.find(item => item.itemId === itemId)?.refundAmount || 0;
@@ -874,7 +850,6 @@
                             .filter(row => row.querySelector('.item-status').textContent !== 'Cancelled').length;
                         totalItemsElement.textContent = `${remainingItems} items`;
 
-                        // Handle full order cancellation
                         if (data.updatedOrder.status === 'Cancelled') {
                             const orderStatusBadge = document.querySelector('.status-badge');
                             orderStatusBadge.textContent = 'Cancelled';
@@ -890,11 +865,6 @@
                                     </div>
                                 </div>
                             `;
-
-                            const paymentStatusElement = document.querySelector('.price-details .card-body .d-flex.justify-content-between.mt-2 span:last-child');
-                            paymentStatusElement.textContent = 'Cancelled';
-                            paymentStatusElement.classList.remove('text-success', 'text-muted');
-                            paymentStatusElement.classList.add('text-danger');
 
                             if (refundAmount > 0) {
                                 const priceDetails = document.querySelector('.price-details .card-body');
@@ -930,7 +900,6 @@
                             timer: 3000,
                             timerProgressBar: true
                         }).then(() => {
-                            // Reload to ensure UI is in sync with server
                             location.reload();
                         });
                     } else {
@@ -1149,10 +1118,18 @@
                         }
 
                         if (data.updatedOrder.status === 'Returned') {
-                            const paymentStatusElement = document.querySelector('.price-details .card-body .d-flex.justify-content-between.mt-2 span:last-child');
-                            paymentStatusElement.textContent = 'Returned';
-                            paymentStatusElement.classList.remove('text-success', 'text-danger');
-                            paymentStatusElement.classList.add('text-muted');
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Return Request Submitted',
+                                text: 'Your return request has been submitted successfully. You will be notified once it is processed.',
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 3000,
+                                timerProgressBar: true
+                            }).then(() => {
+                                location.reload();
+                            });
                         }
 
                         Swal.fire({
@@ -1386,13 +1363,6 @@
                                 const discountDiv = priceDetails.querySelector('.d-flex.justify-content-between.mb-2:nth-child(2)') || priceDetails.firstChild;
                                 priceDetails.insertBefore(couponAppliedDiv, discountDiv.nextSibling);
                             }
-                        }
-
-                        if (data.updatedOrder.status === 'Returned') {
-                            const paymentStatusElement = document.querySelector('.price-details .card-body .d-flex.justify-content-between.mt-2 span:last-child');
-                            paymentStatusElement.textContent = 'Returned';
-                            paymentStatusElement.classList.remove('text-success', 'text-danger');
-                            paymentStatusElement.classList.add('text-muted');
                         }
 
                         button.remove();
