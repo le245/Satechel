@@ -74,34 +74,44 @@ const getForgotPassPage = async (req, res) => {
 const forgotEmailValid = async (req, res) => {
     try {
         const { email } = req.body;
+
+        
+        if (!email) {
+            return res.render("forgot-password", { message: "Email is required", email });
+        }
+
         const findUser = await User.findOne({ email: email });
 
-      
-        if (findUser) {
-            const otp = generateOtp();
-            const emailSent = await sendVerificationEmail(email, otp);
+        if (!findUser) {
+            return res.render("forgot-password", {  message: "User with this email does not exist.", email });
+        }
 
-            if (emailSent) {
-                req.session.userOtp = {
-                    otp: otp,
-                    expires: Date.now() + 5 * 60 * 1000, 
-                };
-                req.session.email = email;
-                console.log("OTP:", otp);
-                res.render("forgetPass-otp");
-            } else {
-                res.json({ success: false, message: "Failed to send OTP. Please try again." });
-            }
+        const otp = generateOtp();
+        const emailSent = await sendVerificationEmail(email, otp);
+
+        if (emailSent) {
+            req.session.userOtp = {
+                otp: otp,
+                expires: Date.now() + 5 * 60 * 1000, 
+            };
+            req.session.email = email;
+
+            console.log("OTP:", otp);
+            return res.render("forgetPass-otp", { email });
         } else {
-            res.render("forgot-password", {
-                message: "User with this email does not exist.",
+            return res.render("forgot-password", { 
+                message: "Failed to send OTP. Please try again.", 
+                email 
             });
         }
+
     } catch (error) {
         console.error("Error in forgotEmailValid:", error);
         res.redirect("/pageNotFound");
     }
 };
+
+
 
 const verifyForgotPassOtp = async (req, res) => {
     try {
@@ -304,41 +314,61 @@ const changePassword=async(req,res)=>{
     }
 }
 
-const postChangePassword= async(req,res)=>{
 
+const postChangePassword = async (req, res) => {
     try {
+        const { currentPassword, newPassword, confirmPassword } = req.body;
 
-        const {newPass1,newPass2}=req.body;
-
-        const userId=req.session.user
-        if(!userId){
-            return res.redirect("/login")
+        const userId = req.session.user;
+        if (!userId) {
+            return res.redirect("/login");
         }
 
-
-        if(!newPass1||!newPass2){
-            return res.render("change",{mesage:"Passwords cannot be empty"})
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.render("change", { message: "User not found." });
         }
 
-        if(newPass1.length<8){
-            return res.render("change",{message:"Password must be at least 8 characters long "})
+       
+        if (!user.password || user.password.length < 10) {  
+           
+            return res.render("change", { message: "Password not set properly. Please reset your password." });
         }
 
-        if(newPass1!==newPass2){
-            return res.render("change",{message:"Password do not Match"})
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            return res.render("change", { message: "All fields are required." });
         }
 
-        const passwordHash = await securePassword(newPass1)
+      
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.render("change", { message: "Current password is incorrect." });
+        }
 
+      
+        if (newPassword.length < 8) {
+            return res.render("change", { message: "Password must be at least 8 characters long." });
+        }
+
+        if (newPassword !== confirmPassword) {
+            return res.render("change", { message: "Passwords do not match." });
+        }
+
+        if (newPassword === currentPassword) {
+            return res.render("change", { message: "New password must be different from current password." });
+        }
+
+        
+        const passwordHash = await securePassword(newPassword);
         await User.findByIdAndUpdate(userId, { password: passwordHash });
 
         return res.redirect("/userProfile");
-        
     } catch (error) {
-     console.error("Error in postChangePassword:", error);
-     res.render("change", { message: "An error occurred. Please try again." });
+        console.error("Error in postChangePassword:", error);
+        return res.render("change", { message: "Something went wrong. Please try again." });
     }
-}
+};
+
 
 
 

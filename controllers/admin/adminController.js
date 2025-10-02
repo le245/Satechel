@@ -95,7 +95,7 @@ const getSalesData = async (dateFilter, filterType = 'daily') => {
     { $unwind: '$items' },
     {
       $project: {
-        createOn: 1, // ✅ FIXED FIELD NAME
+        createOn: 1, 
         itemRevenue: { 
           $multiply: [
             { $ifNull: ['$items.price', 0] }, 
@@ -106,7 +106,7 @@ const getSalesData = async (dateFilter, filterType = 'daily') => {
     },
     {
       $group: {
-        _id: { $dateToString: { format: dateFormat, date: '$createOn' } }, // ✅ FIXED FIELD NAME
+        _id: { $dateToString: { format: dateFormat, date: '$createOn' } },
         revenue: { $sum: '$itemRevenue' },
         orderCount: { $sum: 1 }
       }

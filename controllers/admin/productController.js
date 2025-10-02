@@ -45,11 +45,10 @@ const addproducts = async (req, res) => {
       });
     }
 
-    if (!/^[a-zA-Z0-9\s]{3,100}$/.test(productName?.trim())) {
+    if (!/^[a-zA-Z0-9\s]{3,20}$/.test(productName?.trim())) {
       return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
-        error:
-          "Product name must be 3-100 characters long and contain only alphanumeric characters and spaces",
+        error:"Product name must be 3-20 characters long and contain only alphanumeric characters and spaces",
       });
     }
 
@@ -105,6 +104,8 @@ const addproducts = async (req, res) => {
         });
       }
     }
+
+
    const productNameTrimmed = productName.trim();
 
 
@@ -251,11 +252,10 @@ const editProduct = async (req, res) => {
       });
     }
 
-    if (!/^[a-zA-Z0-9\s]{3,100}$/.test(productName.trim())) {
+    if (!/^[a-zA-Z0-9\s]{3,20}$/.test(productName.trim())) {
       return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
-        error:
-          "Product name must be 3-100 characters long and contain only alphanumeric characters and spaces",
+        error:"Product name must be 3-20 characters long and contain only alphanumeric characters and spaces",
       });
     }
 

@@ -3,84 +3,266 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reset Password</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Change Password</title>
+    <style>
+        /* Error message base styling */
+        .error-message {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            display: block;
+        }
+        
+        .is-invalid {
+            border-color: #dc3545;
+        }
+
+        .is-invalid:focus {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
+
+        /* Main styling */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        .content-main {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+        }
+
+        .card-login {
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+            max-width: 450px;
+            width: 100%;
+        }
+
+        .card-body {
+            padding: 2rem;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #212529;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Form elements */
+        .form-control {
+            display: block;
+            width: 100%;
+            padding: 0.65rem 1rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            box-sizing: border-box;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+
+
+
+        .btn {
+            display: inline-block;
+            font-weight: 500;
+            text-align: center;
+            vertical-align: middle;
+            user-select: none;
+            border: 1px solid transparent;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            border-radius: 4px;
+            transition: all 0.15s ease-in-out;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            color: #fff;
+            background-color: #001f3f;
+            border-color: #001f3f;
+        }
+
+        .btn-primary:hover {
+            color: #fff;
+            background-color: #001737;
+            border-color: #00132d;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        a {
+            color: #0d6efd;
+            text-decoration: none;
+        }
+
+        a:hover {
+            color: #0a58ca;
+            text-decoration: underline;
+        }
+
+        .mb-3 { margin-bottom: 1rem; }
+        .mb-4 { margin-bottom: 1.5rem; }
+        .mx-auto { margin-left: auto; margin-right: auto; }
+        .w-100 { width: 100%; }
+        .col-4 { width: 33.33%; }
+
+        @media (max-width: 768px) {
+            .card-login {
+                margin: 0 1rem;
+                width: 90%;
+            }
+            .card-body { padding: 1.5rem; }
+            .col-4 { width: 100%; }
+        }
+    </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <section class="w-full max-w-md p-6">
-        <div class="bg-white rounded-lg shadow-lg p-8">
-            <h4 class="text-2xl font-semibold text-center text-gray-800 mb-6">Change Password</h4>
-            <form method="post" action="/change-password" onsubmit="return validateForm()">
-
-                <div class="mb-4 relative">
-                    <input 
-                        class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                        name="newPass1" 
-                        id="newPass1" 
-                        placeholder="Enter new password" 
-                        type="password" 
-                      
-                    >
-                    <div id="newPass1Error" class="text-red-500 text-sm mt-1"></div>
-                </div>
-                <div class="mb-6 relative">
-                    <input 
-                        class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                        name="newPass2" 
-                        id="newPass2" 
-                        placeholder="Re-enter new password" 
-                        type="password" 
-                       
-                    >
-                    <div id="newPass2Error" class="text-red-500 text-sm mt-1"></div>
-                </div>
-                <div class="mb-6">
-                  <button 
-                   type="submit" 
-                   class="bg-gray-500 text-white px-5 py-2 rounded-lg hover:bg-gray-700 transition font-semibold">
-                  Change Password
-                </button>
-
-                </div>
-                <% if (locals.message && message.length > 0) { %>
-                    <div id="alertMessage" class="bg-red-100 text-red-700 p-3 rounded-lg text-center mb-4">
-                        <%= message %>
+<body>
+    <section class="content-main" style="margin-top: 80px; margin-bottom: 80px;">
+        <div class="card mx-auto card-login col-4">
+            <div class="card-body">
+                <h4 class="card-title mb-4">Change Password</h4>
+                <form method="post" action="change-password" onsubmit="return validatePasswordForm()">
+                    <div class="mb-3">
+                        <input class="form-control" name="currentPassword" placeholder="Current Password" type="password" id="currentPassword">
+                        <div class="error-message" id="currentPassword-error">
+                            <% if (typeof message !== 'undefined' && message) { %>
+                                <%= message %>
+                            <% } %>
+                        </div>
                     </div>
-                <% } %>
-            </form>
-            
+
+                    <div class="mb-3">
+                        <input class="form-control" name="newPassword" placeholder="New Password" type="password" id="newPassword">
+                        <div class="error-message" id="newPassword-error"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <input class="form-control" name="confirmPassword" placeholder="Confirm New Password" type="password" id="confirmPassword">
+                        <div class="error-message" id="confirmPassword-error"></div>
+                    </div>
+
+                    <div class="mb-4">
+                        <button type="submit" class="btn btn-primary w-100">Update Password</button>
+                    </div>
+                </form>
+                
+                <p class="text-center mb-4">Back to <a href="/profile">Profile</a></p>
+            </div>
         </div>
     </section>
 
-    <script>
-        function validateForm() {
-            let valid = true;
-            const newPass1 = document.getElementById('newPass1');
-            const newPass2 = document.getElementById('newPass2');
-            const newPass1Error = document.getElementById('newPass1Error');
-            const newPass2Error = document.getElementById('newPass2Error');
+<script>
+    const currentPasswordInput = document.getElementById('currentPassword');
+    const newPasswordInput = document.getElementById('newPassword');
+    const confirmPasswordInput = document.getElementById('confirmPassword');
+    const currentPasswordError = document.getElementById('currentPassword-error');
+    const newPasswordError = document.getElementById('newPassword-error');
+    const confirmPasswordError = document.getElementById('confirmPassword-error');
 
-            newPass1Error.textContent = '';
-            newPass2Error.textContent = '';
+    currentPasswordInput.addEventListener('input', () => {
+        const passwordValue = currentPasswordInput.value.trim();
 
-            if (!newPass1.value.trim()) {
-                newPass1Error.textContent = 'Password cannot be empty.';
-                valid = false;
-            } else if (newPass1.value.length < 6) {
-                newPass1Error.textContent = 'Password must be at least 6 characters long.';
-                valid = false;
-            }
-
-            if (!newPass2.value.trim()) {
-                newPass2Error.textContent = 'Please re-enter your password.';
-                valid = false;
-            } else if (newPass2.value !== newPass1.value) {
-                newPass2Error.textContent = 'Passwords do not match.';
-                valid = false;
-            }
-
-            return valid;
+        if (passwordValue === '') {
+            currentPasswordError.textContent = 'Please enter your current password.';
+            currentPasswordInput.classList.add('is-invalid');
+        } else {
+            currentPasswordError.textContent = '';
+            currentPasswordInput.classList.remove('is-invalid');
         }
-    </script>
+    });
+
+    newPasswordInput.addEventListener('input', () => {
+        const passwordValue = newPasswordInput.value;
+
+        if (passwordValue === '') {
+            newPasswordError.textContent = 'Please enter a new password.';
+            newPasswordInput.classList.add('is-invalid');
+        } else if (passwordValue.length < 8) {
+            newPasswordError.textContent = 'Password must be at least 8 characters long.';
+            newPasswordInput.classList.add('is-invalid');
+        } else if (passwordValue === currentPasswordInput.value) {
+            newPasswordError.textContent = 'New password must be different from current password.';
+            newPasswordInput.classList.add('is-invalid');
+        } else {
+            newPasswordError.textContent = '';
+            newPasswordInput.classList.remove('is-invalid');
+        }
+
+        if (confirmPasswordInput.value) {
+            validateConfirmPassword();
+        }
+    });
+
+    confirmPasswordInput.addEventListener('input', validateConfirmPassword);
+
+    function validateConfirmPassword() {
+        const confirmValue = confirmPasswordInput.value;
+        const newValue = newPasswordInput.value;
+
+        if (confirmValue === '') {
+            confirmPasswordError.textContent = 'Please confirm your new password.';
+            confirmPasswordInput.classList.add('is-invalid');
+        } else if (confirmValue !== newValue) {
+            confirmPasswordError.textContent = 'Passwords do not match.';
+            confirmPasswordInput.classList.add('is-invalid');
+        } else {
+            confirmPasswordError.textContent = '';
+            confirmPasswordInput.classList.remove('is-invalid');
+        }
+    }
+
+    function validatePasswordForm() {
+        const currentValue = currentPasswordInput.value.trim();
+        const newValue = newPasswordInput.value;
+        const confirmValue = confirmPasswordInput.value;
+        let isValid = true;
+
+        if (currentValue === '') {
+            currentPasswordError.textContent = 'Please enter your current password.';
+            currentPasswordInput.classList.add('is-invalid');
+            isValid = false;
+        }
+
+        if (newValue === '') {
+            newPasswordError.textContent = 'Please enter a new password.';
+            newPasswordInput.classList.add('is-invalid');
+            isValid = false;
+        } else if (newValue.length < 8) {
+            newPasswordError.textContent = 'Password must be at least 8 characters long.';
+            newPasswordInput.classList.add('is-invalid');
+            isValid = false;
+        } else if (newValue === currentValue) {
+            newPasswordError.textContent = 'New password must be different from current password.';
+            newPasswordInput.classList.add('is-invalid');
+            isValid = false;
+        }
+
+        if (confirmValue === '') {
+            confirmPasswordError.textContent = 'Please confirm your new password.';
+            confirmPasswordInput.classList.add('is-invalid');
+            isValid = false;
+        } else if (confirmValue !== newValue) {
+            confirmPasswordError.textContent = 'Passwords do not match.';
+            confirmPasswordInput.classList.add('is-invalid');
+            isValid = false;
+        }
+
+        return isValid;
+    }
+</script>
+
 </body>
 </html>
