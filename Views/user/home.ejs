@@ -106,123 +106,64 @@
  <!-- Features Section End -->
 
  <!-- Latest Product Begin -->
- <section class="latest-products spad">
-     <div class="container">
-         <div class="product-filter">
-             <div class="row">
-                 <div class="col-lg-12 text-center">
-                     <div class="section-title">
-                         <h2>Latest Products</h2>
-                     </div>
-                     <ul class="product-controls">
-                         <li data-filter="*">All</li>
-                         <li data-filter=".dresses">HandBags</li>
-                         <li data-filter=".bags">Tote Bags</li>
-                         <li data-filter=".shoes">Wallet</li>
-                         <li data-filter=".accesories">Shoulder Bags</li>
-                     </ul>
-                 </div>
-             </div>
-         </div>
-         <div class="row" id="product-list">
-             <div class="col-lg-3 col-sm-6 mix all dresses bags">
-                 <div class="single-product-item">
-                     <figure>
-                         <a href="#"><img src="/img/products img/0cbdc15348fcf19013410887a24b8ae4.jpg" alt=""></a>
-                         <div class="p-status">new</div>
-                     </figure>
-                     <div class="product-text">
-                         <h6>Heather Hobo Bag</h6>
-                      
-                     </div>
-                 </div>
-             </div>
-             <div class="col-lg-3 col-sm-6 mix all dresses bags">
-                 <div class="single-product-item">
-                     <figure>
-                         <a href="#"><img src="/img/products img/6ab6f1c6960ef92ddaaf69b33dd82e7a.jpg" alt=""></a>
-                         <div class="p-status sale">sale</div>
-                     </figure>
-                     <div class="product-text">
-                         <h6>Callie Satchel Bag</h6>
-                     
-                     </div>
-                 </div>
-             </div>
-             <div class="col-lg-3 col-sm-6 mix all shoes accesories">
-                 <div class="single-product-item">
-                     <figure>
-                         <a href="#"><img src="/img/products img/723ec8e8cbf53577610a912507e1c64e.jpg" alt=""></a>
-                         <div class="p-status">new</div>
-                     </figure>
-                     <div class="product-text">
-                         <h6>Alice Shoulder Bag</h6>
-                     
-                     </div>
-                 </div>
-             </div>
-             <div class="col-lg-3 col-sm-6 mix all shoes accesories">
-                 <div class="single-product-item">
-                     <figure>
-                         <a href="#"><img src="/img/products img/7d2c4ba552ebfec7a8d79c7df871c2d4.jpg" alt=""></a>
-                         <div class="p-status popular">popular</div>
-                     </figure>
-                     <div class="product-text">
-                         <h6>Rosalind Tote Bag</h6>
-                 
-                     </div>
-                 </div>
-             </div>
-             <div class="col-lg-3 col-sm-6 mix all dresses shoes">
-                 <div class="single-product-item">
-                     <figure>
-                         <a href="#"><img src="/img/products img/778ec9bb7e567130ee98126e88443441.jpg" alt=""></a>
-                         <div class="p-status">new</div>
-                     </figure>
-                     <div class="product-text">
-                         <h6>Drew Tote Bag</h6>
-                     
-                     </div>
-                 </div>
-             </div>
-             <div class="col-lg-3 col-sm-6 mix all accesories bags">
-                 <div class="single-product-item">
-                     <figure>
-                         <a href="#"><img src="/img/products img/pg14.jpg" alt=""></a>
-                         <div class="p-status sale">sale</div>
-                     </figure>
-                     <div class="product-text">
-                         <h6>Nora Zip Around Wallet</h6>
-                      
-                     </div>
-                 </div>
-             </div>
-             <div class="col-lg-3 col-sm-6 mix all dresses bags">
-                 <div class="single-product-item">
-                     <figure>
-                         <a href="#"><img src="/img/products img/pg5.jpg" alt=""></a>
-                     </figure>
-                     <div class="product-text">
-                         <h6>Alice Shoulder Bag</h6>
-                       >
-                     </div>
-                 </div>
-             </div>
-             <div class="col-lg-3 col-sm-6 mix all accesories bags">
-                 <div class="single-product-item">
-                     <figure>
-                         <a href="#"><img src="/img/products img/ce6052274af6270bd658d705c8999418.jpg" alt=""></a>
-                         <div class="p-status popular">popular</div>
-                     </figure>
-                     <div class="product-text">
-                         <h6>Chérie Crossbody Bag</h6>
-                       
-                     </div>
-                 </div>
-             </div>
-         </div>
-     </div>
- </section>
+<section class="latest-products spad">
+  <div class="container">
+    <div class="product-filter">
+      <div class="row">
+        <div class="col-lg-12 text-center">
+          <div class="section-title">
+            <h2>Latest Products</h2>
+          </div>
+          <ul class="product-controls">
+            <li data-filter="*">All</li>
+            <li data-filter=".dresses">HandBags</li>
+            <li data-filter=".bags">Tote Bags</li>
+            <li data-filter=".shoes">Wallet</li>
+            <li data-filter=".accesories">Shoulder Bags</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="row" id="product-list">
+      <% latestProducts.forEach(product => { %>
+        <div class="col-lg-3 col-sm-6 mix all <%= product.category?.name || '' %>">
+          <div class="single-product-item">
+            <figure>
+              <a href="/product-details/<%= product._id %>">
+                <img src="<%= product.productImage && product.productImage.length > 0 ? product.productImage[0] : '/img/default-product.jpg' %>" alt="<%= product.productName %>">
+              </a>
+
+              <% if (product.isNew) { %>
+                <div class="p-status">new</div>
+              <% } %>
+
+              <% if (product.discountPercent > 0) { %>
+                <div class="p-status sale">sale</div>
+              <% } %>
+            </figure>
+
+            <div class="product-text">
+              <h6><%= product.productName %></h6>
+
+              <% if (product.discountPercent > 0) { %>
+                <p>
+                  <del style="color: gray;">₹<%= product.regularPrice %></del> ₹<%= product.finalPrice %>
+                </p>
+              <% } else { %>
+                <p>₹<%= product.finalPrice %></p>
+              <% } %>
+
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+</section>
+
+
+
  
  <section class="lookbok-section">
      <div class="container-fluid">

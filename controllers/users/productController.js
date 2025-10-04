@@ -10,20 +10,23 @@ const STATUS_CODES= require("../../Models/status")
 const getProductDetailPage = async (req, res) => {
   try {
     const email = req.session.userEmail;
-     if (!email) {
+    if (!email) {
       return res.redirect('/home');
     }
 
     const userData = await User.findOne({ email, isBlocked: false }).lean();
-     if (!userData) {
+    if (!userData) {
       return res.render("blocked", { message: "User is blocked by admin" });
     }
-   
+
     const productId = req.params.id;
     const product = await Product.findById(productId).populate('category').lean();
     if (!product) {
       return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: 'Product not found' });
     }
+
+    // Check if product is blocked OR category is unlisted
+    const isUnavailable = product.isBlocked || !product.category.isListed;
 
     const productOffer = await Offer.findOne({
       productId: productId,
@@ -39,7 +42,6 @@ const getProductDetailPage = async (req, res) => {
 
     const productDiscount = productOffer ? productOffer.discount : 0;
     const categoryDiscount = categoryOffer ? categoryOffer.discount : 0;
-
     const bestDiscount = Math.max(productDiscount, categoryDiscount);
 
     if (bestDiscount > 0 && product.regularPrice) {
@@ -50,27 +52,32 @@ const getProductDetailPage = async (req, res) => {
 
     const user = await User.findOne({ email, isBlocked: false }).lean();
 
-
-   const wishlist = await Wishlist.findOne({ userId: user._id }).lean();
-    const isInWishlist = wishlist ? wishlist.products.some(p => p.productId.toString() === productId): false;
+    const wishlist = await Wishlist.findOne({ userId: user._id }).lean();
+    const isInWishlist = wishlist ? wishlist.products.some(p => p.productId.toString() === productId) : false;
 
     const relatedProducts = await Product.find({
       category: product.category._id,
       _id: { $ne: productId },
       isBlocked: false,
-    }).limit(4).lean();
+    })
+      .populate('category')
+      .lean()
+      .then(products => products.filter(p => p.category.isListed));
 
     res.render('product-detail', {
       user,
       product,
       relatedProducts,
       isInWishlist,
+      isUnavailable, // pass the flag to template
     });
   } catch (error) {
     console.error('Error in getProductDetailPage:', error);
     res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, message: 'Something went wrong' });
   }
 };
+  
+
 
 const addProductReview=async(req,res)=>{
 

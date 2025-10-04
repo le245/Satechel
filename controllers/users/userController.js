@@ -19,22 +19,62 @@ const pageNotFound = async (req, res) => {
 };
 
 const loadHomepage = async (req, res) => {
+  try {
+    const userId = req.session.user;
+    const email = req.session.userEmail;
 
-    try {
-        const user = req.session.user
-        
-        const email = req.session.userEmail 
+    const userData = await User.findOne({ _id: userId, isBlocked: false }).lean();
 
-       
-        const userData=await User.findOne({_id:user , isBlocked:false})
-       
-        return res.render('home',{user:userData})
-      
-    } catch (error) {
-     
-        res.status(STATUS_CODES.BAD_REQUEST).send('Server Error')
-    }
+    const latestProducts = await Product.find()
+      .sort({ createdAt: -1 }) 
+      .limit(8)
+      .populate('category')
+      .lean();
+
+    const offers = await Offer.find({ status: true }).lean();
+
+    const productsWithOffers = latestProducts.map(product => {
+      let finalPrice = product.regularPrice;
+
+      const productOffer = offers.find(
+        offer => offer.type === 'product' && offer.productId?.toString() === product._id.toString()
+      );
+
+      const categoryOffer = offers.find(
+        offer => offer.type === 'category' && offer.categoryId?.toString() === product.category?._id.toString()
+      );
+
+      const productDiscount = productOffer ? productOffer.discount : 0;
+      const categoryDiscount = categoryOffer ? categoryOffer.discount : 0;
+
+      const bestDiscount = Math.max(productDiscount, categoryDiscount);
+
+      if (bestDiscount > 0) {
+        finalPrice = product.regularPrice - (product.regularPrice * bestDiscount) / 100;
+      }
+
+      let offerType = null;
+      if (productOffer && productDiscount >= categoryDiscount) {
+        offerType = 'product';
+      } else if (categoryOffer && categoryDiscount > productDiscount) {
+        offerType = 'category';
+      }
+
+      return {
+        ...product,
+        finalPrice: parseFloat(finalPrice.toFixed(2)),
+        discountPercent: bestDiscount,
+        offerType,
+      };
+    });
+
+    return res.render('home', { user: userData, latestProducts: productsWithOffers });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Server Error');
+  }
 };
+
 
 const loadSignup = async (req, res) => {
     try {

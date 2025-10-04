@@ -285,14 +285,16 @@
     <div class="content-header">
         <h2 class="content-title card-title">Products</h2>
     </div>
-    <header class="card-header text-center mb-20">
-        <form action="" method="get" class="d-inline">
-            <div class="input-group input-group-sm border border-1 border-grey rounded-pill">
-                <input type="text" class="form-control border-0 rounded-pill" placeholder="Search products or brands" name="search">
-                <button class="btn border-0" type="submit">Search</button>
-            </div>
-        </form>
-    </header>
+  <header class="card-header text-center mb-20">
+    <form action="" method="get" class="d-inline" id="searchForm">
+        <div class="input-group input-group-sm rounded-pill shadow-sm" style="max-width: 400px; margin: auto;">
+            <input type="text" class="form-control rounded-start-pill border-0" placeholder="Search products or brands" name="search" id="searchInput">
+            <button class="btn btn-primary rounded-0" type="submit">Search</button>
+            <button class="btn btn-secondary rounded-end-pill" type="button" id="clearBtn">Clear</button>
+        </div>
+    </form>
+</header>
+
     
  
     <div class="right mt-5">
@@ -441,6 +443,11 @@
             }
         });
     }
+
+    document.getElementById('clearBtn').addEventListener('click', () => {
+        document.getElementById('searchInput').value = '';
+        window.location.href = window.location.pathname;   
+    });
 </script>
 
 <%- include("../../views/partials/admin/footer") %>

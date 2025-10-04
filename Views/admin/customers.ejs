@@ -33,15 +33,18 @@
         </div>
         
      
-        <div class="search-container">
-            <form action="/admin/customers" method="get">
-                <div class="input-group">
-                    <input type="text" class="form-control" placeholder="Search customers..." name="search" value="<%= search || '' %>">
-                    <button class="btn btn-primary" type="submit">Search</button>
-                </div>
-            </form>
-        </div>
         
+        
+        <div class="search-container">
+    <form action="/admin/customers" method="get" id="searchForm">
+        <div class="input-group">
+            <input type="text" class="form-control" placeholder="Search customers..." name="search" value="<%= search || '' %>" id="searchInput">
+            <button class="btn btn-primary" type="submit">Search</button>
+            <button class="btn btn-secondary" type="button" id="clearBtn">Clear</button>
+        </div>
+    </form>
+</div>
+
         <!-- Customer Table -->
         <div class="card shadow mb-4">
             <div class="card-body">
@@ -119,6 +122,11 @@
                 });
             });
         });
+
+        document.getElementById('clearBtn').addEventListener('click', () => {
+        document.getElementById('searchInput').value = ''; 
+        window.location.href = '/admin/customers'; 
+    });
     </script>
 
 </body>

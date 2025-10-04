@@ -32,16 +32,47 @@ const getCheckOut = async (req, res) => {
 
     const email = req.session.userEmail;
     const userData = await User.findOne({ email, isBlocked: false }).lean();
-     if (!userData) {
-       return res.render("blocked", { message: "User is blocked by admin" });
-           
-      }
+    if (!userData) {
+      return res.render("blocked", { message: "User is blocked by admin" });
+    }
 
+    const cart = await Cart.findOne({ userId }).populate({
+      path: "items.productId",
+      populate: { path: "category" }
+    });
 
-
-    const cart = await Cart.findOne({ userId }).populate("items.productId");
     if (!cart || cart.items.length === 0) {
       return res.redirect("/cart");
+    }
+
+   
+    const invalidItems = cart.items.filter(
+      item => item.productId.isBlocked || !item.productId.category?.isListed
+    );
+
+    if (invalidItems.length > 0) {
+  
+      cart.items = cart.items.filter(
+        item => !item.productId.isBlocked && item.productId.category?.isListed
+      );
+      await cart.save();
+
+      return res.render("cart", {
+        cartItems: cart.items.map(item => ({
+          id: item._id.toString(),
+          imageUrl: item.productId.productImage[0] || "/default-image.jpg",
+          name: item.productId.productName || "Unknown Product",
+          price: parseFloat(item.productId.regularPrice || 0),
+          quantity: item.quantity,
+          stock: item.productId.quantity,
+          isBlocked: item.productId.isBlocked || false,
+        })),
+        subtotal: 0,
+        discount: 0,
+        total: 0,
+        user: userData,
+        message: "Some products in your cart are unavailable (blocked or unlisted) and have been removed.",
+      });
     }
 
     const user = await User.findById(userId);
@@ -51,7 +82,7 @@ const getCheckOut = async (req, res) => {
     const coupons = await Coupon.find({
       isList: true,
       expireOn: { $gt: new Date() },
-      usedBy: { $nin: [userId] }, 
+      usedBy: { $nin: [userId] },
     });
 
     res.render("checkout", {
@@ -61,7 +92,10 @@ const getCheckOut = async (req, res) => {
       Coupon: coupons,
     });
   } catch (error) {
-    res.status(STATUS_CODES.SERVER_ERROR).render("pageNotFound", {message: "Server error, please try again later", });
+    console.error("Error in getCheckOut:", error);
+    res.status(STATUS_CODES.SERVER_ERROR).render("pageNotFound", {
+      message: "Server error, please try again later",
+    });
   }
 };
 

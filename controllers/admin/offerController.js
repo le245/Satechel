@@ -181,8 +181,6 @@ if (isNaN(discount) || discount < 1 || discount > 99) {
 
   } catch (error) {
 
-    console.log("=============================",error)
-
     return res.status(STATUS_CODES.SERVER_ERROR).json({ 
       success: false, 
       message: 'Server Error' 

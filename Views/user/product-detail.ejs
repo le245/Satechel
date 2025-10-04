@@ -743,13 +743,13 @@
     </nav>
 
     <div class="container">
-        <% if (product && product.isBlocked) { %>
-            <!-- Unavailable Message -->
-            <div class="unavailable-message">
-                <h2>Product Unavailable</h2>
-                <p>This product is currently not available for purchase.</p>
-                <p><a href="/shop">Continue Shopping</a></p>
-            </div>
+       <% if (!product || product.isBlocked || !product.category?.isListed) { %>
+        <!-- Unavailable Message -->
+        <div class="unavailable-message text-center my-5">
+            <h2>Product Unavailable</h2>
+            <p>This product is currently not available for purchase.</p>
+            <p><a href="/shop" >Continue Shopping</a></p>
+        </div>
         <% } else { %>
             <!-- Product Details -->
             <div class="product-details">

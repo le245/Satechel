@@ -319,7 +319,7 @@
 
                         <div class="text-end">
                             <button type="button" class="btn btn-secondary me-2" onclick="resetForm()">Reset</button>
-                            <button type="button" class="btn btn-danger me-2" id="removeProduct">Remove Product</button>
+                           
                             <button class="btn btn-primary" type="submit">Update Product</button>
                             <div id="formError" class="error-message" style="color: red; margin-top: 10px;"></div>
                         </div>
@@ -444,11 +444,7 @@
     });
 
     function initializeForm() {
-        document.getElementById('removeProduct').addEventListener('click', function () {
-            if (confirm('Are you sure you want to remove this product? This action cannot be undone.')) {
-                removeProduct();
-            }
-        });
+    
 
         const cropError = document.getElementById('cropError');
         cropError.textContent = '';
@@ -684,29 +680,6 @@ function loadExistingImages() {
         loadExistingImages();
     }
 
-    function removeProduct() {
-        const productId = '<%= product._id %>';
-        if (!productId) return;
-
-        fetch(`/admin/product/${productId}`, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        })
-            .then((response) => {
-                if (response.ok) {
-                    alert('Product successfully removed.');
-                    window.location.href = '/admin/products';
-                } else {
-                    throw new Error('Failed to remove product');
-                }
-            })
-            .catch((error) => {
-                console.error('Error removing product:', error);
-                alert('Failed to remove product. Please try again.');
-            });
-    }
 
     function setupFormValidation() {
         const form = document.getElementById('productForm');

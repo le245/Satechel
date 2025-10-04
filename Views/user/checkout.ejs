@@ -82,6 +82,18 @@
 </head>
 <body class="bg-gray-200 font-sans">
   <%- include("../../views/partials/user/header") %>
+
+
+  
+<% if (typeof unavailableMessage !== 'undefined' && unavailableMessage) { %>
+<script>
+  Swal.fire({
+    icon: 'warning',
+    title: 'Unavailable Products',
+    html: "<%= unavailableMessage %>"
+  });
+</script>
+<% } %>
   <div class="site-wrap">
     <!-- Breadcrumb -->
     <div class="bg-gray-100 py-3">
@@ -185,24 +197,25 @@
                   <tbody>
                     <% if (cart && cart.items && cart.items.length > 0) { %>
                       <% cart.items.forEach(item => { %>
-                        <tr class="border-b border-gray-300">
-                          <td class="py-3 flex items-center">
-                            <img 
-                              src="<%= item?.productId?.productImage && Array.isArray(item.productId.productImage) && item.productId.productImage.length > 0 ? item.productId.productImage[0] : 'https://via.placeholder.com/50' %>" 
-                              alt="<%= item?.productId?.productName || 'Product' %>" 
-                              class="w-12 h-12 rounded mr-3 border border-gray-300"
-                              onerror="this.onerror=null; this.src='https://via.placeholder.com/50';"
-                            >
-                            <span class="text-gray-600">
-                              <%= item?.productId?.productName || 'Product' %> <%= item?.productId?.size || '' %>
-                            </span>
-                            <% if (item?.productId?.isBlocked) { %>
-                              <span class="text-red-500 ml-2">(Blocked - Unavailable)</span>
-                            <% } %>
-                          </td>
-                          <td class="py-3 text-gray-600"><%= item?.quantity || 0 %></td>
-                          <td class="py-3 text-gray-600 text-right">₹<%= ((item?.price || 0) * (item?.quantity || 0)).toFixed(2) %></td>
-                        </tr>
+                        <tr class="border-b border-gray-300 <%= (item?.productId?.isBlocked || !item?.productId?.category?.isListed) ? 'unavailable-item' : '' %>">
+  <td class="py-3 flex items-center">
+    <img 
+      src="<%= item?.productId?.productImage && Array.isArray(item.productId.productImage) && item.productId.productImage.length > 0 ? item.productId.productImage[0] : 'https://via.placeholder.com/50' %>" 
+      alt="<%= item?.productId?.productName || 'Product' %>" 
+      class="w-12 h-12 rounded mr-3 border border-gray-300"
+      onerror="this.onerror=null; this.src='https://via.placeholder.com/50';"
+    >
+    <span class="text-gray-600">
+      <%= item?.productId?.productName || 'Product' %> <%= item?.productId?.size || '' %>
+    </span>
+    <% if (item?.productId?.isBlocked || !item?.productId?.category?.isListed) { %>
+      <span class="text-red-500 ml-2">(Unavailable)</span>
+    <% } %>
+  </td>
+  <td class="py-3 text-gray-600"><%= item?.quantity || 0 %></td>
+  <td class="py-3 text-gray-600 text-right">₹<%= ((item?.price || 0) * (item?.quantity || 0)).toFixed(2) %></td>
+</tr>
+
                       <% }); %>
                     <% } else { %>
                       <tr>
@@ -437,101 +450,108 @@
           placeOrder(event);
         });
 
-        async function placeOrder(event) {
-          event.preventDefault();
-      
+     async function placeOrder(event) {
+  event.preventDefault();
 
-          try {
-            const selectedAddress = document.querySelector('input[name="deliveryAddressId"]:checked');
-            if (!selectedAddress) {
-              Swal.fire('Error', 'Please select a delivery address.', 'error');
-              return;
-            }
-            const addressId = selectedAddress.value;
+  try {
+    
+    const unavailableItems = document.querySelectorAll('.unavailable-item');
+    if (unavailableItems.length > 0) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Product Blocked',
+        html: 'Some products in your cart have been blocked by the admin or belong to unlisted categories. Please remove them before proceeding to checkout.'
+      });
+      return; 
+    }
 
-            const selectedPayment = document.querySelector('input[name="paymentMethod"]:checked');
-            if (!selectedPayment) {
-              Swal.fire('Error', 'Please select a payment method.', 'error');
-              return;
-            }
-            const paymentMethod = selectedPayment.value;
+  
+    const selectedAddress = document.querySelector('input[name="deliveryAddressId"]:checked');
+    if (!selectedAddress) {
+      Swal.fire('Error', 'Please select a delivery address.', 'error');
+      return;
+    }
+    const addressId = selectedAddress.value;
 
-            const subTotalElement = document.getElementById('subtotal');
-            const orderTotalElement = document.getElementById('final-amount');
-            if (!subTotalElement || !orderTotalElement) {
-              Swal.fire('Error', 'Order total information is missing.', 'error');
-              return;
-            }
-            const subTotal = parseFloat(subTotalElement.textContent.replace('₹', '')) || 0;
-            const orderTotal = parseFloat(orderTotalElement.textContent.replace('₹', '')) || 0;
+    
+    const selectedPayment = document.querySelector('input[name="paymentMethod"]:checked');
+    if (!selectedPayment) {
+      Swal.fire('Error', 'Please select a payment method.', 'error');
+      return;
+    }
+    const paymentMethod = selectedPayment.value;
 
-            if (paymentMethod === 'cod' && orderTotal > 1000) {
-              Swal.fire({
-                icon: 'error',
-                title: 'Invalid Payment Method',
-                text: 'Cash on Delivery is not available for orders above ₹1000.',
-              });
-              return;
-            }
+ 
+    const subTotalElement = document.getElementById('subtotal');
+    const orderTotalElement = document.getElementById('final-amount');
+    if (!subTotalElement || !orderTotalElement) {
+      Swal.fire('Error', 'Order total information is missing.', 'error');
+      return;
+    }
+    const subTotal = parseFloat(subTotalElement.textContent.replace('₹', '')) || 0;
+    const orderTotal = parseFloat(orderTotalElement.textContent.replace('₹', '')) || 0;
 
-            const couponCode = appliedCoupon ? appliedCoupon.code : '';
+   
+    if (paymentMethod === 'cod' && orderTotal > 1000) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Invalid Payment Method',
+        text: 'Cash on Delivery is not available for orders above ₹1000.',
+      });
+      return;
+    }
 
-          
+    const couponCode = appliedCoupon ? appliedCoupon.code : '';
 
-            if (paymentMethod === 'razorpay') {
-              const success = await handleRazorpayPayment(addressId, orderTotal, paymentMethod, couponCode);
-        
-              if (!success) {
-                console.log('Razorpay payment failed or was cancelled. Staying on checkout page.');
-               
-              }
-            } else if (paymentMethod === 'cod' || paymentMethod === 'wallet') {
-              const response = await fetch('/placeorder', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                  addressId,
-                  subTotal,
-                  orderTotal,
-                  paymentMethod,
-                  couponCode
-                })
-              });
+    if (paymentMethod === 'razorpay') {
+      const success = await handleRazorpayPayment(addressId, orderTotal, paymentMethod, couponCode);
+      if (!success) {
+        console.log('Razorpay payment failed or was cancelled. Staying on checkout page.');
+      }
+    } else if (paymentMethod === 'cod' || paymentMethod === 'wallet') {
+      const response = await fetch('/placeorder', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          addressId,
+          subTotal,
+          orderTotal,
+          paymentMethod,
+          couponCode
+        })
+      });
 
-              const result = await response.json();
-              if (response.ok) {
-            
-
-                if (result.clearCoupon && appliedCoupon) {
-                  removeCoupon();
-                }
-
-                await Swal.fire({
-                  icon: 'success',
-                  title: 'Success',
-                  text: 'Your order has been placed!'
-                });
-                window.location.href = `/order-success/${result.orderId}`;
-              } else {
-             
-                throw new Error(result.message || 'Failed to place order.');
-              }
-            } else {
-              throw new Error('Invalid payment method selected.');
-            }
-          } catch (error) {
-            console.error('Order placement error:', error.message);
-            Swal.fire({
-              icon: 'error',
-              title: 'Error',
-              text: error.message || 'Failed to place order. Please try again.'
-            });
-         
-          }
+      const result = await response.json();
+      if (response.ok) {
+        if (result.clearCoupon && appliedCoupon) {
+          removeCoupon();
         }
+
+        await Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: 'Your order has been placed!'
+        });
+        window.location.href = `/order-success/${result.orderId}`;
+      } else {
+        throw new Error(result.message || 'Failed to place order.');
+      }
+    } else {
+      throw new Error('Invalid payment method selected.');
+    }
+
+  } catch (error) {
+    console.error('Order placement error:', error.message);
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: error.message || 'Failed to place order. Please try again.'
+    });
+  }
+}
 
         async function handleRazorpayPayment(addressId, amount, paymentMethod, couponCode) {
           try {

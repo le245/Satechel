@@ -68,36 +68,40 @@ const calculateCartTotals = (items) => {
 
 const getCartPage = async (req, res) => {
   try {
-    
-     const email = req.session.userEmail;
-     const userData = await User.findOne({ email, isBlocked: false }).lean();
-      if (!userData) {
+    const email = req.session.userEmail;
+    const userData = await User.findOne({ email, isBlocked: false }).lean();
+    if (!userData) {
       return res.render("blocked", { message: "User is blocked by admin" });
-           
-    
     }
-   
 
     const userId = req.session.user;
     if (!userId) {
       return res.redirect('/login');
     }
+
     const user = await User.findById(userId);
 
     const cart = await Cart.findOne({ userId }).populate({
       path: 'items.productId',
+      populate: { path: 'category' } 
     });
 
     if (cart && cart.items) {
-      cart.items = cart.items.filter( (item) => item.productId && !item.productId.isBlocked);
-     
+      
+      cart.items = cart.items.filter(
+        item => item.productId && !item.productId.isBlocked && item.productId.category?.isListed
+      );
+
+    
       for (let item of cart.items) {
         item.price = await calculateDiscountedPrice(item.productId);
       }
+
       await cart.save();
     }
 
-    const cartItems = cart && cart.items && cart.items.length > 0? cart.items.map((item) => ({
+    const cartItems = cart && cart.items && cart.items.length > 0
+      ? cart.items.map((item) => ({
           id: item._id.toString(),
           imageUrl: item.productId.productImage[0] || '/default-image.jpg',
           name: item.productId.productName || 'Unknown Product',
@@ -123,10 +127,11 @@ const getCartPage = async (req, res) => {
       user: user || null,
     });
   } catch (error) {
-   
-    res.render('/pageNotFound');
+    console.error('Error in getCartPage:', error);
+    res.render('pageNotFound');
   }
 };
+
 
 const addToCart = async (req, res) => {
   try {

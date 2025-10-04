@@ -66,105 +66,129 @@ const getOrderDetailsPage = async (req, res) => {
 const updateStatus = async (req, res) => {
     try {
         const { orderId } = req.params;
-        const { status, action, returnReason, itemId } = req.body;
+        const { status, action, itemId } = req.body;
 
-       
         if (!orderId || typeof orderId !== 'string') {
-            return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Invalid order ID format' });
+            return res.status(STATUS_CODES.BAD_REQUEST).json({
+                success: false,
+                message: 'Invalid order ID format'
+            });
         }
 
         const order = await Order.findOne({ orderId });
         if (!order) {
-            return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: 'Order not found' });
+            return res.status(STATUS_CODES.NOT_FOUND).json({
+                success: false,
+                message: 'Order not found'
+            });
         }
 
         const currentStatus = order.status;
-        const validStatuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled', 'ReturnRequest', 'Returned',];
 
-        // if (currentStatus === 'PaymentFailed') {
-        //     return res.status(STATUS_CODES.FORBIDDEN).json({
-        //         success: false,
-        //         message: 'This order failed due to payment failure and is not editable by admins.'
-        //     });
-        // }
+        // Allowed transitions
+        const allowedTransitions = {
+            Pending: [],
+            Processing: ['Shipped', 'Delivered', 'Cancelled'],
+            Shipped: ['Delivered'],
+            Delivered: [],
+            Cancelled: [],
+            ReturnRequest: ['Returned'],
+            Returned: [],
+          
+        };
 
-        
-        if (['Delivered', 'Cancelled', 'ReturnRequest', 'Returned','PaymentFailed'].includes(currentStatus)) {
+       
+        if (['Delivered', 'Cancelled', 'Returned'].includes(currentStatus)) {
             return res.status(STATUS_CODES.FORBIDDEN).json({
                 success: false,
                 message: `Orders in ${currentStatus} status cannot be changed to another status`
             });
         }
 
-      
-        if (status && !validStatuses.includes(status)) {
-            return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: `Invalid status. Must be one of: ${validStatuses.join(', ')}` });
-        }
-
-    
-        if (status && currentStatus === 'Processing') {
-            if (!['Shipped', 'Delivered'].includes(status)) {
+     
+        if (status) {
+            if (!Object.values(allowedTransitions).flat().includes(status)) {
                 return res.status(STATUS_CODES.BAD_REQUEST).json({
                     success: false,
-                    message: 'Processing orders can only be changed to Shipped or Delivered'
+                    message: ` Must be one of: ${Object.values(allowedTransitions).flat().join(', ')}`
+                });
+            }
+
+          
+            if (!allowedTransitions[currentStatus].includes(status)) {
+                return res.status(STATUS_CODES.BAD_REQUEST).json({
+                    success: false,
+                    message: `Cannot change status from ${currentStatus} to ${status}`
                 });
             }
         }
-
-     
         const determineOrderStatus = (items) => {
             const activeItems = items.filter(item => item.cancelStatus !== 'Cancelled');
             if (activeItems.length === 0) return 'Cancelled';
             if (activeItems.some(item => item.returnStatus === 'Requested')) return 'ReturnRequest';
-            if (activeItems.every(item => item.returnStatus === 'Approved' || item.returnStatus === 'Rejected')) return 'Returned';
+            if (activeItems.every(item => ['Approved', 'Rejected'].includes(item.returnStatus))) return 'Returned';
             return 'Delivered';
         };
 
-   
+     
         if (action === 'cancelItem' && itemId) {
             if (!mongoose.Types.ObjectId.isValid(itemId)) {
-                return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Invalid item ID format' });
+                return res.status(STATUS_CODES.BAD_REQUEST).json({
+                    success: false,
+                    message: 'Invalid item ID format'
+                });
             }
 
             const item = order.items.id(itemId);
             if (!item) {
-                return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: 'Item not found in order' });
+                return res.status(STATUS_CODES.NOT_FOUND).json({
+                    success: false,
+                    message: 'Item not found in order'
+                });
             }
 
             if (item.cancelStatus === 'Cancelled') {
-                return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Item is already cancelled' });
+                return res.status(STATUS_CODES.BAD_REQUEST).json({
+                    success: false,
+                    message: 'Item is already cancelled'
+                });
             }
 
             if (item.returnStatus !== 'Not Requested') {
-                return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Cannot cancel an item with an active return request' });
+                return res.status(STATUS_CODES.BAD_REQUEST).json({
+                    success: false,
+                    message: 'Cannot cancel an item with an active return request'
+                });
             }
 
             item.cancelStatus = 'Cancelled';
             order.status = determineOrderStatus(order.items);
-        } 
-   
+        }
+
         else if (action === 'initiateReturn') {
             return res.status(STATUS_CODES.FORBIDDEN).json({
                 success: false,
-                message: 'Return requests are not allowed as Delivered orders cannot change status'
+                message: 'Return requests are not allowed for Delivered orders'
             });
-        } 
-      
+        }
+
         else if (status) {
-            
-            order.items.forEach(item => {
-                if (item.cancelStatus !== 'Cancelled' && status === 'Delivered') {
-                    item.cancelStatus = 'Completed';
-                }
-            });
-
-            order.status = status;
-
+          
             if (status === 'Delivered') {
+                order.items.forEach(item => {
+                    if (item.cancelStatus !== 'Cancelled') {
+                        item.cancelStatus = 'Completed';
+                    }
+                });
                 order.invoiceDate = new Date();
             }
+
+            order.status = status;
         } else {
-            return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'No valid status or action provided' });
+            return res.status(STATUS_CODES.BAD_REQUEST).json({
+                success: false,
+                message: 'No valid status or action provided'
+            });
         }
 
         await order.save();
@@ -177,7 +201,10 @@ const updateStatus = async (req, res) => {
     } catch (error) {
         const orderId = req.params.orderId || 'unknown';
         console.error(`Error updating order ${orderId}:`, error);
-        res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, message: `Server error: ${error.message}` });
+        res.status(STATUS_CODES.SERVER_ERROR).json({
+            success: false,
+            message: `Server error: ${error.message}`
+        });
     }
 };
 
@@ -213,7 +240,7 @@ const approveReturn = async (req, res) => {
         return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: 'User not found' });
       }
 
-      const discountFactor = order.originalSubTotal > 0 ? order.originalFinalAmount / order.originalSubTotal : 1;
+      const discountFactor = order.subTotal > 0 ? order.finalAmount / order.subTotal : 1;
       const itemTotal = item.price * item.quantity;
       const refundAmount = itemTotal * discountFactor;
 

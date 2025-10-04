@@ -139,6 +139,8 @@ const returnOrder = async (req, res) => {
     const { itemId, reason } = req.body;
     const userId = req.session.user;
 
+    console.log("🔹 Return request started", { orderId, itemId, userId });
+
     if (!userId) {
       return res.status(STATUS_CODES.UNAUTHORIZED).json({ success: false, message: 'Please login first' });
     }
@@ -154,6 +156,13 @@ const returnOrder = async (req, res) => {
     if (!order) {
       return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: 'Order not found' });
     }
+    console.log("🔹 Order fetched:", {
+      subTotal: order.subTotal,
+      discount: order.discount,
+      finalAmount: order.finalAmount,
+      status: order.status,
+      itemsCount: order.items.length,
+    });
 
     if (!['Delivered', 'ReturnRequest'].includes(order.status)) {
       return res.status(STATUS_CODES.BAD_REQUEST).json({
@@ -166,13 +175,20 @@ const returnOrder = async (req, res) => {
     let refundAmount = 0;
 
     if (itemId) {
-     
-     
+      console.log("🔹 Processing single item return:", itemId);
 
       const item = order.items.find((i) => i.productId && i.productId._id.toString() === itemId);
       if (!item) {
         return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: 'Item not found in order' });
       }
+
+      console.log("   ↳ Found item:", {
+        productId: item.productId._id.toString(),
+        price: item.price,
+        quantity: item.quantity,
+        cancelStatus: item.cancelStatus,
+        returnStatus: item.returnStatus,
+      });
 
       if (item.returnStatus !== 'Not Requested') {
         return res.status(STATUS_CODES.BAD_REQUEST).json({
@@ -194,8 +210,15 @@ const returnOrder = async (req, res) => {
 
       const itemTotal = item.price * item.quantity;
       const discountRatio = order.subTotal > 0 ? (order.discount || 0) / order.subTotal : 0;
-      
       refundAmount = itemTotal - itemTotal * discountRatio;
+
+      console.log("   ↳ Refund calculation:", {
+        itemTotal,
+        discount: order.discount,
+        subTotal: order.subTotal,
+        discountRatio,
+        refundAmount,
+      });
 
       returnedItems.push({
         itemId: item.productId._id.toString(),
@@ -204,7 +227,8 @@ const returnOrder = async (req, res) => {
         refundAmount,
       });
     } else {
-      
+      console.log("🔹 Processing full order return");
+
       const hasReturnableItems = order.items.some(
         (item) => item.returnStatus === 'Not Requested' && item.cancelStatus !== 'Cancelled'
       );
@@ -221,6 +245,7 @@ const returnOrder = async (req, res) => {
           item.returnStatus = 'Requested';
           item.returnReason = reason.trim();
           item.returnRequestedAt = new Date();
+
           returnedItems.push({
             itemId: item.productId._id.toString(),
             name: item.productId?.productName || 'Unknown',
@@ -230,12 +255,13 @@ const returnOrder = async (req, res) => {
       });
 
       refundAmount = order.finalAmount;
+      console.log("   ↳ Full order refundAmount:", refundAmount);
     }
 
-  
     order.refundedAmount = (order.refundedAmount || 0) + refundAmount;
 
-   
+    console.log("🔹 Updated refundedAmount:", order.refundedAmount);
+
     const activeItems = order.items.filter((i) => i.cancelStatus !== 'Cancelled');
     if (activeItems.every((i) => i.returnStatus === 'Returned')) {
       order.status = 'Returned';
@@ -243,31 +269,37 @@ const returnOrder = async (req, res) => {
       order.status = 'ReturnRequest';
     }
 
+    console.log("🔹 Final order status after return request:", order.status);
+
     await order.save();
+
+    console.log("✅ Order saved with return request");
 
     res.status(STATUS_CODES.OK).json({
       success: true,
       message: itemId ? 'Item return requested successfully' : 'Order return requested successfully',
       updatedStatus: order.status,
       updatedOrder: {
-      subTotal: order.subTotal,
-      finalAmount: order.finalAmount,
-      discount: order.discount || 0,
-      couponApplied: order.couponApplied || false,
-      refundedAmount: order.refundedAmount,
-      items: order.items.map((item) => ({
+        subTotal: order.subTotal,
+        finalAmount: order.finalAmount,
+        discount: order.discount || 0,
+        couponApplied: order.couponApplied || false,
+        refundedAmount: order.refundedAmount,
+        items: order.items.map((item) => ({
           productId: item.productId._id.toString(),
           returnStatus: item.returnStatus,
           cancelStatus: item.cancelStatus,
+          refundAmount: item.refundAmount || null,
         })),
       },
       returnedItems,
     });
   } catch (error) {
-    console.error('Error processing return request:', error);
+    console.error('❌ Error processing return request:', error);
     res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, message: `Server error: ${error.message}` });
   }
 };
+
 
 
 
