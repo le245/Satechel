@@ -45,7 +45,7 @@ const addproducts = async (req, res) => {
       });
     }
 
-    if (!/^[a-zA-Z0-9\s]{3,20}$/.test(productName?.trim())) {
+    if (!/^[a-zA-Z\s]{3,20}$/.test(productName?.trim())) {
       return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         error:"Product name must be 3-20 characters long and contain only alphanumeric characters and spaces",
@@ -74,13 +74,23 @@ const addproducts = async (req, res) => {
       });
     }
 
+if (!productImages || !Array.isArray(productImages) || productImages.length !== 3) {
+  return res.status(STATUS_CODES.BAD_REQUEST).json({
+    success: false,
+    error: "Exactly 3 product images are required",
+  });
+}
+    
+
     const parsedQuantity = parseInt(quantity);
-    if (isNaN(parsedQuantity) || parsedQuantity < 0) {
-      return res.status(STATUS_CODES.BAD_REQUEST).json({
-        success: false,
-        error: "Quantity must be 0 or greater",
-      });
-    }
+
+    if (isNaN(parsedQuantity) || parsedQuantity < 0 || parsedQuantity > 2000) {
+  return res.status(STATUS_CODES.BAD_REQUEST).json({
+    success: false,
+    error: "Quantity must be between 0 and 2000",
+  });
+}
+
 
     const parsedRegularPrice = parseFloat(regularPrice);
     if (isNaN(parsedRegularPrice) || parsedRegularPrice <= 0) {
@@ -89,6 +99,14 @@ const addproducts = async (req, res) => {
         error: "Regular price must be greater than 0",
       });
     }
+
+  if (isNaN(parsedRegularPrice) || parsedRegularPrice <= 0 || parsedRegularPrice > 100000) {
+  return res.status(STATUS_CODES.BAD_REQUEST).json({
+    success: false,
+    error: "Regular price must be greater than 0 and less than or equal to 100000",
+  });
+}
+
 
 
 
@@ -252,23 +270,25 @@ const editProduct = async (req, res) => {
       });
     }
 
-    if (!/^[a-zA-Z0-9\s]{3,20}$/.test(productName.trim())) {
+    if (!/^[a-zA-Z\s]{3,20}$/.test(productName.trim())) {
       return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         error:"Product name must be 3-20 characters long and contain only alphanumeric characters and spaces",
       });
     }
 
-    const existingProduct = await Product.findOne({
-      productName: productName.trim(),
-      _id: { $ne: id },
-    });
-    if (existingProduct) {
-      return res.status(STATUS_CODES.BAD_REQUEST).json({
-        success: false,
-        error: "Product name already exists",
-      });
-    }
+   const existingProduct = await Product.findOne({
+  productName: { $regex: new RegExp(`^${productName.trim()}$`, "i") }, 
+  _id: { $ne: id } 
+});
+
+if (existingProduct) {
+  return res.status(STATUS_CODES.BAD_REQUEST).json({
+    success: false,
+    error: "Product name already exists",
+  });
+}
+
 
     const categoryId = await Category.findById(category);
     if (!categoryId) {
@@ -283,12 +303,12 @@ const editProduct = async (req, res) => {
     }
 
     const parsedQuantity = parseInt(quantity);
-    if (isNaN(parsedQuantity) || parsedQuantity < 0) {
-      return res.status(STATUS_CODES.BAD_REQUEST).json({
-        success: false,
-        error: "Quantity must be 0 or greater",
-      });
-    }
+      if (isNaN(parsedQuantity) || parsedQuantity < 0 || parsedQuantity > 2000) {
+  return res.status(STATUS_CODES.BAD_REQUEST).json({
+    success: false,
+    error: "Quantity must be between 0 and 2000",
+  });
+}
 
     const parsedRegularPrice = parseFloat(regularPrice);
     if (isNaN(parsedRegularPrice) || parsedRegularPrice <= 0) {
@@ -298,12 +318,28 @@ const editProduct = async (req, res) => {
       });
     }
 
+      if (isNaN(parsedRegularPrice) || parsedRegularPrice <= 0 || parsedRegularPrice > 100000) {
+  return res.status(STATUS_CODES.BAD_REQUEST).json({
+    success: false,
+    error: "Regular price must be greater than 0 and less than or equal to 100000",
+  });
+}
+
+    
+
     if (!productImages || !Array.isArray(productImages) || productImages.length < 3) {
       return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         error: "At least 3 product images are required",
       });
     }
+
+    if (!productImages || !Array.isArray(productImages) || productImages.length !== 3) {
+  return res.status(STATUS_CODES.BAD_REQUEST).json({
+    success: false,
+    error: "Exactly 3 product images are required",
+  });
+}
 
     const imagePaths = [];
     for (const base64Image of productImages) {

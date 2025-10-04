@@ -167,9 +167,7 @@ const returnOrder = async (req, res) => {
 
     if (itemId) {
      
-      if (!mongoose.Types.ObjectId.isValid(itemId)) {
-        return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Invalid item ID format' });
-      }
+     
 
       const item = order.items.find((i) => i.productId && i.productId._id.toString() === itemId);
       if (!item) {

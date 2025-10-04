@@ -85,12 +85,14 @@ const addoffer = async (req, res) => {
   try {
     const { name, type, discount, productId, categoryId } = req.body;
 
-    if (!discount || discount <= 0 || discount > 99) {
-      return res.status(STATUS_CODES.BAD_REQUEST).json({ 
-        success: false, 
-        message: 'Discount must be a number between 1 and 99' 
-      });
-    }
+
+if (isNaN(discount) || discount < 1 || discount > 99) {
+  return res.status(STATUS_CODES.BAD_REQUEST).json({ 
+    success: false, 
+    message: 'Discount must be a number between 1 and 99' 
+  });
+}
+
 
     const offerData = new Offer({
       name,
@@ -132,7 +134,7 @@ const addoffer = async (req, res) => {
 
       await product.save();
 
-      return res.status(201).json({
+      return res.status(STATUS_CODES.CREATED).json({
         success: true,
         message: 'Product offer added successfully',
         offer: newOffer,
@@ -165,7 +167,7 @@ const addoffer = async (req, res) => {
         await product.save();
       }
 
-      return res.status(201).json({
+      return res.status(STATUS_CODES.CREATED).json({
         success: true,
         message: 'Category offer added successfully',
         offer: newOffer,
@@ -178,7 +180,9 @@ const addoffer = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Error in addoffer:", error);
+
+    console.log("=============================",error)
+
     return res.status(STATUS_CODES.SERVER_ERROR).json({ 
       success: false, 
       message: 'Server Error' 

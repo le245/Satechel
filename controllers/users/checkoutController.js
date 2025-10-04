@@ -495,7 +495,7 @@ const createRazorpayOrder = async (req, res) => {
     if (Math.abs(amount - expectedAmountInPaise) > 1) {
       return res
         .status(STATUS_CODES.BAD_REQUEST)
-        .json({ success: false, message: "Amount mismatch" });
+        .json({ success: false, message: "Error" });
     }
     function generateTenDigitNumber() {
       return Math.floor(1000000000 + Math.random() * 9000000000);
@@ -874,7 +874,7 @@ const downloadInvoice = async (req, res) => {
     
     const subTotal = Number(order.subTotal) || 0;
     const discount = Number(order.discount) || 0;
-    const finalAmount = Number(order.originalFinalAmount) || 0;
+    const finalAmount = Number(order.finalAmount) || 0;
 
     const data = {
       documentTitle: "INVOICE",

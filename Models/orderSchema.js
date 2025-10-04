@@ -68,16 +68,7 @@ const orderSchema = new Schema({
         type: Number,
         required: true,
     },
-    // originalSubTotal: {
-    //     type: Number,
-    //     required: true,
-    //     default: 0,
-    // },
-    // originalFinalAmount: {
-    //     type: Number,
-    //     required: true,
-    //     default: 0,
-    // },
+   
     address: { 
         
         type: Schema.Types.ObjectId,
@@ -113,6 +104,8 @@ const orderSchema = new Schema({
         type: Boolean,
         default: false,
     },
+ 
+
     paymentMethod: {
         type: String,
         required: true,

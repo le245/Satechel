@@ -266,7 +266,7 @@
                 </div>
             </div>
 
-            <!-- Wallet History Section -->
+         
             <div id="wallet-history" class="content-section">
                 <div class="bg-white rounded-lg shadow-md p-8 max-w-4xl mx-auto border border-gray-300 mb-8">
                     <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-gray-300 pb-2 text-center">Wallet History</h2>
@@ -277,7 +277,7 @@
                                     <th class="p-2">Date</th>
                                     <th class="p-2">Type</th>   
                                     <th class="p-2">Amount</th>
-                                    <th class="p-2">Product/Description</th>
+                                    <th class="p-2">Product Name</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -350,9 +350,16 @@ async function submitName(event) {
   const nameInput = nameInputEl.value.trim(); 
   const errorEl = document.getElementById("name-error");
 
- 
   if (!nameInput) {
     errorEl.textContent = "Name cannot be empty";
+    errorEl.classList.remove("hidden");
+    return;
+  } else if (nameInput.length < 3) {
+    errorEl.textContent = "Name must be at least 3 characters long";
+    errorEl.classList.remove("hidden");
+    return;
+  } else if (nameInput.length > 20) {  
+    errorEl.textContent = "Name cannot exceed 50 characters";
     errorEl.classList.remove("hidden");
     return;
   } else {

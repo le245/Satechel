@@ -17,7 +17,7 @@ const offerSchema = new Schema ({
     type: Number,
     required: true,
     min: 0,
-    max: 90,
+    max: 99,
   },
   productId: {
     type: mongoose.Schema.Types.ObjectId,
