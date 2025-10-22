@@ -1502,4 +1502,1539 @@
         }
     </script>
 </body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Details</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f5f5f5;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #374151;
+            margin: 0;
+        }
+        .order-container {
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+            padding: 2.5rem;
+            margin: 2rem auto;
+            max-width: 1280px;
+        }
+        .section-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #374151;
+            border-bottom: 2px solid #d1d5db;
+            padding-bottom: 0.5rem;
+            margin-bottom: 2rem;
+        }
+        .order-header {
+            background: linear-gradient(180deg, #f5f5f5 0%, #e5e7eb 100%);
+            border-radius: 12px;
+            padding: 1.75rem;
+            margin-bottom: 2.5rem;
+        }
+        .status-badge {
+            font-size: 0.95rem;
+            font-weight: 600;
+            padding: 0.6rem 1.2rem;
+            border-radius: 24px;
+            display: inline-flex;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        .status-Pending { background-color: #e5e7eb; color: #6b7280; }
+        .status-PaymentPending { background-color: #d1d5db; color: #374151; }
+        .status-Processing { background-color: #d1d5db; color: #374151; }
+        .status-Shipped { background-color: #9ca3af; color: #ffffff; }
+        .status-Delivered { background-color: #28a745; color: #ffffff; }
+        .status-Cancelled { background-color: #dc3545; color: #ffffff; }
+        .status-ReturnRequest { background-color: #d1d5db; color: #374151; }
+        .status-Returned { background-color: #e5e7eb; color: #6b7280; }
+        .status-PaymentFailed { background-color: #ff6b6b; color: #ffffff; }
+        .card {
+            border: none;
+            border-radius: 12px;
+            background-color: #f5f5f5;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 8px 160px rgba(0, 0, 0, 0.1);
+        }
+        .product-item {
+            padding: 1.25rem 0;
+            border-bottom: 1px solid #e5e7eb;
+            transition: background-color 0.3s ease;
+        }
+        .product-item:hover {
+            background-color: #e5e7eb;
+        }
+        .product-item:last-child {
+            border-bottom: none;
+        }
+        .price-details {
+            background-color: #f5f5f5;
+            border-radius: 12px;
+            padding: 1.75rem;
+        }
+        .tracking-timeline {
+            position: relative;
+            padding-left: 3rem;
+        }
+        .tracking-timeline::before {
+            content: '';
+            position: absolute;
+            left: 1rem;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background: linear-gradient(180deg, #d1d5db 0%, #6b7280 100%);
+        }
+        .timeline-item {
+            position: relative;
+            padding-bottom: 2rem;
+        }
+        .timeline-dot {
+            position: absolute;
+            left: -2rem;
+            top: 0.3rem;
+            width: 1.5rem;
+            height: 1.5rem;
+            border: 3px solid #ffffff;
+            border-radius: 50%;
+            transition: background-color 0.3s ease;
+        }
+        .timeline-dot-Pending { background-color: #6b7280; }
+        .timeline-dot-PaymentPending { background-color: #9ca3af; }
+        .timeline-dot-Processing { background-color: #9ca3af; }
+        .timeline-dot-Shipped { background-color: #9ca3af; }
+        .timeline-dot-Delivered { background-color: #28a745; }
+        .timeline-dot-Cancelled { background-color: #dc3545; }
+        .timeline-dot-ReturnRequest { background-color: #9ca3af; }
+        .timeline-dot-Returned { background-color: #6b7280; }
+        .timeline-dot-PaymentFailed { background-color: #ff6b6b; }
+        .btn {
+            border-radius: 8px;
+            padding: 0.8rem 1.75rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background-color: #6b7280;
+            border-color: #6b7280;
+            color: #ffffff;
+        }
+        .btn-primary:hover {
+            background-color: #4b5563;
+            border-color: #4b5563;
+        }
+        .btn-warning {
+            background-color: #9ca3af;
+            border-color: #9ca3af;
+            color: #374151;
+        }
+        .btn-warning:hover {
+            background-color: #6b7280;
+            border-color: #6b7280;
+            color: #ffffff;
+        }
+        .btn-danger {
+            background-color: #9ca3af;
+            border-color: #9ca3af;
+            color: #374151;
+        }
+        .btn-danger:hover {
+            background-color: #6b7280;
+            border-color: #6b7280;
+            color: #ffffff;
+        }
+        .btn-success {
+            background-color: #28a745;
+            border-color: #28a745;
+            color: #ffffff;
+        }
+        .btn-success:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+            color: #ffffff;
+        }
+        .btn-outline-secondary {
+            border-color: #d1d5db;
+            color: #6b7280;
+        }
+        .btn-outline-secondary:hover {
+            background-color: #e5e7eb;
+            border-color: #9ca3af;
+            color: #374151;
+        }
+        .btn-loading {
+            opacity: 0.7;
+            pointer-events: none;
+            cursor: not-allowed;
+        }
+        @media (max-width: 768px) {
+            .order-container {
+                padding: 1.75rem;
+            }
+            .section-title {
+                font-size: 1.5rem;
+            }
+            .order-header {
+                padding: 1.25rem;
+            }
+            .action-buttons {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            .btn {
+                width: 100%;
+                padding: 0.75rem;
+            }
+            .tracking-timeline {
+                padding-left: 2.5rem;
+            }
+            .timeline-dot {
+                left: -1.75rem;
+                width: 1.25rem;
+                height: 1.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <%
+        // Define displaySubTotal and displayFinalAmount once at the top
+        const displaySubTotal = (
+            order.subTotal && order.subTotal > 0 ? order.subTotal :
+            order.originalSubTotal && order.originalSubTotal > 0 ? order.originalSubTotal :
+            order.displaySubTotal && order.displaySubTotal > 0 ? order.displaySubTotal : 0
+        ).toFixed(2);
+        const displayFinalAmount = (
+            order.finalAmount && order.finalAmount > 0 ? order.finalAmount :
+            order.originalFinalAmount && order.originalFinalAmount > 0 ? order.originalFinalAmount :
+            order.displayFinalAmount && order.displayFinalAmount > 0 ? order.displayFinalAmount : 0
+        ).toFixed(2);
+    %>
+    <div class="container">
+        <div class="order-container">
+            <!-- Order Header -->
+            <div class="order-header">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h2 class="mb-0">ORD<%= order.orderId %></h2>
+                        <p class="text-muted mb-0">
+                            Placed on <%= new Date(order.createOn).toLocaleDateString('en-US', { 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric' 
+                            }) %>
+                        </p>
+                    </div>
+                    <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                        <span class="status-badge status-<%= order.status.replace(/\s+/g, '') %>">
+                            <%= order.status %>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h4 class="section-title">Order Summary</h4>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-calendar-alt me-2"></i>Order Date</h5>
+                            <p class="card-text">
+                                <%= new Date(order.createOn).toLocaleDateString('en-US', { 
+                                    year: 'numeric', 
+                                    month: 'long', 
+                                    day: 'numeric' 
+                                }) %>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <% if (order.invoiceDate) { %>
+                <div class="col-md-3 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-file-invoice me-2"></i>Invoice Date</h5>
+                            <p class="card-text">
+                                <%= new Date(order.invoiceDate).toLocaleDateString('en-US', { 
+                                    year: 'numeric', 
+                                    month: 'long', 
+                                    day: 'numeric' 
+                                }) %>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <% } %>
+                <div class="col-md-3 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-shopping-cart me-2"></i>Total Items</h5>
+                            <p class="card-text" id="total-items">
+                                <%= order.items.filter(item => item.cancelStatus !== 'Cancelled').length %> items
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-money-bill-wave me-2"></i>Total Amount</h5>
+                            <p class="card-text" id="total-amount">
+                                ₹<%= displayFinalAmount %>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Items -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h4 class="section-title">Ordered Items</h4>
+                    <div class="card">
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">Product</th>
+                                            <th scope="col">Price</th>
+                                            <th scope="col">Quantity</th>
+                                            <th scope="col" class="text-end">Subtotal</th>
+                                            <th scope="col" class="text-end">Actions</th>
+                                        </tr>
+                                    </thead>
+                                   <tbody id="order-items">
+    <% order.items.forEach((item, index) => { %>
+    <tr class="product-item" data-item-id="<%= item.productId ? item.productId._id : '' %>">
+        <td>
+            <div class="d-flex align-items-center">
+                <% if (item.productId && item.productId.productImage && item.productId.productImage.length > 0) { %>
+                    <img src="<%= item.productId.productImage[0] %>" alt="<%= (item.productId.productName || item.name || 'Product') %>" class="item-img me-3 img-fluid" style="width: 60px; height: 60px; object-fit: cover;">
+                <% } else { %>
+                    <div class="bg-light me-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                        <i class="fas fa-box text-muted"></i>
+                    </div>
+                <% } %>
+                <div>
+                    <h6 class="mb-0"><%= item.productId?.productName || item.name || 'Unknown Product' %></h6>
+                    <% if (item.sku) { %>
+                        <small class="text-muted">SKU: <%= item.sku %></small>
+                    <% } %>
+                    <% if (item.cancelStatus === 'Cancelled') { %>
+                        <span class="text-danger item-status">Cancelled</span>
+                    <% } else if (item.returnStatus === 'Requested') { %>
+                        <span class="text-warning item-status">Return Requested</span>
+                    <% } else if (item.returnStatus === 'Returned') { %>
+                        <span class="text-muted item-status">Returned</span>
+                    <% } else { %>
+                        <span class="item-status hidden"></span>
+                    <% } %>
+                </div>
+            </td>
+            <td class="item-price">₹<%= item.price ? item.price.toFixed(2) : '0.00' %></td>
+            <td class="item-quantity"><%= item.quantity %></td>
+            <td class="text-end item-subtotal">₹<%= item.price && item.quantity ? (item.price * item.quantity).toFixed(2) : '0.00' %></td>
+            <td class="text-end item-actions">
+                <% if (order.status !== 'PaymentFailed' && ['Pending', 'Processing'].includes(order.status) && item.cancelStatus !== 'Cancelled') { %>
+                    <button class="btn btn-danger btn-sm cancel-item-btn" 
+                            data-order-id="<%= order.orderId || '' %>" 
+                            data-item-id="<%= item.productId ? item.productId._id : '' %>" 
+                            onclick="cancelItem(this, '<%= order.orderId || '' %>', '<%= item.productId ? item.productId._id : '' %>', '<%= order.status %>')">
+                        <i class="fas fa-times me-1"></i> Cancel
+                    </button>
+                <% } %>
+                <% 
+                    const orderStatusLower = order.status ? order.status.toLowerCase() : '';
+                    const returnStatus = item.returnStatus || 'Not Requested';
+                    const cancelStatus = item.cancelStatus || 'Not Cancelled';
+                    console.log(`Item ${item.productId ? item.productId._id : 'unknown'}: orderStatus=${orderStatusLower}, returnStatus=${returnStatus}, cancelStatus=${cancelStatus}`);
+                %>
+                <% if (['delivered', 'returnrequest'].includes(orderStatusLower) && returnStatus === 'Not Requested' && cancelStatus !== 'Cancelled' && item.productId) { %>
+                    <button class="btn btn-warning btn-sm return-item-btn" 
+                            data-order-id="<%= order.orderId || '' %>" 
+                            data-item-id="<%= item.productId ? item.productId._id : '' %>" 
+                            onclick="returnItem(this, '<%= order.orderId || '' %>', '<%= item.productId ? item.productId._id : '' %>', '<%= item.productId?.productName || item.name || '' %>')">
+                        <i class="fas fa-undo me-1"></i> Return
+                    </button>
+                <% } %>
+            </td>
+        </tr>
+    <% }) %>
+</tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shipping Address & Payment Summary -->
+            <div class="row mb-4">
+                <div class="col-md-6 mb-3">
+                    <h4 class="section-title">Shipping Address</h4>
+                    <div class="card">
+                        <div class="card-body">
+                            <% if (selectedAddress) { %>
+                                <h6 class="fw-bold"><%= selectedAddress.name || 'N/A' %></h6>
+                                <p class="mb-1"><%= selectedAddress.landMark || 'N/A' %></p>
+                                <p class="mb-1">
+                                    <%= selectedAddress.city || 'N/A' %>, <%= selectedAddress.state || 'N/A' %> - <%= selectedAddress.pincode || 'N/A' %>
+                                </p>
+                                <p class="mb-1"><%= selectedAddress.country || 'India' %></p>
+                                <p class="mb-0">Phone: <%= selectedAddress.phone || 'N/A' %></p>
+                                <% if (selectedAddress.altPhone) { %>
+                                    <p class="mb-0">Alternate Phone: <%= selectedAddress.altPhone %></p>
+                                <% } %>
+                            <% } else { %>
+                                <p class="mb-0 text-muted">Address information not available</p>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <h4 class="section-title">Payment Summary</h4>
+                    <div class="card price-details">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Subtotal</span>
+                                <span id="subtotal-amount">₹<%= displaySubTotal %></span>
+                            </div>
+                            <% if (order.discount > 0) { %>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Discount</span>
+                                <span id="discount-amount">₹<%= (order.discount || 0).toFixed(2) %></span>
+                            </div>
+                            <% } %>
+                            <% if (order.couponApplied) { %>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Coupon Applied</span>
+                                <span><i class="fas fa-check-circle me-1" style="color: #6b7280;"></i> Yes</span>
+                            </div>
+                            <% } %>
+                            <hr class="my-2">
+                            <div class="d-flex justify-content-between fw-bold">
+                                <span>Total</span>
+                                <span id="final-amount">₹<%= displayFinalAmount %></span>
+                            </div>
+                            <div class="d-flex justify-content-between mt-2">
+                                <span>Payment Status</span>
+                                <span class="<% if (order.status === 'PaymentFailed') { %>text-danger<% } else if (order.status === 'Cancelled') { %>text-danger<% } else if (order.status === 'Returned') { %>text-muted<% } else { %>text-success<% } %>">
+                                    <% if (order.status === 'PaymentFailed') { %>
+                                        Failed
+                                    <% } else if (order.status === 'Cancelled') { %>
+                                        Cancelled
+                                    <% } else if (order.status === 'Returned') { %>
+                                        Returned
+                                    <% } else { %>
+                                        Completed
+                                    <% } %>
+                                </span>
+                            </div>
+                            <% if (order.status === 'Cancelled' && order.refundedAmount > 0) { %>
+                            <div class="d-flex justify-content-between mt-2 text-success">
+                                <span>Refunded to Wallet</span>
+                                <span>₹<%= (order.refundedAmount || 0).toFixed(2) %></span>
+                            </div>
+                            <% } %>
+                            <% if (['ReturnRequest', 'Returned'].includes(order.status) && order.refundedAmount > 0) { %>
+                            <div class="d-flex justify-content-between mt-2 text-success refund-pending">
+                                <span>Refund Pending for Return</span>
+                                <span>₹<%= (order.refundedAmount || 0).toFixed(2) %></span>
+                            </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Status Timeline -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h4 class="section-title">Order Status</h4>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="tracking-timeline">
+                                <% 
+                                    let allStatusesLocal = typeof allStatuses !== 'undefined' ? allStatuses : [
+                                        'PaymentPending',
+                                        'PaymentFailed',
+                                        'Pending',
+                                        'Processing',
+                                        'Shipped',
+                                        'Delivered',
+                                        'Cancelled',
+                                        'ReturnRequest',
+                                        'Returned'
+                                    ];
+                                    const currentStatusIndex = allStatusesLocal.indexOf(order.status);
+                                %>
+                                <% if (order.status === 'PaymentFailed') { %>
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot timeline-dot-PaymentFailed"></div>
+                                        <div class="timeline-content">
+                                            <h5 class="mb-1">Payment Failed</h5>
+                                            <p class="text-muted mb-0">Payment attempt unsuccessful</p>
+                                        </div>
+                                    </div>
+                                <% } else if (order.status === 'Cancelled') { %>
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot timeline-dot-Cancelled"></div>
+                                        <div class="timeline-content">
+                                            <h5 class="mb-1">Cancelled</h5>
+                                            <p class="text-muted mb-0">Order was cancelled</p>
+                                        </div>
+                                    </div>
+                                <% } else if (order.status === 'ReturnRequest' || order.status === 'Returned') { %>
+                                    <% allStatusesLocal.forEach((status, index) => { %>
+                                        <% if (index <= currentStatusIndex && status !== 'Cancelled' && status !== 'PaymentFailed' && status !== 'PaymentPending') { %>
+                                            <div class="timeline-item">
+                                                <div class="timeline-dot timeline-dot-<%= status %>"></div>
+                                                <div class="timeline-content">
+                                                    <h5 class="mb-1"><%= status %></h5>
+                                                    <p class="text-muted mb-0">
+                                                        <%= index === currentStatusIndex ? 'Current Status' : 'Completed' %>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        <% } %>
+                                    <% }); %>
+                                <% } else { %>
+                                    <% allStatusesLocal.forEach((status, index) => { %>
+                                        <% if (index <= currentStatusIndex && status !== 'Cancelled' && status !== 'ReturnRequest' && status !== 'Returned' && status !== 'PaymentFailed') { %>
+                                            <div class="timeline-item">
+                                                <div class="timeline-dot timeline-dot-<%= status %>"></div>
+                                                <div class="timeline-content">
+                                                    <h5 class="mb-1"><%= status %></h5>
+                                                    <p class="text-muted mb-0">
+                                                        <%= index === currentStatusIndex ? 'Current Status' : 'Completed' %>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        <% } %>
+                                    <% }); %>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="row">
+                <div class="col-12 text-center action-buttons">
+                    <% if (['Pending', 'Processing'].includes(order.status) && order.items.some(item => item.cancelStatus !== 'Cancelled')) { %>
+                        <button id="cancelOrderBtn" class="btn btn-danger me-2" onclick="cancelOrder('<%= order.orderId %>', '<%= order.status %>')">
+                            <i class="fas fa-times me-1"></i> Cancel Entire Order
+                        </button>
+                    <% } %>
+                    <% 
+                        const hasReturnableItems = order.items.some(item => {
+                            const returnStatus = item.returnStatus || 'Not Requested';
+                            const cancelStatus = item.cancelStatus || 'Not Cancelled';
+                            return ['delivered', 'returnrequest'].includes(order.status.toLowerCase()) && 
+                                   returnStatus === 'Not Requested' && 
+                                   cancelStatus !== 'Cancelled';
+                        });
+                        console.log(`Order ${order.orderId}: hasReturnableItems=${hasReturnableItems}, orderStatus=${order.status}`);
+                    %>
+                    <% if (hasReturnableItems) { %>
+                        <button id="returnOrderBtn" class="btn btn-warning me-2" onclick="returnEntireOrder('<%= order.orderId %>')">
+                            <i class="fas fa-undo me-1"></i> Return Entire Order
+                        </button>
+                    <% } %>
+                    <% if (order.status && order.status.toLowerCase() === 'paymentfailed' && order.paymentMethod && order.paymentMethod.toLowerCase() === 'razorpay') { %>
+                        <button class="btn btn-warning me-2" onclick="retryPayment('<%= order._id.toString() %>', <%= displayFinalAmount %>)">
+                            <i class="fas fa-redo me-1"></i> Retry Payment
+                        </button>
+                    <% } %>
+                    <% if (order.status && order.status.toLowerCase() === 'delivered') { %>
+                        <a href="/download-invoice/<%= order._id %>" class="btn btn-sm me-2" style="background-color: grey; color: #fff; border-radius: 5px; padding: 6px 12px;">
+                            <i class="fas fa-download me-1"></i> Download Invoice
+                        </a>
+                    <% } %>
+                    <a onclick="window.history.back();" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Orders
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+    <script>
+        async function cancelOrder(orderId, currentStatus) {
+            if (!['Pending', 'Processing'].includes(currentStatus)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Cannot Cancel',
+                    text: 'This order cannot be cancelled as it is no longer in Pending or Processing status.',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+                return;
+            }
+
+            let apiStatus = currentStatus;
+            try {
+                const statusResponse = await fetch(`/orders/status/${orderId}`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                if (statusResponse.ok) {
+                    const statusData = await statusResponse.json();
+                    apiStatus = statusData.status;
+                    if (!['Pending', 'Processing'].includes(apiStatus)) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Cannot Cancel',
+                            text: 'This order cannot be cancelled as it is no longer in Pending or Processing status.',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true
+                        });
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.warn('Status endpoint not available or failed:', error);
+            }
+
+            const result = await Swal.fire({
+                title: 'Cancel Entire Order',
+                text: 'Are you sure you want to cancel this entire order? This action cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#6b7280',
+                cancelButtonColor: '#9ca3af',
+                confirmButtonText: 'Yes, cancel it',
+                cancelButtonText: 'No, keep it'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    const response = await fetch(`/orders/cancel/${orderId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    const data = await response.json();
+
+                    if (data.success) {
+                        // Update order status
+                        const orderStatusBadge = document.querySelector('.status-badge');
+                        orderStatusBadge.textContent = 'Cancelled';
+                        orderStatusBadge.className = 'status-badge status-Cancelled';
+
+                        // Update timeline
+                        const timelineContainer = document.querySelector('.tracking-timeline');
+                        timelineContainer.innerHTML = `
+                            <div class="timeline-item">
+                                <div class="timeline-dot timeline-dot-Cancelled"></div>
+                                <div class="timeline-content">
+                                    <h5 class="mb-1">Cancelled</h5>
+                                    <p class="text-muted mb-0">Order was cancelled</p>
+                                </div>
+                            </div>
+                        `;
+
+                        // Update item statuses
+                        document.querySelectorAll('#order-items .product-item').forEach(row => {
+                            const statusCell = row.querySelector('.item-status');
+                            const actionsCell = row.querySelector('.item-actions');
+                            if (statusCell.textContent !== 'Cancelled') {
+                                statusCell.textContent = 'Cancelled';
+                                statusCell.classList.remove('hidden');
+                                statusCell.classList.add('text-danger');
+                                actionsCell.innerHTML = '';
+                            }
+                        });
+
+                        // Update payment summary
+                        const subtotalElement = document.getElementById('subtotal-amount');
+                        const totalElement = document.getElementById('final-amount');
+                        const totalAmountElement = document.getElementById('total-amount');
+                        const discountElement = document.getElementById('discount-amount');
+                        const totalItemsElement = document.getElementById('total-items');
+
+                        // Use backend-provided values
+                        const newSubTotal = data.updatedOrder.subTotal !== undefined ? data.updatedOrder.subTotal : 0;
+                        const newFinalAmount = data.updatedOrder.finalAmount !== undefined ? data.updatedOrder.finalAmount : 0;
+                        const refundAmount = data.updatedOrder.cancelledItems.reduce((sum, item) => sum + (item.refundAmount || 0), 0);
+
+                        if (data.updatedOrder.subTotal === undefined || data.updatedOrder.finalAmount === undefined) {
+                            console.error('Backend response missing subTotal or finalAmount:', data.updatedOrder);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Invalid response from server. Please refresh the page.',
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 3000,
+                                timerProgressBar: true
+                            });
+                            return;
+                        }
+
+                        subtotalElement.textContent = `₹${newSubTotal.toFixed(2)}`;
+                        totalElement.textContent = `₹${newFinalAmount.toFixed(2)}`;
+                        totalAmountElement.textContent = `₹${newFinalAmount.toFixed(2)}`;
+                        if (discountElement && data.updatedOrder.discount !== undefined) {
+                            discountElement.textContent = `₹${data.updatedOrder.discount.toFixed(2)}`;
+                        }
+                        totalItemsElement.textContent = '0 items';
+
+                        // Update payment status
+                        const paymentStatusElement = document.querySelector('.price-details .card-body .d-flex.justify-content-between.mt-2 span:last-child');
+                        paymentStatusElement.textContent = 'Cancelled';
+                        paymentStatusElement.classList.remove('text-success', 'text-muted');
+                        paymentStatusElement.classList.add('text-danger');
+
+                        // Handle refund display
+                        if (refundAmount > 0) {
+                            const priceDetails = document.querySelector('.price-details .card-body');
+                            const existingRefund = priceDetails.querySelector('.text-success:not(.refund-pending)');
+                            if (!existingRefund) {
+                                const refundDiv = document.createElement('div');
+                                refundDiv.className = 'd-flex justify-content-between mt-2 text-success';
+                                refundDiv.innerHTML = `
+                                    <span>Refunded to Wallet</span>
+                                    <span>₹${refundAmount.toFixed(2)}</span>
+                                `;
+                                priceDetails.appendChild(refundDiv);
+                            } else {
+                                existingRefund.innerHTML = `
+                                    <span>Refunded to Wallet</span>
+                                    <span>₹${refundAmount.toFixed(2)}</span>
+                                `;
+                            }
+                        }
+
+                        // Remove action buttons
+                        const cancelOrderBtn = document.getElementById('cancelOrderBtn');
+                        if (cancelOrderBtn) cancelOrderBtn.remove();
+                        document.querySelectorAll('.cancel-item-btn').forEach(btn => btn.remove());
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Order Cancelled',
+                            text: 'Your entire order has been cancelled successfully.',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true
+                        }).then(() => location.reload());
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Failed',
+                            text: data.message || 'Failed to cancel order.',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error cancelling order:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'An error occurred while cancelling the order. Please try again.',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                }
+            }
+        }
+
+        async function cancelItem(button, orderId, itemId, currentStatus) {
+            button.classList.add('btn-loading');
+            button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Cancelling...';
+
+            if (!orderId || !itemId) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Input',
+                    text: 'Order ID or Item ID is missing.',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+                button.classList.remove('btn-loading');
+                button.innerHTML = '<i class="fas fa-times me-1"></i> Cancel';
+                return;
+            }
+
+            if (!['Pending', 'Processing'].includes(currentStatus)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Cannot Cancel',
+                    text: 'This item cannot be cancelled as the order is no longer in Pending or Processing status.',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+                button.classList.remove('btn-loading');
+                button.innerHTML = '<i class="fas fa-times me-1"></i> Cancel';
+                return;
+            }
+
+            const result = await Swal.fire({
+                title: 'Cancel Item',
+                text: 'Are you sure you want to cancel this item? This action cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#6b7280',
+                cancelButtonColor: '#9ca3af',
+                confirmButtonText: 'Yes, cancel item',
+                cancelButtonText: 'No, keep it'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    const response = await fetch(`/orders/cancel/${orderId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ itemId })
+                    });
+                    const data = await response.json();
+
+                    if (data.success) {
+                        const row = button.closest('tr');
+                        const statusCell = row.querySelector('.item-status');
+                        const actionsCell = row.querySelector('.item-actions');
+
+                        statusCell.textContent = 'Cancelled';
+                        statusCell.classList.remove('hidden');
+                        statusCell.classList.add('text-danger');
+                        actionsCell.innerHTML = '';
+
+                        const subtotalElement = document.getElementById('subtotal-amount');
+                        const totalElement = document.getElementById('final-amount');
+                        const totalAmountElement = document.getElementById('total-amount');
+                        const discountElement = document.getElementById('discount-amount');
+                        const totalItemsElement = document.getElementById('total-items');
+
+                        // Use backend-provided values
+                        const newSubTotal = data.updatedOrder.subTotal !== undefined ? data.updatedOrder.subTotal : parseFloat(subtotalElement.textContent.replace('₹', '')) || 0;
+                        const newFinalAmount = data.updatedOrder.finalAmount !== undefined ? data.updatedOrder.finalAmount : parseFloat(totalElement.textContent.replace('₹', '')) || 0;
+                        const refundAmount = data.updatedOrder.cancelledItems.find(item => item.itemId === itemId)?.refundAmount || 0;
+
+                        if (data.updatedOrder.subTotal === undefined || data.updatedOrder.finalAmount === undefined) {
+                            console.error('Backend response missing subTotal or finalAmount:', data.updatedOrder);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Invalid response from server. Please refresh the page.',
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 3000,
+                                timerProgressBar: true
+                            });
+                            return;
+                        }
+
+                        subtotalElement.textContent = `₹${newSubTotal.toFixed(2)}`;
+                        totalElement.textContent = `₹${newFinalAmount.toFixed(2)}`;
+                        totalAmountElement.textContent = `₹${newFinalAmount.toFixed(2)}`;
+                        if (discountElement && data.updatedOrder.discount !== undefined) {
+                            discountElement.textContent = `₹${data.updatedOrder.discount.toFixed(2)}`;
+                        }
+
+                        const remainingItems = Array.from(document.querySelectorAll('#order-items .product-item'))
+                            .filter(row => row.querySelector('.item-status').textContent !== 'Cancelled').length;
+                        totalItemsElement.textContent = `${remainingItems} items`;
+
+                        // Handle full order cancellation
+                        if (data.updatedOrder.status === 'Cancelled') {
+                            const orderStatusBadge = document.querySelector('.status-badge');
+                            orderStatusBadge.textContent = 'Cancelled';
+                            orderStatusBadge.className = 'status-badge status-Cancelled';
+
+                            const timelineContainer = document.querySelector('.tracking-timeline');
+                            timelineContainer.innerHTML = `
+                                <div class="timeline-item">
+                                    <div class="timeline-dot timeline-dot-Cancelled"></div>
+                                    <div class="timeline-content">
+                                        <h5 class="mb-1">Cancelled</h5>
+                                        <p class="text-muted mb-0">Order was cancelled</p>
+                                    </div>
+                                </div>
+                            `;
+
+                            const paymentStatusElement = document.querySelector('.price-details .card-body .d-flex.justify-content-between.mt-2 span:last-child');
+                            paymentStatusElement.textContent = 'Cancelled';
+                            paymentStatusElement.classList.remove('text-success', 'text-muted');
+                            paymentStatusElement.classList.add('text-danger');
+
+                            if (refundAmount > 0) {
+                                const priceDetails = document.querySelector('.price-details .card-body');
+                                const existingRefund = priceDetails.querySelector('.text-success:not(.refund-pending)');
+                                if (!existingRefund) {
+                                    const refundDiv = document.createElement('div');
+                                    refundDiv.className = 'd-flex justify-content-between mt-2 text-success';
+                                    refundDiv.innerHTML = `
+                                        <span>Refunded to Wallet</span>
+                                        <span>₹${refundAmount.toFixed(2)}</span>
+                                    `;
+                                    priceDetails.appendChild(refundDiv);
+                                } else {
+                                    existingRefund.innerHTML = `
+                                        <span>Refunded to Wallet</span>
+                                        <span>₹${refundAmount.toFixed(2)}</span>
+                                    `;
+                                }
+                            }
+
+                            const cancelOrderBtn = document.getElementById('cancelOrderBtn');
+                            if (cancelOrderBtn) cancelOrderBtn.remove();
+                            document.querySelectorAll('.cancel-item-btn').forEach(btn => btn.remove());
+                        }
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Item Cancelled',
+                            text: 'The item has been cancelled successfully.',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true
+                        }).then(() => {
+                            // Reload to ensure UI is in sync with server
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Failed',
+                            text: data.message || 'Failed to cancel item.',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error cancelling item:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'An error occurred while cancelling the item. Please try again.',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                } finally {
+                    button.classList.remove('btn-loading');
+                    button.innerHTML = '<i class="fas fa-times me-1"></i> Cancel';
+                }
+            } else {
+                button.classList.remove('btn-loading');
+                button.innerHTML = '<i class="fas fa-times me-1"></i> Cancel';
+            }
+        }
+
+        async function returnItem(button, orderId, itemId, itemName) {
+            button.classList.add('btn-loading');
+            button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Processing...';
+
+            if (!orderId || !itemId) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Input',
+                    text: 'Order ID or Item ID is missing.',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+                button.classList.remove('btn-loading');
+                button.innerHTML = '<i class="fas fa-undo me-1"></i> Return';
+                return;
+            }
+
+            const policyResult = await Swal.fire({
+                title: `Return Item: ${itemName}`,
+                html: `<p>Do you want to proceed with the return request for ${itemName}?</p>`,
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonColor: '#6b7280',
+                cancelButtonColor: '#9ca3af',
+                confirmButtonText: 'Proceed',
+                cancelButtonText: 'Cancel'
+            });
+
+            if (!policyResult.isConfirmed) {
+                button.classList.remove('btn-loading');
+                button.innerHTML = '<i class="fas fa-undo me-1"></i> Return';
+                return;
+            }
+
+            const result = await Swal.fire({
+                title: `Return Item: ${itemName}`,
+                input: 'textarea',
+                inputLabel: 'Reason for Return',
+                inputPlaceholder: 'Type your reason here...',
+                inputAttributes: {
+                    'aria-label': 'Reason for return'
+                },
+                showCancelButton: true,
+                confirmButtonText: 'Submit Return Request',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#6b7280',
+                cancelButtonColor: '#9ca3af',
+                inputValidator: (value) => {
+                    if (!value) {
+                        return 'You need to write a reason!';
+                    }
+                    if (value.length < 10) {
+                        return 'Reason must be at least 10 characters long!';
+                    }
+                }
+            });
+
+            if (result.isConfirmed) {
+                const returnReason = result.value;
+                try {
+                    const response = await fetch(`/orders/return/${orderId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ itemId, reason: returnReason })
+                    });
+                    const data = await response.json();
+
+                    if (data.success) {
+                        const row = button.closest('tr');
+                        const statusCell = row.querySelector('.item-status');
+                        const actionsCell = row.querySelector('.item-actions');
+
+                        statusCell.textContent = 'Return Requested';
+                        statusCell.classList.remove('hidden');
+                        statusCell.classList.add('text-warning');
+                        actionsCell.innerHTML = '';
+
+                        const orderStatusBadge = document.querySelector('.status-badge');
+                        if (data.updatedStatus && !orderStatusBadge.textContent.includes('Return')) {
+                            orderStatusBadge.textContent = data.updatedStatus;
+                            orderStatusBadge.className = `status-badge status-${data.updatedStatus.replace(/\s+/g, '')}`;
+                        }
+
+                        const timelineContainer = document.querySelector('.tracking-timeline');
+                        timelineContainer.innerHTML += `
+                            <div class="timeline-item">
+                                <div class="timeline-dot timeline-dot-ReturnRequest"></div>
+                                <div class="timeline-content">
+                                    <h5 class="mb-1">Return Request</h5>
+                                    <p class="text-muted mb-0">Return request submitted for ${itemName}</p>
+                                </div>
+                            </div>
+                        `;
+
+                        const subtotalElement = document.getElementById('subtotal-amount');
+                        const totalElement = document.getElementById('final-amount');
+                        const totalAmountElement = document.getElementById('total-amount');
+                        const discountElement = document.getElementById('discount-amount');
+                        const totalItemsElement = document.getElementById('total-items');
+
+                        const newSubTotal = data.updatedOrder.subTotal !== undefined ? data.updatedOrder.subTotal : parseFloat(subtotalElement.textContent.replace('₹', '')) || 0;
+                        const newFinalAmount = data.updatedOrder.finalAmount !== undefined ? data.updatedOrder.finalAmount : parseFloat(totalElement.textContent.replace('₹', '')) || 0;
+                        const refundAmount = data.updatedOrder.refundedAmount !== undefined ? data.updatedOrder.refundedAmount : 0;
+
+                        if (data.updatedOrder.subTotal === undefined || data.updatedOrder.finalAmount === undefined) {
+                            console.error('Backend response missing subTotal or finalAmount:', data.updatedOrder);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Invalid response from server. Please refresh the page.',
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 3000,
+                                timerProgressBar: true
+                            });
+                            return;
+                        }
+
+                        subtotalElement.textContent = `₹${newSubTotal.toFixed(2)}`;
+                        totalElement.textContent = `₹${newFinalAmount.toFixed(2)}`;
+                        totalAmountElement.textContent = `₹${newFinalAmount.toFixed(2)}`;
+                        if (discountElement && data.updatedOrder.discount !== undefined) {
+                            discountElement.textContent = `₹${data.updatedOrder.discount.toFixed(2)}`;
+                        }
+
+                        const remainingItems = Array.from(document.querySelectorAll('#order-items .product-item'))
+                            .filter(row => row.querySelector('.item-status').textContent !== 'Cancelled').length;
+                        totalItemsElement.textContent = `${remainingItems} items`;
+
+                        if (['ReturnRequest', 'Returned'].includes(data.updatedOrder.status) && refundAmount > 0) {
+                            const priceDetails = document.querySelector('.price-details .card-body');
+                            const existingRefundPending = priceDetails.querySelector('.refund-pending');
+                            if (!existingRefundPending) {
+                                const refundPendingDiv = document.createElement('div');
+                                refundPendingDiv.className = 'd-flex justify-content-between mt-2 text-success refund-pending';
+                                refundPendingDiv.innerHTML = `
+                                    <span>Refund Pending for Return</span>
+                                    <span>₹${refundAmount.toFixed(2)}</span>
+                                `;
+                                priceDetails.appendChild(refundPendingDiv);
+                            } else {
+                                existingRefundPending.innerHTML = `
+                                    <span>Refund Pending for Return</span>
+                                    <span>₹${refundAmount.toFixed(2)}</span>
+                                `;
+                            }
+                        }
+
+                        if (data.updatedOrder.couponApplied) {
+                            const priceDetails = document.querySelector('.price-details .card-body');
+                            let couponAppliedDiv = priceDetails.querySelector('.coupon-applied');
+                            if (!couponAppliedDiv && data.updatedOrder.discount > 0) {
+                                couponAppliedDiv = document.createElement('div');
+                                couponAppliedDiv.className = 'd-flex justify-content-between mb-2 coupon-applied';
+                                couponAppliedDiv.innerHTML = `
+                                    <span>Coupon Applied</span>
+                                    <span><i class="fas fa-check-circle me-1" style="color: #6b7280;"></i> Yes</span>
+                                `;
+                                const discountDiv = priceDetails.querySelector('.d-flex.justify-content-between.mb-2:nth-child(2)') || priceDetails.firstChild;
+                                priceDetails.insertBefore(couponAppliedDiv, discountDiv.nextSibling);
+                            }
+                        }
+
+                        const allItems = document.querySelectorAll('#order-items .item-status');
+                        const allReturnedOrCancelled = Array.from(allItems).every(status => 
+                            status.textContent === 'Return Requested' || 
+                            status.textContent === 'Returned' || 
+                            status.textContent === 'Cancelled'
+                        );
+
+                        if (allReturnedOrCancelled) {
+                            const returnOrderBtn = document.getElementById('returnOrderBtn');
+                            if (returnOrderBtn) {
+                                returnOrderBtn.remove();
+                            }
+                        }
+
+                        if (data.updatedOrder.status === 'Returned') {
+                            const paymentStatusElement = document.querySelector('.price-details .card-body .d-flex.justify-content-between.mt-2 span:last-child');
+                            paymentStatusElement.textContent = 'Returned';
+                            paymentStatusElement.classList.remove('text-success', 'text-danger');
+                            paymentStatusElement.classList.add('text-muted');
+                        }
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Return Request Submitted',
+                            text: 'Your return request has been submitted successfully. You will be notified once it is processed.',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: data.message || 'Failed to submit return request.',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error processing return request:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'An error occurred while processing the return request.',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                }
+            }
+
+            button.classList.remove('btn-loading');
+            button.innerHTML = '<i class="fas fa-undo me-1"></i> Return';
+        }
+
+        async function returnEntireOrder(orderId) {
+            const button = document.getElementById('returnOrderBtn');
+            button.classList.add('btn-loading');
+            button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Processing...';
+
+            if (!orderId) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Input',
+                    text: 'Order ID is missing.',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+                button.classList.remove('btn-loading');
+                button.innerHTML = '<i class="fas fa-undo me-1"></i> Return Entire Order';
+                return;
+            }
+
+            const items = Array.from(document.querySelectorAll('#order-items .product-item'));
+            const hasReturnableItems = items.some(row => {
+                const status = row.querySelector('.item-status').textContent;
+                return status !== 'Cancelled' && status !== 'Return Requested' && status !== 'Returned';
+            });
+
+            if (!hasReturnableItems) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'No Items Eligible',
+                    text: 'No items in this order are eligible for return.',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+                button.classList.remove('btn-loading');
+                button.innerHTML = '<i class="fas fa-undo me-1"></i> Return Entire Order';
+                return;
+            }
+
+            const policyResult = await Swal.fire({
+                title: 'Return Entire Order',
+                html: `<p>Do you want to proceed with the return request for the entire order?</p>`,
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonColor: '#6b7280',
+                cancelButtonColor: '#9ca3af',
+                confirmButtonText: 'Proceed',
+                cancelButtonText: 'Cancel'
+            });
+
+            if (!policyResult.isConfirmed) {
+                button.classList.remove('btn-loading');
+                button.innerHTML = '<i class="fas fa-undo me-1"></i> Return Entire Order';
+                return;
+            }
+
+            const result = await Swal.fire({
+                title: 'Return Entire Order',
+                input: 'textarea',
+                inputLabel: 'Reason for Return',
+                inputPlaceholder: 'Type your reason here...',
+                inputAttributes: {
+                    'aria-label': 'Reason for return'
+                },
+                showCancelButton: true,
+                confirmButtonText: 'Submit Return Request',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#6b7280',
+                cancelButtonColor: '#9ca3af',
+                inputValidator: (value) => {
+                    if (!value) {
+                        return 'You need to write a reason!';
+                    }
+                    if (value.length < 10) {
+                        return 'Reason must be at least 10 characters long!';
+                    }
+                }
+            });
+
+            if (result.isConfirmed) {
+                const returnReason = result.value;
+                try {
+                    const response = await fetch(`/orders/return/${orderId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ reason: returnReason })
+                    });
+                    const data = await response.json();
+
+                    if (data.success) {
+                        document.querySelectorAll('#order-items .product-item').forEach(row => {
+                            const statusCell = row.querySelector('.item-status');
+                            const actionsCell = row.querySelector('.item-actions');
+                            if (statusCell.textContent !== 'Cancelled') {
+                                statusCell.textContent = 'Return Requested';
+                                statusCell.classList.remove('hidden');
+                                statusCell.classList.add('text-warning');
+                                actionsCell.innerHTML = '';
+                            }
+                        });
+
+                        const orderStatusBadge = document.querySelector('.status-badge');
+                        orderStatusBadge.textContent = data.updatedStatus || 'ReturnRequest';
+                        orderStatusBadge.className = `status-badge status-${(data.updatedStatus || 'ReturnRequest').replace(/\s+/g, '')}`;
+
+                        const timelineContainer = document.querySelector('.tracking-timeline');
+                        timelineContainer.innerHTML += `
+                            <div class="timeline-item">
+                                <div class="timeline-dot timeline-dot-ReturnRequest"></div>
+                                <div class="timeline-content">
+                                    <h5 class="mb-1">Return Request</h5>
+                                    <p class="text-muted mb-0">Return request submitted for entire order</p>
+                                </div>
+                            </div>
+                        `;
+
+                        const subtotalElement = document.getElementById('subtotal-amount');
+                        const totalElement = document.getElementById('final-amount');
+                        const totalAmountElement = document.getElementById('total-amount');
+                        const discountElement = document.getElementById('discount-amount');
+                        const totalItemsElement = document.getElementById('total-items');
+
+                        const newSubTotal = data.updatedOrder.subTotal !== undefined ? data.updatedOrder.subTotal : parseFloat(subtotalElement.textContent.replace('₹', '')) || 0;
+                        const newFinalAmount = data.updatedOrder.finalAmount !== undefined ? data.updatedOrder.finalAmount : parseFloat(totalElement.textContent.replace('₹', '')) || 0;
+                        const refundAmount = data.updatedOrder.refundedAmount !== undefined ? data.updatedOrder.refundedAmount : 0;
+
+                        if (data.updatedOrder.subTotal === undefined || data.updatedOrder.finalAmount === undefined) {
+                            console.error('Backend response missing subTotal or finalAmount:', data.updatedOrder);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Invalid response from server. Please refresh the page.',
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 3000,
+                                timerProgressBar: true
+                            });
+                            return;
+                        }
+
+                        subtotalElement.textContent = `₹${newSubTotal.toFixed(2)}`;
+                        totalElement.textContent = `₹${newFinalAmount.toFixed(2)}`;
+                        totalAmountElement.textContent = `₹${newFinalAmount.toFixed(2)}`;
+                        if (discountElement && data.updatedOrder.discount !== undefined) {
+                            discountElement.textContent = `₹${data.updatedOrder.discount.toFixed(2)}`;
+                        }
+
+                        const remainingItems = Array.from(document.querySelectorAll('#order-items .product-item'))
+                            .filter(row => row.querySelector('.item-status').textContent !== 'Cancelled').length;
+                        totalItemsElement.textContent = `${remainingItems} items`;
+
+                        if (['ReturnRequest', 'Returned'].includes(data.updatedOrder.status) && refundAmount > 0) {
+                            const priceDetails = document.querySelector('.price-details .card-body');
+                            const existingRefundPending = priceDetails.querySelector('.refund-pending');
+                            if (!existingRefundPending) {
+                                const refundPendingDiv = document.createElement('div');
+                                refundPendingDiv.className = 'd-flex justify-content-between mt-2 text-success refund-pending';
+                                refundPendingDiv.innerHTML = `
+                                    <span>Refund Pending for Return</span>
+                                    <span>₹${refundAmount.toFixed(2)}</span>
+                                `;
+                                priceDetails.appendChild(refundPendingDiv);
+                            } else {
+                                existingRefundPending.innerHTML = `
+                                    <span>Refund Pending for Return</span>
+                                    <span>₹${refundAmount.toFixed(2)}</span>
+                                `;
+                            }
+                        }
+
+                        if (data.updatedOrder.couponApplied) {
+                            const priceDetails = document.querySelector('.price-details .card-body');
+                            let couponAppliedDiv = priceDetails.querySelector('.coupon-applied');
+                            if (!couponAppliedDiv && data.updatedOrder.discount > 0) {
+                                couponAppliedDiv = document.createElement('div');
+                                couponAppliedDiv.className = 'd-flex justify-content-between mb-2 coupon-applied';
+                                couponAppliedDiv.innerHTML = `
+                                    <span>Coupon Applied</span>
+                                    <span><i class="fas fa-check-circle me-1" style="color: #6b7280;"></i> Yes</span>
+                                `;
+                                const discountDiv = priceDetails.querySelector('.d-flex.justify-content-between.mb-2:nth-child(2)') || priceDetails.firstChild;
+                                priceDetails.insertBefore(couponAppliedDiv, discountDiv.nextSibling);
+                            }
+                        }
+
+                        if (data.updatedOrder.status === 'Returned') {
+                            const paymentStatusElement = document.querySelector('.price-details .card-body .d-flex.justify-content-between.mt-2 span:last-child');
+                            paymentStatusElement.textContent = 'Returned';
+                            paymentStatusElement.classList.remove('text-success', 'text-danger');
+                            paymentStatusElement.classList.add('text-muted');
+                        }
+
+                        button.remove();
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Return Request Submitted',
+                            text: 'Your return request for the entire order has been submitted successfully. You will be notified once it is processed.',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: data.message || 'Failed to submit return request.',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error processing return request:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'An error occurred while processing the return request.',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                }
+            }
+
+            button.classList.remove('btn-loading');
+            button.innerHTML = '<i class="fas fa-undo me-1"></i> Return Entire Order';
+        }
+
+        async function retryPayment(orderId, amount) {
+            try {
+                if (!orderId || typeof orderId !== 'string' || isNaN(amount) || amount <= 0) {
+                    throw new Error('Invalid order ID or amount');
+                }
+
+                const response = await fetch('/retry-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderId, amount })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data.success && data.paymentMethod === 'razorpay') {
+                    const rzp = new Razorpay({
+                        ...data.razorpayOptions,
+                        handler: async (response) => {
+                            const verifyResponse = await fetch('/verify-razorpay-payment', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    orderId,
+                                    razorpayOrderId: response.razorpay_order_id,
+                                    razorpayPaymentId: response.razorpay_payment_id,
+                                    razorpaySignature: response.razorpay_signature
+                                })
+                            });
+                            const verifyData = await verifyResponse.json();
+
+                            if (verifyData.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Payment Successful',
+                                    text: 'Redirecting to order success page...'
+                                }).then(() => {
+                                    window.location.href = `/order-success/${orderId}`;
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Payment Verification Failed',
+                                    text: verifyData.message || 'Unable to verify payment. Please try again.'
+                                }).then(() => {
+                                    window.location.reload();
+                                });
+                            }
+                        }
+                    });
+
+                    rzp.on('payment.failed', async (response) => {
+                        await fetch('/handle-payment-failure', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                orderId,
+                                failureReason: response.error.description || 'Payment failed'
+                            })
+                        });
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Payment Failed Again',
+                            text: 'Please try again or use a different payment method.'
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    });
+
+                    rzp.open();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message || 'Failed to initiate retry payment.'
+                    });
+                }
+            } catch (error) {
+                console.error('Error in retryPayment:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An error occurred while retrying payment: ' + error.message
+                });
+            }
+        }
+    </script>
+</body>
 </html>

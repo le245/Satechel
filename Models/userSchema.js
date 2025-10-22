@@ -65,7 +65,7 @@ const userSchema = new Schema({
         type: Date,
         default: Date.now
     },
-    redeemed: {
+      redeemed: {
         type: Boolean,
     },
 
