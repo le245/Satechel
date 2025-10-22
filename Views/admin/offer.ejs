@@ -72,7 +72,7 @@
                 </div>
 
                 <div class="mt-3">
-                    <button type="submit" class="btn btn-primary">Create Offer</button>
+                    <button type="submit" class="btn btn-primary" style="background-color: black;">Create Offer</button>
                     <a href="/admin/offer-list" class="btn btn-light ml-2">Cancel</a>
                 </div>
             </form>
@@ -90,7 +90,7 @@
         const discountInput = document.getElementById('discount');
         let isSubmitting = false;
 
-        // Handle type change
+       
         function handleTypeChange() {
             const type = typeSelect.value;
             productSelect.value = '';
@@ -102,7 +102,7 @@
             document.getElementById('discountedPriceDiv').style.display = type === 'product' ? 'block' : 'none';
         }
 
-        // Calculate discounted price
+      
        function calculateDiscountedPrice() {
     if (typeSelect.value === 'product' && productSelect.selectedIndex > 0) {
         const originalPrice = parseFloat(productSelect.options[productSelect.selectedIndex].dataset.price);

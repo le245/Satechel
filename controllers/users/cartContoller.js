@@ -4,6 +4,7 @@ const Product = require("../../Models/productSchema");
 const Category = require("../../Models/categorySchema");
 const Wishlist = require("../../Models/wishlistSchema");
 const Offer = require("../../Models/offerSchema");
+const mongoose = require("mongoose");
 const STATUS_CODES= require("../../Models/status")
 
  
@@ -67,24 +68,35 @@ const calculateCartTotals = (items) => {
 
 const getCartPage = async (req, res) => {
   try {
-    if (!req.session.user) {
-      return res.redirect('/login');
+    const email = req.session.userEmail;
+    const userData = await User.findOne({ email, isBlocked: false }).lean();
+    if (!userData) {
+      return res.render("blocked", { message: "User is blocked by admin" });
     }
 
     const userId = req.session.user;
+    if (!userId) {
+      return res.redirect('/login');
+    }
+
     const user = await User.findById(userId);
 
     const cart = await Cart.findOne({ userId }).populate({
       path: 'items.productId',
+      populate: { path: 'category' } 
     });
 
     if (cart && cart.items) {
+      
       cart.items = cart.items.filter(
-        (item) => item.productId && !item.productId.isBlocked);
-     
+        item => item.productId && !item.productId.isBlocked && item.productId.category?.isListed
+      );
+
+    
       for (let item of cart.items) {
         item.price = await calculateDiscountedPrice(item.productId);
       }
+
       await cart.save();
     }
 
@@ -115,10 +127,11 @@ const getCartPage = async (req, res) => {
       user: user || null,
     });
   } catch (error) {
-   
-    res.render('/pageNotFound');
+    console.error('Error in getCartPage:', error);
+    res.render('pageNotFound');
   }
 };
+
 
 const addToCart = async (req, res) => {
   try {
@@ -159,9 +172,7 @@ const addToCart = async (req, res) => {
       cart = new Cart({ userId, items: [] });
     }
 
-    const existingItemIndex = cart.items.findIndex(
-      (item) => item.productId.toString() === productId
-    );
+    const existingItemIndex = cart.items.findIndex((item) => item.productId.toString() === productId);
 
     let newQuantity = quantity;
     if (existingItemIndex > -1) {
@@ -226,77 +237,101 @@ const addToCart = async (req, res) => {
 const updateCart = async (req, res) => {
   try {
     const itemId = req.params.itemId;
-    const { quantity } = req.body;
+    let { quantity } = req.body;
     const userId = req.session.user;
 
-    const cart = await Cart.findOne({ userId });
+    const cart = await Cart.findOne({ userId }).populate('items.productId');
     if (!cart) {
-      return res.status(STATUS_NOT_FOUND).json({ success: false, message: 'Cart not found' });
+      return res.status(404).json({ success: false, message: 'Cart not found' });
     }
 
-    const item = cart.items.find((item) => item._id.toString() === itemId);
+    const item = cart.items.find(i => i._id.toString() === itemId);
     if (!item) {
-      return res.status(STATUS_NOT_FOUND).json({ success: false, message: 'Item not found' });
+      return res.status(404).json({ success: false, message: 'Item not found' });
     }
 
-    const product = await Product.findById(item.productId);
-    if (!product) {
-      return res.status(STATUS_NOT_FOUND).json({ success: false, message: 'Product not found' });
-    }
+    quantity = parseInt(quantity); 
 
     if (quantity < 1) {
-      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Quantity must be at least 1' });
+      return res.status(400).json({ success: false, message: 'Quantity must be at least 1' });
     }
 
     if (quantity > 5) {
-      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Maximum quantity is 5' });
+      return res.status(400).json({ success: false, message: 'Maximum quantity is 5' });
     }
 
+    const product = item.productId;
+
     if (quantity > product.quantity) {
-      return res.status(STATUS_CODES.BAD_REQUEST).json({
+      return res.status(400).json({
         success: false,
         message: 'Stock limit reached',
         availableStock: product.quantity,
       });
     }
 
+    
+    const discountedPrice = await calculateDiscountedPrice(product);
+
     item.quantity = quantity;
-    item.price = await calculateDiscountedPrice(product);
+    item.price = discountedPrice; 
     await cart.save();
 
-    return res.status(STATUS_CODES.OK).json({
+    
+    const totals = cart.items.reduce((acc, i) => {
+        if (!i.productId.isBlocked) {
+          acc.subtotal += i.price * i.quantity;
+        }
+        return acc;
+      },
+      { subtotal: 0 }
+    );
+
+    cart.subTotal = parseFloat(totals.subtotal.toFixed(2));
+    await cart.save();
+
+    return res.status(200).json({
       success: true,
       quantity: item.quantity,
       price: item.price,
-      message: 'Cart updated',
+      subtotal: cart.subTotal,
+      message: 'Cart updated successfully',
     });
   } catch (error) {
-   
-    return res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, message: 'Server error' });
+    console.error(error);
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
 
 
 const deleteItemFromCart = async (req, res) => {
   try {
     const userId = req.session.user;
-    const productId = req.params.productId;
+    const itemId = req.params.itemId;
 
-    if (!userId || !productId) {
+    if (!userId || !itemId) {
       return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Missing user or product ID' });
     }
-
+ 
     const cart = await Cart.findOne({ userId: userId });
 
     if (!cart) {
       return res.status(STATUS_NOT_FOUND).json({ success: false, message: 'Cart not found' });
     }
 
-    cart.items = cart.items.filter((item) => item.productId !== productId);
+ await Cart.updateOne(
+      { userId },
+      { $pull: { items: { _id: new mongoose.Types.ObjectId(itemId) } } }
+    );
 
-    await cart.save();
 
-    res.json({ success: true, message: 'Item removed from cart' });
+ const updatedCart = await Cart.findOne({ userId }).populate("items.productId");
+ updatedCart.subTotal = updatedCart.items.reduce((sum, item) =>sum + item.quantity * item.productId.regularPrice,0);
+ await updatedCart.save();
+
+
+   res.json({ success: true, message: 'Item removed from cart' });
   } catch (error) {
 
     res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, message: 'Server error' });

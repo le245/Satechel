@@ -17,7 +17,7 @@ const offerSchema = new Schema ({
     type: Number,
     required: true,
     min: 0,
-    max: 90,
+    max: 99,
   },
   productId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -29,6 +29,7 @@ const offerSchema = new Schema ({
     ref: 'Category',
     default: null,
   },
+  
   discountedPrice:{
     type:Number,
     default:0

@@ -1,473 +1,524 @@
-<%- include("../../views/partials/admin/header") %>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<style>
-    .content-main {
-        padding: 20px;
-        margin-left: 250px; /* Adjust based on your sidebar width */
-    }
-    .content-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-    }
-    .card {
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        border-radius: 10px;
-        margin-bottom: 20px;
-        background-color: #fff;
-        transition: transform 0.2s;
-    }
-    .card:hover {
-        transform: translateY(-5px);
-    }
-    .card-body {
-        padding: 20px;
-    }
-    .card h6 {
-        font-size: 14px;
-        color: #6c757d;
-        margin-bottom: 10px;
-    }
-    .card h4 {
-        font-size: 24px;
-        font-weight: bold;
-        color: #333333;
-    }
-    .table-responsive {
-        max-height: 400px;
-        overflow-y: auto;
-    }
-    .table {
-        width: 100%;
-        margin-bottom: 0;
-        border-collapse: collapse;
-    }
-    .table th, .table td {
-        padding: 12px;
-        text-align: left;
-        border-bottom: 1px solid #dee2e6;
-    }
-    .table th {
-        background-color: #f1f3f5;
-        font-weight: 600;
-        color: #333;
-        position: sticky;
-        top: 0;
-        z-index: 1;
-    }
-    .table tbody tr:hover {
-        background-color: #f8f9fa;
-    }
-    .form-select, .form-control {
-        border-radius: 5px;
-        border: 1px solid #ced4da;
-        padding: 8px;
-        margin-bottom: 10px;
-        width: 100%;
-    }
-    .form-label {
-        font-size: 14px;
-        color: #333;
-        margin-bottom: 5px;
-    }
-    .error-message {
-        color: red;
-        font-size: 0.9em;
-        display: none;
-    }
-    canvas {
-        max-width: 100%;
-        height: 300px;
-    }
-    .btn-primary {
-        background-color: #007bff;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 5px;
-        font-weight: 500;
-    }
-    .btn-primary:hover {
-        background-color: #0056b3;
-    }
-    .dropdown-menu {
-        border-radius: 5px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    .dropdown-item:hover {
-        background-color: #f8f9fa;
-    }
-    .pagination .page-link {
-        color: #007bff;
-        border: 1px solid #dee2e6;
-    }
-    .pagination .page-item.active .page-link {
-        background-color: #007bff;
-        border-color: #007bff;
-        color: #fff;
-    }
-    .pagination .page-link:hover {
-        background-color: #e9ecef;
-    }
-</style>
+    <%- include("../../views/partials/admin/header") %>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
 
-<section class="content-main">
-    <div class="content-header">
-        <div>
-            <h2 class="content-title card-title">Dashboard</h2>
-            <p>Sales Report and Overview</p>
-        </div>
-        <div>
-            <div class="dropdown">
-                <button class="btn btn-primary dropdown-toggle" type="button" id="downloadReportDropdown" 
-                        data-bs-toggle="dropdown" aria-expanded="false">
-                    Download Report
-                </button>
-                <ul class="dropdown-menu" aria-labelledby="downloadReportDropdown">
-                    <li><a class="dropdown-item" 
-                          href="/admin/download/excel?filter=<%= selectedFilter %>&startDate=<%= startDate %>&endDate=<%= endDate %>">
-                          Export Excel</a></li>
-                    <li><a class="dropdown-item" 
-                          href="/admin/download/pdf?filter=<%= selectedFilter %>&startDate=<%= startDate %>&endDate=<%= endDate %>">
-                          Export PDF</a></li>
-                </ul>
-            </div>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <h6>Total Sales</h6>
-                    <h4>₹<%= totalSales.toFixed(2) %></h4>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <h6>Total Orders</h6>
-                    <h4><%= totalOrders %></h4>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <h6>Total Discount</h6>
-                    <h4>₹<%= totalDiscount.toFixed(2) %></h4>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <h6>Total User</h6>
-                    <h4><%= totalUsers %></h4>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <div class="card">
-        <div class="card-body">
-            <form action="/admin/dashboard" method="GET" id="filterForm" onsubmit="return validateForm(event)">
-                <div class="row align-items-end">
-                    <div class="col-md-3">
-                        <label class="form-label">Filter:</label>
-                        <select name="filter" class="form-select" onchange="toggleDateInputs(this)">
-                            <option value="daily" <%= selectedFilter === 'daily' ? 'selected' : '' %>>Daily</option>
-                            <option value="weekly" <%= selectedFilter === 'weekly' ? 'selected' : '' %>>Weekly</option>
-                            <option value="monthly" <%= selectedFilter === 'monthly' ? 'selected' : '' %>>Monthly</option>
-                            <option value="yearly" <%= selectedFilter === 'yearly' ? 'selected' : '' %>>Yearly</option>
-                            <option value="custom" <%= selectedFilter === 'custom' ? 'selected' : '' %>>Custom</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3" id="startDateDiv" <%= selectedFilter !== 'custom' ? 'style="display:none"' : '' %>>
-                        <label class="form-label">Start Date:</label>
-                        <input type="date" name="startDate" class="form-control" value="<%= startDate %>">
-                        <div id="startDateError" class="error-message"></div>
-                    </div>
-                    <div class="col-md-3" id="endDateDiv" <%= selectedFilter !== 'custom' ? 'style="display:none"' : '' %>>
-                        <label class="form-label">End Date:</label>
-                        <input type="date" name="endDate" class="form-control" value="<%= endDate %>">
-                        <div id="endDateError" class="error-message"></div>
-                    </div>
-                    <div class="col-md-3">
-                        <button type="submit" class="btn btn-primary">Apply Filter</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
 
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h4>Top Best Selling Products</h4>
-                    <canvas id="bestProductsChart"></canvas>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h4>Top Best Selling Categories</h4>
-                    <canvas id="bestCategoriesChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="card">
-        <div class="card-body">
-            <h4>Sales Details</h4>
-            <div class="table-responsive">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Order ID</th>
-                            <th>Date</th>
-                            <th>Products</th>
-                            <th>Total Price</th>
-                            <th>Discount</th>
-                            <th>Final Amount</th>
-                            <th>Coupon</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% if (orders && orders.length > 0) { %>
-                            <% orders.forEach(order => { %>
-                                <tr>
-                                    <td>ORD<%= order.orderId || 'N/A' %></td>
-                                    <td><%= order.createOn ? order.createOn.toLocaleDateString() : 'N/A' %></td>
-                                    <td>
-                                        <% if (order.items && order.items.length > 0) { %>
-                                            <% order.items.forEach(item => { %>
-                                                <div>
-                                                    <%= item.productId?.productName || 'N/A' %> 
-                                                    (Qty: <%= item.quantity || 0 %>)
-                                                </div>
-                                            <% }) %>
-                                        <% } else { %>
-                                            No items
-                                        <% } %>
-                                    </td>
-                                    <td>
-                                        <% 
-                                            let calculatedSubTotal = 0;
-                                            if (order.items && Array.isArray(order.items) && order.items.length > 0) {
-                                                calculatedSubTotal = order.items.reduce((sum, item) => {
-                                                    return sum + (item.cancelStatus === 'Cancelled' ? 0 : (item.price || 0) * (item.quantity || 0));
-                                                }, 0);
-                                            }
-                                            const displaySubTotal = (order.status === 'Cancelled' || order.status === 'Returned' || order.status === 'ReturnRequest') 
-                                                ? (order.originalSubTotal || order.displaySubTotal || order.subTotal || calculatedSubTotal || 0).toFixed(2)
-                                                : (order.displaySubTotal || order.subTotal || calculatedSubTotal || 0).toFixed(2);
-                                        %>
-                                        ₹<%= displaySubTotal %>
-                                    </td>
-                                    <td>₹<%= order.discount ? order.discount.toFixed(2) : '0.00' %></td>
-                                    <td>
-                                        <% 
-                                            let calculatedTotal = calculatedSubTotal - (order.discount || 0);
-                                            const displayFinalAmount = (order.status === 'Cancelled' || order.status === 'Returned' || order.status === 'ReturnRequest') 
-                                                ? (order.originalFinalAmount || order.displayFinalAmount || order.finalAmount || calculatedTotal || 0).toFixed(2)
-                                                : (order.displayFinalAmount || order.finalAmount || calculatedTotal || 0).toFixed(2);
-                                        %>
-                                        ₹<%= displayFinalAmount %>
-                                    </td>
-                                    <td><%= order.couponApplied ? 'Applied' : 'N/A' %></td>
-                                </tr>
-                            <% }) %>
-                        <% } else { %>
-                            <tr>
-                                <td colspan="7" class="text-center">No orders found for the selected date range.</td>
-                            </tr>
-                        <% } %>
-                    </tbody>
-                </table>
-            </div>
 
-            <% if (totalPages > 1) { %>
-                <nav class="mt-3">
-                    <ul class="pagination justify-content-center">
-                        <% for (let i = 1; i <= totalPages; i++) { %>
-                            <li class="page-item <%= currentPage === i ? 'active' : '' %>">
-                                <a class="page-link" href="/admin/dashboard?page=<%= i %>&filter=<%= selectedFilter %>&startDate=<%= startDate %>&endDate=<%= endDate %>">
-                                    <%= i %>
-                                </a>
-                            </li>
-                        <% } %>
+    .sidebar {
+        background-color: #111;
+        color: white;         
+    }
+
+    .sidebar a {
+        color: white;            
+        text-decoration: none;
+    }
+
+
+
+    .sidebar h4, .sidebar h5, .sidebar h6 {
+        color: white;
+    }
+
+
+    .sidebar .active {
+        background-color: #222; 
+        color: white;
+    }
+
+
+        .content-main {
+            padding: 20px;
+            margin-left: 250px; /* Adjust based on your sidebar width */
+        }
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .card {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            margin-bottom: 20px;
+            background-color: #fff;
+            transition: transform 0.2s;
+        }       
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .card-body {
+            padding: 20px;
+        }
+        .card h6 {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 10px;
+        }
+        .card h4 {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333333;
+        }
+        .table-responsive {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .table {
+            width: 100%;
+            margin-bottom: 0;
+            border-collapse: collapse;
+        }
+        .table th, .table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .table th {
+            background-color: #f1f3f5;
+            font-weight: 600;
+            color: #333;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        .table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+        .form-select, .form-control {
+            border-radius: 5px;
+            border: 1px solid #ced4da;
+            padding: 8px;
+            margin-bottom: 10px;
+            width: 100%;
+        }
+        .form-label {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .error-message {
+            color: red;
+            font-size: 0.9em;
+            display: none;
+        }
+        canvas {
+            max-width: 100%;
+            height: 300px;
+        }
+        .btn-primary {
+            background-color: black;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: 500;
+        }
+        .btn-primary:hover {
+            background-color: black;
+        }
+        .dropdown-menu {
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .dropdown-item:hover {
+            background-color: #f8f9fa;
+        }
+        .pagination .page-link {
+            color: black;
+            border: 1px solid #dee2e6;
+        }
+        .pagination .page-item.active .page-link {
+            background-color: black;
+            border-color:black;
+            color: #fff;
+        }
+        .pagination .page-link:hover {
+            background-color: #e9ecef;
+        }
+    .dropdown-toggle{
+        background-color: black ;
+        color: white;
+    }
+    .custom-dropdown-btn:hover {
+        background-color: white ;
+        color: black ;
+    }
+    </style>
+
+    <section class="content-main">
+        <div class="content-header">
+            <div>
+                <h2 class="content-title card-title">Dashboard</h2>
+                <p>Sales Report and Overview</p>
+            </div>
+            <div>
+                <div class="dropdown">
+                    <button class="btn btn-primary dropdown-toggle" type="button" id="downloadReportDropdown" 
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                        Download Report
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="downloadReportDropdown">
+                        <li><a class="dropdown-item" 
+                            href="/admin/download/excel?filter=<%= selectedFilter %>&startDate=<%= startDate %>&endDate=<%= endDate %>">
+                            Export Excel</a></li>
+                        <li><a class="dropdown-item" 
+                            href="/admin/download/pdf?filter=<%= selectedFilter %>&startDate=<%= startDate %>&endDate=<%= endDate %>">
+                            Export PDF</a></li>
                     </ul>
-                </nav>
-            <% } %>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-body">
-                    <h4>Sales Over Time</h4>
-                    <canvas id="salesChart"></canvas>
                 </div>
             </div>
         </div>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h6>Total Sales</h6>
+                        <h4>₹<%= totalSales.toFixed(2) %></h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h6>Total Orders</h6>
+                        <h4><%= totalOrders %></h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h6>Total Discount</h6>
+                        <h4>₹<%= totalDiscount.toFixed(2) %></h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h6>Total User</h6>
+                        <h4><%= totalUsers %></h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <form action="/admin/dashboard" method="GET" id="filterForm" onsubmit="return validateForm(event)">
+                    <div class="row align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label">Filter:</label>
+                            <select name="filter" class="form-select" onchange="toggleDateInputs(this)">
+                                <option value="daily" <%= selectedFilter === 'daily' ? 'selected' : '' %>>Daily</option>
+                                <option value="weekly" <%= selectedFilter === 'weekly' ? 'selected' : '' %>>Weekly</option>
+                                <option value="monthly" <%= selectedFilter === 'monthly' ? 'selected' : '' %>>Monthly</option>
+                                <option value="yearly" <%= selectedFilter === 'yearly' ? 'selected' : '' %>>Yearly</option>
+                                <option value="custom" <%= selectedFilter === 'custom' ? 'selected' : '' %>>Custom</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3" id="startDateDiv" <%= selectedFilter !== 'custom' ? 'style="display:none"' : '' %>>
+                            <label class="form-label">Start Date:</label>
+                            <input type="date" name="startDate" class="form-control" value="<%= startDate %>">
+                            <div id="startDateError" class="error-message"></div>
+                        </div>
+                        <div class="col-md-3" id="endDateDiv" <%= selectedFilter !== 'custom' ? 'style="display:none"' : '' %>>
+                            <label class="form-label">End Date:</label>
+                            <input type="date" name="endDate" class="form-control" value="<%= endDate %>">
+                            <div id="endDateError" class="error-message"></div>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-primary">Apply Filter</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h4>Top Best Selling Products</h4>
+                        <canvas id="bestProductsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h4>Top Best Selling Categories</h4>
+                        <canvas id="bestCategoriesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <h4>Sales Details</h4>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Date</th>
+                                <th>Products</th>
+                                <th>Total Price</th>
+                                <th>Discount</th>
+                                <th>Final Amount</th>
+                                <th>Coupon</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (orders && orders.length > 0) { %>
+                                <% orders.forEach(order => { %>
+                                    <tr>
+                                        <td>ORD<%= order.orderId || 'N/A' %></td>
+                                        <td><%= order.createOn ? order.createOn.toLocaleDateString() : 'N/A' %></td>
+                                        <td>
+                                            <% if (order.items && order.items.length > 0) { %>
+                                                <% order.items.forEach(item => { %>
+                                                    <div>
+                                                        <%= item.productId?.productName || 'N/A' %> 
+                                                        (Qty: <%= item.quantity || 0 %>)
+                                                    </div>
+                                                <% }) %>
+                                            <% } else { %>
+                                                No items
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <% 
+                                                let calculatedSubTotal = 0;
+                                                if (order.items && Array.isArray(order.items) && order.items.length > 0) {
+                                                    calculatedSubTotal = order.items.reduce((sum, item) => {
+                                                        return sum + (item.cancelStatus === 'Cancelled' ? 0 : (item.price || 0) * (item.quantity || 0));
+                                                    }, 0);
+                                                }
+                                                const displaySubTotal = (order.status === 'Cancelled' || order.status === 'Returned' || order.status === 'ReturnRequest') 
+                                                    ? (order.originalSubTotal || order.displaySubTotal || order.subTotal || calculatedSubTotal || 0).toFixed(2)
+                                                    : (order.displaySubTotal || order.subTotal || calculatedSubTotal || 0).toFixed(2);
+                                            %>
+                                            ₹<%= displaySubTotal %>
+                                        </td>
+                                        <td>₹<%= order.discount ? order.discount.toFixed(2) : '0.00' %></td>
+                                        <td>
+                                            <% 
+                                                let calculatedTotal = calculatedSubTotal - (order.discount || 0);
+                                                const displayFinalAmount = (order.status === 'Cancelled' || order.status === 'Returned' || order.status === 'ReturnRequest') 
+                                                    ? (order.originalFinalAmount || order.displayFinalAmount || order.finalAmount || calculatedTotal || 0).toFixed(2)
+                                                    : (order.displayFinalAmount || order.finalAmount || calculatedTotal || 0).toFixed(2);
+                                            %>
+                                            ₹<%= displayFinalAmount %>
+                                        </td>
+                                        <td><%= order.couponApplied ? 'Applied' : 'N/A' %></td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="7" class="text-center">No orders found for the selected date range.</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+
+                <% if (totalPages > 1) { %>
+                    <nav class="mt-3">
+                        <ul class="pagination justify-content-center">
+                            <% for (let i = 1; i <= totalPages; i++) { %>
+                                <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                                    <a class="page-link" href="/admin/dashboard?page=<%= i %>&filter=<%= selectedFilter %>&startDate=<%= startDate %>&endDate=<%= endDate %>">
+                                        <%= i %>
+                                    </a>
+                                </li>
+                            <% } %>
+                        </ul>
+                    </nav>
+                <% } %>
+            </div>
+        </div>
+       <div class="row">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-body">
+        <h4>Sales Over Time</h4>
+        <canvas id="salesChart"></canvas>
+      </div>
     </div>
-</section>
+  </div>
+</div>
+    </section>
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-    function toggleDateInputs(select) {
-        const startDateDiv = document.getElementById('startDateDiv');
-        const endDateDiv = document.getElementById('endDateDiv');
-        const isCustom = select.value === 'custom';
-        startDateDiv.style.display = isCustom ? 'block' : 'none';
-        endDateDiv.style.display = isCustom ? 'block' : 'none';
-    }
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function toggleDateInputs(select) {
+            const startDateDiv = document.getElementById('startDateDiv');
+            const endDateDiv = document.getElementById('endDateDiv');
+            const isCustom = select.value === 'custom';
+            startDateDiv.style.display = isCustom ? 'block' : 'none';
+            endDateDiv.style.display = isCustom ? 'block' : 'none';
+        }
 
-    function validateForm(event) {
-        event.preventDefault();
+        function validateForm(event) {
+            event.preventDefault();
 
-        const filter = document.querySelector('select[name="filter"]').value;
-        const startDateInput = document.querySelector('input[name="startDate"]');
-        const endDateInput = document.querySelector('input[name="endDate"]');
-        const startDateError = document.getElementById('startDateError');
-        const endDateError = document.getElementById('endDateError');
+            const filter = document.querySelector('select[name="filter"]').value;
+            const startDateInput = document.querySelector('input[name="startDate"]');
+            const endDateInput = document.querySelector('input[name="endDate"]');
+            const startDateError = document.getElementById('startDateError');
+            const endDateError = document.getElementById('endDateError');
 
-        startDateError.style.display = 'none';
-        endDateError.style.display = 'none';
-        startDateError.textContent = '';
-        endDateError.textContent = '';
+            startDateError.style.display = 'none';
+            endDateError.style.display = 'none';
+            startDateError.textContent = '';
+            endDateError.textContent = '';
 
-        if (filter !== 'custom') {
+            if (filter !== 'custom') {
+                event.target.submit();
+                return true;
+            }
+
+            const startDate = startDateInput.value;
+            const endDate = endDateInput.value;
+            const today = new Date().toISOString().split('T')[0];
+
+            if (!startDate) {
+                startDateError.textContent = 'Start date is required.';
+                startDateError.style.display = 'block';
+                return false;
+            }
+            if (!endDate) {
+                endDateError.textContent = 'End date is required.';
+                endDateError.style.display = 'block';
+                return false;
+            }
+
+            if (new Date(endDate) < new Date(startDate)) {
+                endDateError.textContent = 'End date cannot be before start date.';
+                endDateError.style.display = 'block';
+                return false;
+            }
+
+            if (startDate > today) {
+                startDateError.textContent = 'Start date cannot be in the future.';
+                startDateError.style.display = 'block';
+                return false;
+            }
+            if (endDate > today) {
+                endDateError.textContent = 'End date cannot be in the future.';
+                endDateError.style.display = 'block';
+                return false;
+            }
+
             event.target.submit();
             return true;
         }
 
-        const startDate = startDateInput.value;
-        const endDate = endDateInput.value;
-        const today = new Date().toISOString().split('T')[0];
-
-        if (!startDate) {
-            startDateError.textContent = 'Start date is required.';
-            startDateError.style.display = 'block';
-            return false;
-        }
-        if (!endDate) {
-            endDateError.textContent = 'End date is required.';
-            endDateError.style.display = 'block';
-            return false;
-        }
-
-        if (new Date(endDate) < new Date(startDate)) {
-            endDateError.textContent = 'End date cannot be before start date.';
-            endDateError.style.display = 'block';
-            return false;
-        }
-
-        if (startDate > today) {
-            startDateError.textContent = 'Start date cannot be in the future.';
-            startDateError.style.display = 'block';
-            return false;
-        }
-        if (endDate > today) {
-            endDateError.textContent = 'End date cannot be in the future.';
-            endDateError.style.display = 'block';
-            return false;
-        }
-
-        event.target.submit();
-        return true;
-    }
-
-    const bestProductsCtx = document.getElementById('bestProductsChart').getContext('2d');
-    const bestProductsChart = new Chart(bestProductsCtx, {
-        type: 'bar',
-        data: {
-            labels: <%- JSON.stringify(bestSellingProducts.map(p => p.name)) %>,
-            datasets: [{
-                label: 'Revenue (₹)',
-                data: <%- JSON.stringify(bestSellingProducts.map(p => p.revenue)) %>,
-                backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    title: { display: true, text: 'Revenue (₹)' }
-                }
+        const bestProductsCtx = document.getElementById('bestProductsChart').getContext('2d');
+        const bestProductsChart = new Chart(bestProductsCtx, {
+            type: 'bar',
+            data: {
+                labels: <%- JSON.stringify(bestSellingProducts.map(p => p.name)) %>,
+                datasets: [{
+                    label: 'Revenue (₹)',
+                    data: <%- JSON.stringify(bestSellingProducts.map(p => p.revenue)) %>,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
             },
-            plugins: {
-                legend: { display: true }
-            }
-        }
-    });
-
-    const bestCategoriesCtx = document.getElementById('bestCategoriesChart').getContext('2d');
-    const bestCategoriesChart = new Chart(bestCategoriesCtx, {
-        type: 'bar',
-        data: {
-            labels: <%- JSON.stringify(bestCategories.map(c => c.name)) %>,
-            datasets: [{
-                label: 'Revenue (₹)',
-                data: <%- JSON.stringify(bestCategories.map(c => c.revenue)) %>,
-                backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                borderColor: 'rgba(75, 192, 192, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    title: { display: true, text: 'Revenue (₹)' }
-                }
-            },
-            plugins: {
-                legend: { display: true }
-            }
-        }
-    });
-
-    // Initialize Sales Over Time Chart
-    const salesChartCtx = document.getElementById('salesChart').getContext('2d');
-    const salesChart = new Chart(salesChartCtx, {
-        type: 'line',
-        data: {
-            labels: <%- JSON.stringify(salesData.map(s => s.date)) || '["22/7/2025"]' %>,
-            datasets: [{
-                label: 'Total Sales (₹)',
-                data: <%- JSON.stringify(salesData.map(s => s.revenue || 0)) || '[61539.20]' %>,
-                fill: false,
-                borderColor: 'rgba(255, 99, 132, 1)',
-                backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                tension: 0.1
-            }]
-        },
-        options: {
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    title: { display: true, text: 'Sales (₹)' },
-                    ticks: {
-                        callback: function(value) { return '₹' + value.toLocaleString(); }
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Revenue (₹)' }
                     }
                 },
-                x: {
-                    title: { display: true, text: 'Date' }
+                plugins: {
+                    legend: { display: true }
                 }
-            },
-            plugins: {
-                legend: { display: true }
             }
-        }
-    });
-</script>
+        });
 
-<%- include("../../views/partials/admin/footer") %>
+        const bestCategoriesCtx = document.getElementById('bestCategoriesChart').getContext('2d');
+         const bestCategoriesChart = new Chart(bestCategoriesCtx, {
+            type: 'bar',
+            data: {
+                labels: <%- JSON.stringify(bestCategories.map(c => c.name)) %>,
+                datasets: [{
+                    label: 'Revenue (₹)',
+                    data: <%- JSON.stringify(bestCategories.map(c => c.revenue)) %>,
+                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Revenue (₹)' }
+                    }
+                },
+                plugins: {
+                    legend: { display: true }
+                }
+            }
+        });
+  
+  
+  
+const salesChartCtx = document.getElementById('salesChart').getContext('2d');
+const salesLabels = <%- JSON.stringify((salesData && salesData.length > 0) ? salesData.map(s => s.date) : []) %>;
+const salesValues = <%- JSON.stringify((salesData && salesData.length > 0) ? salesData.map(s => s.revenue) : []) %>;
+
+if (salesLabels.length > 0 && salesValues.length > 0) {
+  new Chart(salesChartCtx, {
+    type: 'line',
+    data: {
+      labels: salesLabels,
+      datasets: [{
+        label: 'Total Sales (₹)',
+        data: salesValues,
+        borderColor: 'rgba(75, 192, 192, 1)',
+        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 5,
+        pointBackgroundColor: 'rgba(75, 192, 192, 1)'
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: true },
+        tooltip: { enabled: true }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          suggestedMax: Math.max(...salesValues) + 2000, 
+          ticks: {
+            callback: (value) => '₹' + value.toLocaleString()
+          },
+          title: { display: true, text: 'Revenue (₹)' }
+        },
+        x: {
+          title: { display: true, text: 'Date' }
+        }
+      }
+    }
+  });
+} else {
+  // Show a friendly message if no data
+  salesChartCtx.font = "16px Arial";
+  salesChartCtx.fillText("No sales data available for the selected range", 20, 40);
+}
+
+    </script>
+
+    <%- include("../../views/partials/admin/footer") %>

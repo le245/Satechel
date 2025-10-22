@@ -169,7 +169,7 @@
             height: 200px;
             overflow: hidden;
             background-color: #f0f0f0;
-            z-index: 1; /* Lower than wishlist-btn */
+            z-index: 1; 
         }
 
         .product-image img {
@@ -183,47 +183,38 @@
             transform: scale(1.05);
         }
 
-        .wishlist-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(255, 255, 255, 0.8);
-            border: none;
-            border-radius: 50%;
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            z-index: 10; /* Ensure it stays above other elements */
-            outline: none; /* Remove default outline */
-        }
+  .wishlist-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #333; 
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 10;
+    outline: none;
+}
 
-        .wishlist-btn:hover {
-            background: #fff;
-            transform: scale(1.1);
-        }
+.wishlist-btn i {
+    color: #fff; 
+    font-size: 20px;
+}
 
-        .wishlist-btn i {
-            color: #ff5757;
-            font-size: 20px; /* Slightly larger for visibility */
-        }
 
-        .wishlist-btn.active {
-            background: #ff5757;
-            color: white;
-        }
+.wishlist-btn.active {
+    background: #fff; 
+}
 
-        .wishlist-btn.active i {
-            color: white;
-        }
+.wishlist-btn.active i {
+    color: #333; 
+}
 
-        .wishlist-btn.active:hover {
-            background: #e04e4e;
-            transform: scale(1.1);
-        }
 
         .product-badge {
             position: absolute;
@@ -266,6 +257,19 @@
             font-weight: 500;
             color: #333;
         }
+        .offer-details {
+    margin: 10px 0;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-light)
+}
+
+.offer-type {
+    background-color: #ffe6e6; 
+    padding: 5px 10px;
+    border-radius: 4px;
+    display: inline-block;
+}
 
         .product-rating {
             margin-bottom: 10px;
@@ -416,12 +420,105 @@
                 grid-template-columns: 1fr;
             }
         }
+
+.sort-select {
+    /* Layout & Sizing */
+    padding: 12px 40px 12px 16px;
+    min-width: 200px;
+    
+    /* Typography */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: #2c3e50;
+    
+    /* Visual Styling */
+    background-color: #ffffff;
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 12px;
+    
+    /* Border & Outline */
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    outline: none;
+    
+    /* Interaction */
+    cursor: pointer;
+    transition: all 0.3s ease;
+    
+    /* Remove default arrow */
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.sort-select:hover {
+    border-color: #3498db;
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.15);
+    background-color: #fafbfc;
+}
+
+.sort-select:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    background-color: #ffffff;
+}
+
+.sort-select:active {
+    transform: translateY(1px);
+}
+
+/* Option styling (limited browser support) */
+.sort-select option {
+    padding: 10px;
+    background-color: #ffffff;
+    color: #2c3e50;
+}
+
+.sort-select option:hover {
+    background-color: #f0f7ff;
+}
+
+/* Disabled state */
+.sort-select:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #f5f5f5;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .sort-select {
+        background-color: #333;
+        color: #e2e8f0;
+        border-color: #333;
+        background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23cbd5e0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    }
+    
+    .sort-select:hover {
+        background-color: #333;
+        border-color: #333;
+    }
+    
+    .sort-select:focus {
+        border-color: #333;
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+    }
+    
+    .sort-select option {
+        background-color: #333;
+        color: #e2e8f0;
+    }
+}
+
     </style>
 </head>
 <body>
     <!-- Breadcrumbs -->
     <nav class="breadcrumbs">
-        <a href="/">Home</a>
+        <a href="/home">Home</a>
         <span>></span>
         <a href="/shop">Shop</a>
         <% if (categoryFilter) { %>
@@ -447,13 +544,13 @@
                         <button type="button" class="clear-button" onclick="window.location.href='/shop'">Clear Filters</button>
                     <% } %>
                 </form>
-                <select name="sort" onchange="updateFormAndSubmit(this)">
-                    <option value="default" <%= sortBy === 'default' ? 'selected' : '' %>>Sort By: Newest</option>
-                    <option value="price-low-to-high" <%= sortBy === 'price-low-to-high' ? 'selected' : '' %>>Price: Low to High</option>
-                    <option value="price-high-to-low" <%= sortBy === 'price-high-to-low' ? 'selected' : '' %>>Price: High to Low</option>
-                    <option value="aA-zZ" <%= sortBy === 'aA-zZ' ? 'selected' : '' %>>A-Z</option>
-                    <option value="zZ-aA" <%= sortBy === 'zZ-aA' ? 'selected' : '' %>>Z-A</option>
-                </select>
+                <select name="sort" class="sort-select" onchange="updateFormAndSubmit(this)">
+    <option value="default" <%= sortBy === 'default' ? 'selected' : '' %>>Sort By: Newest</option>
+    <option value="price-low-to-high" <%= sortBy === 'price-low-to-high' ? 'selected' : '' %>>Price: Low to High</option>
+    <option value="price-high-to-low" <%= sortBy === 'price-high-to-low' ? 'selected' : '' %>>Price: High to Low</option>
+    <option value="aA-zZ" <%= sortBy === 'aA-zZ' ? 'selected' : '' %>>A-Z</option>
+    <option value="zZ-aA" <%= sortBy === 'zZ-aA' ? 'selected' : '' %>>Z-A</option>
+</select>
             </div>
         </div>
 
@@ -483,9 +580,11 @@
                     <div class="product-card" onclick="window.location.href='/product-details/<%= product._id %>'">
                         <div class="product-image">
                             <img src="<%= product.productImage && product.productImage.length > 0 ? product.productImage[0] : '/api/placeholder/300/300' %>" alt="<%= product.productName || 'No image' %>">
-                            <button class="wishlist-btn <%= product.inWishlist ? 'active' : '' %>" onclick="addToWishlist('<%= product._id %>', event)">
-                                <i class="fas fa-heart<%= product.inWishlist ? '' : '-o' %>"></i>
-                            </button>
+                               <button class="wishlist-btn <%= product.inWishlist ? 'active' : '' %>" 
+        onclick="addToWishlist('<%= product._id %>', event)">
+    <i class="fas fa-heart<%= product.inWishlist ? '' : '-o' %>"></i>
+</button>
+
                             <% if (new Date(product.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)) { %>
                                 <div class="product-badge">NEW</div>
                             <% } %>
@@ -493,24 +592,37 @@
                                 <div class="product-status"><%= product.status %></div>
                             <% } %>
                         </div>
-                        <div class="product-info">
-                            <div class="product-category">
-                                <%= product.category && product.category.name ? product.category.name : 'Unknown Category' %>
-                            </div>
-                            <h3 class="product-name">
-                                <%= product.productName || 'Unnamed Product' %>
-                            </h3>
-                           
-                            <div class="product-price">
-                                <div class="price">
-                                    <% if (product.regularPrice > 0) { %>
-                                        <span>₹<%= Number(product.regularPrice).toFixed(2) %></span>
-                                    <% } else { %>
-                                        <span class="unavailable">Price Unavailable</span>
-                                    <% } %>
-                                </div>
-                            </div>
-                        </div>
+                       <div class="product-info">
+                        <div class="product-category">
+                       <%= product.category && product.category.name ? product.category.name : 'Unknown Category' %>
+                   </div>
+                  <h3 class="product-name">
+                  <%= product.productName || 'Unnamed Product' %>
+                 </h3>
+  <div class="offer-details">
+  <% if (product.discountPercent && product.discountPercent > 0) { %>
+    <span class="offer-type">
+      <% if (product.offerType === 'product') { %>
+        Product Offer: <%= product.discountPercent %>% Off
+      <% } else if (product.offerType === 'category') { %>
+        Category Offer: <%= product.discountPercent %>% Off
+      <% } %>
+    </span>
+  <% } %>
+</div>
+
+<div class="product-price">
+  <% if (product.discountPercent && product.discountPercent > 0) { %>
+    <span>₹<%= parseFloat(product.finalPrice) %></span>
+    <span style="text-decoration: line-through; color: #888; margin-left:8px;">
+      ₹<%= Number(product.regularPrice).toFixed(2) %>
+    </span>
+  <% } else { %>
+    <span>₹<%= Number(product.regularPrice).toFixed(2) %></span>
+  <% } %>
+</div>
+        
+</div>
                     </div>
                 <% }); %>
             <% } else { %>
@@ -547,42 +659,41 @@
         }
 
         function addToWishlist(productId, event) {
-            event.preventDefault();
-            event.stopPropagation();
-            
-            const button = event.target.closest('.wishlist-btn');
-            const icon = button.querySelector('i');
-            const isWishlisted = button.classList.contains('active');
+    event.preventDefault();
+    event.stopPropagation();
 
-            fetch('/addWishlist', {
-                method: isWishlisted ? 'DELETE' : 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ productId })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    button.classList.toggle('active');
-                    if (isWishlisted) {
-                        icon.classList.remove('fa-heart');
-                        icon.classList.add('fa-heart-o');
-                        showToast('Product removed from wishlist!', 'info');
-                    } else {
-                        icon.classList.remove('fa-heart-o');
-                        icon.classList.add('fa-heart');
-                        showToast('Product added to wishlist!', 'success');
-                    }
-                } else {
-                    showToast(data.message || 'Failed to update wishlist', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showToast('Something went wrong. Please try again.', 'error');
-            });
+    const button = event.target.closest('.wishlist-btn');
+    const icon = button.querySelector('i');
+    const isWishlisted = button.classList.contains('active');
+
+   fetch(isWishlisted ? '/removeFromWishlist' : '/addWishlist', {
+    method: isWishlisted ? 'DELETE' : 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ productId })
+})
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            button.classList.toggle('active');
+            if (isWishlisted) {
+              icon.classList.remove('fa-heart-o');
+                icon.classList.add('fa-heart');
+                showToast('Product removed from wishlist!', 'success');
+            } else {
+                icon.classList.remove('fa-heart-o');
+                icon.classList.add('fa-heart');
+                showToast('Product added to wishlist!', 'success');
+            }
+        } else {
+            showToast(data.message || 'Failed to update wishlist', 'error');
         }
+    })
+    .catch(err => {
+        console.error(err);
+        showToast('Something went wrong. Please try again.', 'error');
+    });
+}
+
 
         function showToast(message, type) {
             Swal.fire({

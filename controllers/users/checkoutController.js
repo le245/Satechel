@@ -21,6 +21,8 @@ const razorpayInstance = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
+
+
 const getCheckOut = async (req, res) => {
   try {
     const userId = req.session.user;
@@ -28,9 +30,49 @@ const getCheckOut = async (req, res) => {
       return res.redirect("/login");
     }
 
-    const cart = await Cart.findOne({ userId }).populate("items.productId");
+    const email = req.session.userEmail;
+    const userData = await User.findOne({ email, isBlocked: false }).lean();
+    if (!userData) {
+      return res.render("blocked", { message: "User is blocked by admin" });
+    }
+
+    const cart = await Cart.findOne({ userId }).populate({
+      path: "items.productId",
+      populate: { path: "category" }
+    });
+
     if (!cart || cart.items.length === 0) {
       return res.redirect("/cart");
+    }
+
+   
+    const invalidItems = cart.items.filter(
+      item => item.productId.isBlocked || !item.productId.category?.isListed
+    );
+
+    if (invalidItems.length > 0) {
+  
+      cart.items = cart.items.filter(
+        item => !item.productId.isBlocked && item.productId.category?.isListed
+      );
+      await cart.save();
+
+      return res.render("cart", {
+        cartItems: cart.items.map(item => ({
+          id: item._id.toString(),
+          imageUrl: item.productId.productImage[0] || "/default-image.jpg",
+          name: item.productId.productName || "Unknown Product",
+          price: parseFloat(item.productId.regularPrice || 0),
+          quantity: item.quantity,
+          stock: item.productId.quantity,
+          isBlocked: item.productId.isBlocked || false,
+        })),
+        subtotal: 0,
+        discount: 0,
+        total: 0,
+        user: userData,
+        message: "Some products in your cart are unavailable (blocked or unlisted) and have been removed.",
+      });
     }
 
     const user = await User.findById(userId);
@@ -40,7 +82,7 @@ const getCheckOut = async (req, res) => {
     const coupons = await Coupon.find({
       isList: true,
       expireOn: { $gt: new Date() },
-      usedBy: { $nin: [userId] }, 
+      usedBy: { $nin: [userId] },
     });
 
     res.render("checkout", {
@@ -50,13 +92,14 @@ const getCheckOut = async (req, res) => {
       Coupon: coupons,
     });
   } catch (error) {
-    res
-      .status(STATUS_CODES.SERVER_ERROR)
-      .render("pageNotFound", {
-        message: "Server error, please try again later",
-      });
+    console.error("Error in getCheckOut:", error);
+    res.status(STATUS_CODES.SERVER_ERROR).render("pageNotFound", {
+      message: "Server error, please try again later",
+    });
   }
 };
+
+
 const placeOrder = async (req, res) => {
   try {
     const userId = req.session.user;
@@ -74,9 +117,7 @@ const placeOrder = async (req, res) => {
       return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "User address not found" });
     }
 
-    const selectedAddress = userAddress.address.find(
-      (addr) => addr._id.toString() === addressId
-    );
+    const selectedAddress = userAddress.address.find((addr) => addr._id.toString() === addressId);
     if (!selectedAddress) {
       return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Selected address not found" });
     }
@@ -113,9 +154,7 @@ const placeOrder = async (req, res) => {
         return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Invalid or expired coupon" });
       }
 
-      const alreadyUsed = coupon.usedBy.some(
-        (id) => id.toString() === userId.toString()
-      );
+      const alreadyUsed = coupon.usedBy.some( (id) => id.toString() === userId.toString());
 
       if (alreadyUsed) {
         return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Coupon already used" });
@@ -422,9 +461,7 @@ const createRazorpayOrder = async (req, res) => {
         .json({ success: false, message: "User address not found" });
     }
 
-    const selectedAddress = userAddress.address.find(
-      (addr) => addr._id.toString() === addressId
-    );
+    const selectedAddress = userAddress.address.find((addr) => addr._id.toString() === addressId);
     if (!selectedAddress) {
       return res
         .status(STATUS_CODES.BAD_REQUEST)
@@ -454,11 +491,11 @@ const createRazorpayOrder = async (req, res) => {
         });
       }
     }
+   
+    
 
     const subTotal = cart.items.reduce(
-      (total, item) => total + item.price * item.quantity,
-      0
-    );
+      (total, item) => total + item.price * item.quantity,0 );
    
     let discount = 0;
     if (couponCode) {
@@ -472,9 +509,7 @@ const createRazorpayOrder = async (req, res) => {
         return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Invalid or expired coupon" });
       }
 
-      const alreadyUsed = coupon.usedBy.some(
-        (id) => id.toString() === userId.toString()
-      );
+      const alreadyUsed = coupon.usedBy.some( (id) => id.toString() === userId.toString());
 
       if (alreadyUsed) {
         return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Coupon already used" });
@@ -494,7 +529,7 @@ const createRazorpayOrder = async (req, res) => {
     if (Math.abs(amount - expectedAmountInPaise) > 1) {
       return res
         .status(STATUS_CODES.BAD_REQUEST)
-        .json({ success: false, message: "Amount mismatch" });
+        .json({ success: false, message: "Error" });
     }
     function generateTenDigitNumber() {
       return Math.floor(1000000000 + Math.random() * 9000000000);
@@ -574,6 +609,7 @@ const razorPayment = async (req, res) => {
       currency: "INR",
       receipt: `receipt_${Date.now()}`,
     });
+
     res.json({ success: true, order });
   } catch (error) {
 
@@ -583,8 +619,7 @@ const razorPayment = async (req, res) => {
 
 const verifyRazorPayment = async (req, res) => {
   try {
-    const { razorpayPaymentId, razorpayOrderId, razorpaySignature, orderId } =
-      req.body;
+    const { razorpayPaymentId, razorpayOrderId, razorpaySignature, orderId } =req.body;
 
     const secret = process.env.RAZORPAY_KEY_SECRET;
     const generated_signature = crypto
@@ -645,26 +680,18 @@ const orderSuccess = async (req, res) => {
     const { orderId } = req.params;
 
     if (!user) {
-      return res
-        .status(STATUS_CODES.SERVER_ERROR)
-        .json({ success: false, message: "User not authenticated" });
+      return res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, message: "User not authenticated" });
     }
 
     let order;
     if (mongoose.isValidObjectId(orderId)) {
-      order = await Order.findById(orderId)
-        .populate("items.productId")
-        .lean();
+      order = await Order.findById(orderId).populate("items.productId").lean();
     } else {
-      order = await Order.findOne({ orderId })
-        .populate("items.productId")
-        .lean();
+      order = await Order.findOne({ orderId }).populate("items.productId").lean();
     }
 
     if (!order) {
-      return res
-        .status(STATUS_NOT_FOUND)
-        .json({ success: false, message: "Order not found!" });
+      return res.status(STATUS_NOT_FOUND).json({ success: false, message: "Order not found!" });
     }
 
   
@@ -673,11 +700,12 @@ const orderSuccess = async (req, res) => {
 
   } catch (error) {
    
-    return res
-      .status(STATUS_SERVER_ERROR)
-      .json({ success: false, message: "Internal server error" });
+    return res.status(STATUS_SERVER_ERROR).json({ success: false, message: "Internal server error" });
   }
 };
+
+
+
 const handlePaymentDismissal = async (req, res) => {
   try {
     const { orderId } = req.body;
@@ -731,56 +759,44 @@ const handlePaymentFailure = async (req, res) => {
     );
 
     if (!order) {
-      return res
-        .status(STATUS_NOT_FOUND)
-        .json({ success: false, message: "Order not found" });
+      return res.status(STATUS_NOT_FOUND).json({ success: false, message: "Order not found" });
     }
 
-    res
-      .status(STATUS_CODES.OK)
-      .json({ success: true, message: "Payment failure recorded" });
+    res.status(STATUS_CODES.OK).json({ success: true, message: "Payment failure recorded" });
   } catch (error) {
     console.error("Payment failure handling error:", error);
-    res
-      .status(STATUS_SERVER_ERROR)
-      .json({ success: false, message: "Failed to handle payment failure" });
+    res.status(STATUS_SERVER_ERROR).json({ success: false, message: "Failed to handle payment failure" });
   }
 };
+
+
+
 const retryPayment = async (req, res) => {
   try {
     const { orderId } = req.body;
 
     if (!orderId || !mongoose.isValidObjectId(orderId)) {
-      return res
-        .status(STATUS_CODES.BAD_REQUEST)
-        .json({
-          success: false,
-          message: "Order ID is required and must be valid",
-        });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({success: false, message: "Order ID is required and must be valid",});
     }
 
     const order = await Order.findById(orderId).populate("items.productId");
     
     if (!order) {
-      return res
-        .status(STATUS_NOT_FOUND)
-        .json({ success: false, message: "Order not found" });
+      return res.status(STATUS_NOT_FOUND).json({ success: false, message: "Order not found" });
     }
 
   
 
     const eligibleStatuses = ["PaymentFailed", "Pending", "Payment Pending"];
     if (!eligibleStatuses.includes(order.status)) {
-      return res
-        .status(STATUS_CODES.BAD_REQUEST)
-        .json({ success: false, message: "Order is not eligible for retry" });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Order is not eligible for retry" });
     }
 
     for (const item of order.items) {
       
       
       const product = item.productId;
-      if (!product || product.isDeleted || product.isBlocked) {
+      if (!product  || product.isBlocked) {
         return res.status(STATUS_CODES.BAD_REQUEST).json({
           success: false,
           message: `Product ${product?.productName || "Unknown"} is not available`,
@@ -844,20 +860,12 @@ const loadTransactionFailurePage = async (req, res) => {
     const { orderId } = req.query;
 
     if (!orderId || !mongoose.isValidObjectId(orderId)) {
-      return res.status(STATUS_CODES.BAD_REQUEST).render("error", {
-        message: "Invalid or missing order ID",
-        user: req.session.user,
-      });
+      return res.status(STATUS_CODES.BAD_REQUEST).render("error", {message: "Invalid or missing order ID",user: req.session.user,});
     }
-    const order = await Order.findById(orderId)
-      .populate("items.productId")
-      .lean();
+    const order = await Order.findById(orderId).populate("items.productId").lean();
 
     if (!order) {
-      return res.status(STATUS_NOT_FOUND).render("error", {
-        message: "Order not found",
-        user: req.session.user,
-      });
+      return res.status(STATUS_NOT_FOUND).render("error", {message: "Order not found",user: req.session.user});
     }
 
     const user = req.session.user;
@@ -884,28 +892,23 @@ const loadTransactionFailurePage = async (req, res) => {
 const downloadInvoice = async (req, res) => {
   try {
     const orderId = req.params.orderId;
-    const order = await Order.findById(orderId)
-      .populate("items.productId")
-      .populate("address");
+    const order = await Order.findById(orderId).populate("items.productId").populate("address");
 
     if (!order) {
-      return res
-        .status(STATUS_NOT_FOUND)
-        .json({ success: false, message: "Order not found" });
+      return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: "Order not found" });
     }
 
-    const allowedStatuses = [
-      
-      "Delivered",
-     
-    ];
-    if (!allowedStatuses.includes(order.status)) {
+    if (!order.status || order.status.toLowerCase() !== "delivered") {
       return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
-        message:
-          "Invoice can only be downloaded for orders in  Delivered"
+        message: "Invoice can only be downloaded for orders in Delivered",
       });
     }
+
+    
+    const subTotal = Number(order.subTotal) || 0;
+    const discount = Number(order.discount) || 0;
+    const finalAmount = Number(order.finalAmount) || 0;
 
     const data = {
       documentTitle: "INVOICE",
@@ -924,73 +927,64 @@ const downloadInvoice = async (req, res) => {
       },
       client: {
         company: order.address?.name || "Customer",
-        address: `${order.address?.landMark || ""}, ${
-          order.address?.city || ""
-        }`,
+        address: `${order.address?.landMark || ""}, ${order.address?.city || ""}`,
         zip: order.address?.pincode || "",
         city: order.address?.state || "",
         country: order.address?.country || "India",
       },
       information: {
         number: order.orderId,
-        date: moment(order.createOn).format("YYYY-MM-DD HH:mm:ss"),
+        date: order.createOn ? moment(order.createOn).format("YYYY-MM-DD HH:mm:ss") : moment().format("YYYY-MM-DD HH:mm:ss"),
         dueDate: order.deliveryDate
           ? moment(order.deliveryDate).format("YYYY-MM-DD HH:mm:ss")
           : moment().add(7, "days").format("YYYY-MM-DD HH:mm:ss"),
       },
       products: order.items
-        .filter((item) => item.cancelStatus !== "Cancelled")
-        .map((item) => ({
-          quantity: item.quantity,
+        .filter(item => item.cancelStatus !== "Cancelled")
+        .map(item => ({
+          quantity: item.quantity || 1,
           description: item.productId?.productName || "Product",
           tax: 0,
-          price: item.price,
+          price: Number(item.price) || 0,
         })),
       bottomNotice:
-        `Subtotal: ₹${order.originalSubTotal.toFixed(2)}\n` +
-        (order.discount > 0
-          ? `Discount: -₹${order.discount.toFixed(2)}\n`
-          : "") +
+        `Subtotal: ₹${subTotal.toFixed(2)}\n` +
+        (discount > 0 ? `Discount: -₹${discount.toFixed(2)}\n` : "") +
         (order.couponApplied ? `Coupon Applied: Yes\n` : "") +
-        `Final Amount: ₹${order.originalFinalAmount.toFixed(2)}`,
+        `Final Amount: ₹${finalAmount.toFixed(2)}`,
     };
 
     const result = await easyinvoice.createInvoice(data);
+
     const invoicePath = path.resolve(
       "public/invoice",
       `invoice_${order.orderId}.pdf`
     );
 
-    const invoiceDir = path.dirname(invoicePath);
-    if (!fs.existsSync(invoiceDir)) {
-      fs.mkdirSync(invoiceDir, { recursive: true });
-    }
-
+    fs.mkdirSync(path.dirname(invoicePath), { recursive: true });
     fs.writeFileSync(invoicePath, result.pdf, "base64");
 
-    res.download(invoicePath, `invoice_${order.orderId}.pdf`, (err) => {
+    res.download(invoicePath, `invoice_${order.orderId}.pdf`, err => {
       if (err) {
-      
-        res
-          .status(STATUS_SERVER_ERROR)
-          .json({ success: false, message: "Error downloading the invoice" });
+        console.error("Download error:", err);
+        return res.status(STATUS_CODES.SERVER_ERROR).json({ success: false, message: "Error downloading invoice" });
       }
+      
       try {
         fs.unlinkSync(invoicePath);
       } catch (cleanupError) {
-        console.error("Error cleaning up invoice file:", cleanupError);
+        console.error("Invoice cleanup error:", cleanupError);
       }
     });
   } catch (error) {
     console.error("Error generating invoice:", error);
-    res
-      .status(STATUS_SERVER_ERROR)
-      .json({
-        success: false,
-        message: "An error occurred while generating the invoice",
-      });
+    res.status(STATUS_CODES.SERVER_ERROR).json({
+      success: false,
+      message: "An error occurred while generating the invoice",
+    });
   }
 };
+
 
 module.exports = {
   getCheckOut,

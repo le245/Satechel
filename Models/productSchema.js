@@ -7,20 +7,24 @@ const productSchema = new Schema(
       type: String,
       required: true,
     },
+
     description: {
-      type: String,
+      type: String, 
       required: true,
     },
+
     category: {
       type: Schema.Types.ObjectId,
       required: true,
       ref: 'Category',
     },
+
     productImage: {
       type: [String],
       required: false,
       default: [],
     },
+
     isBlocked: {
       type: Boolean,
       default: false,
@@ -32,6 +36,7 @@ const productSchema = new Schema(
       required: true,
       default: 'Available',
     },
+
     quantity: {
       type: Number,
       required: true,
@@ -49,13 +54,40 @@ const productSchema = new Schema(
       min: 0,
       max: 100,
     },
-      categoryOffer: {
-      type: Number,
-      default: 0,
-      min: 0,
-      max: 100,
-    },
-    
+
+  
+
+    reviews:[
+
+      {
+
+        userId:{
+          type:Schema.Types.ObjectId,
+          ref:'User',
+          required:true
+        },
+
+         rating: {
+          type: Number,
+          required: true,
+          min: 1,
+          max: 5,
+        },
+        review: {
+          type: String,
+          required: true,
+        },
+
+         createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+
+
+      }
+    ]
+   
+   
  
   },
   

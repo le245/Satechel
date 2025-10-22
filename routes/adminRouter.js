@@ -50,8 +50,8 @@ router.get("/unblockCustomer",isAuthenticated,customerController.unblockCustomer
 //category
 router.get("/category",isAuthenticated,categoryController.categoryInfo);
 router.post("/addCategory",isAuthenticated,categoryController.addCategory)
-router.get("/listCategory",isAuthenticated,categoryController.getListCategory);
-router.get("/unlistCategory",isAuthenticated,categoryController.getUnlistCategory);
+router.get("/listCategory",isAuthenticated,categoryController.listCategory);
+router.get("/unlistCategory",isAuthenticated,categoryController.unlistCategory);
 router.get("/editCategory",isAuthenticated,categoryController.getEditCategory)
 router.post("/editCategory/:id",isAuthenticated,categoryController.editCategory)
 

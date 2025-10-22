@@ -9,6 +9,7 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome for icons -->
+     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         .content-section {
@@ -47,13 +48,12 @@
             <!-- Breadcrumbs -->
             <nav class="mb-6 max-w-md mx-auto">
                 <ol class="flex items-center space-x-2 text-sm text-gray-600">
-                    <li><a href="/" class="hover:text-gray-800 transition">Home</a></li>
+                    <li><a href="/home" class="hover:text-gray-800 transition">Home</a></li>
                     <li><span class="mx-2">></span></li>
                     <li class="font-medium text-gray-800">Profile</li>
                 </ol>
             </nav>
 
-            <!-- Content Sections -->
             <!-- Dashboard Section -->
             <div id="dashboard" class="content-section active">
                 <div class="bg-white rounded-lg shadow-md p-8 max-w-md mx-auto border border-gray-300 mb-8">
@@ -63,18 +63,46 @@
                             <i class="fas fa-user text-gray-500 text-4xl"></i>
                         </div>
                     </div>
-                    <div class="space-y-4">
-                        <div class="flex justify-between">
-                            <span class="text-gray-700 font-semibold">Name:</span>
-                            <span class="text-gray-600"><%= user.name %></span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-700 font-semibold">Email:</span>
-                            <span class="text-gray-600"><%= user.email %></span>
-                        </div>
-                    </div>
+  <div class="space-y-4">
+    <!-- Name Section -->
+ 
+<div class="flex justify-between items-center">
+  <span class="text-gray-700 font-semibold">Name:</span>
+  <div class="flex items-center">
+    <span id="name-display" class="text-gray-600"><%= user.name %></span>
+    <button onclick="toggleEdit('name')" class="ml-2 text-gray-500 hover:text-gray-700">
+      <i class="fas fa-edit text-sm"></i>
+    </button>
+ <form id="name-form" class="hidden flex items-center" onsubmit="submitName(event)">
+
+      <div class="flex flex-col">
+        <input type="text" name="name" value="<%= user.name %>" 
+               class="border border-gray-300 rounded px-2 py-1 text-sm">
+        <span id="name-error" class="text-red-500 text-xs hidden">Name cannot be empty</span>
+      </div>
+     <button type="submit" 
+        class="ml-2 bg-gray-500 text-white px-2 py-1 rounded hover:bg-gray-600 text-sm">
+    Save
+</button>
+
+      <button type="button" onclick="toggleEdit('name')" 
+              class="ml-1 bg-gray-300 text-gray-700 px-2 py-1 rounded hover:bg-gray-400 text-sm">
+        Cancel
+      </button>
+    </form>
+  </div>
+</div>
+
+
+    <!-- Email Section (Display only, no edit) -->
+    <div class="flex justify-between items-center">
+        <span class="text-gray-700 font-semibold">Email:</span>
+        <div class="flex items-center">
+            <span id="email-display" class="text-gray-600"><%= user.email %></span>
+        </div>
+    </div>
+</div>
                     <div class="mt-6 flex justify-center space-x-4">
-                        <!-- <a href="/change-email" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition font-semibold">Change Email</a> -->
                         <a href="/change-password" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition font-semibold">Change Password</a>
                     </div>
                 </div>
@@ -104,7 +132,7 @@
                                             <a href="/editAddress?id=<%= address._id %>" class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition font-semibold">
                                                 <i class="fas fa-edit mr-1"></i>Edit
                                             </a>
-                                            <a href="/deleteAddress?id=<%=address._id%>" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition font-semibold delete-address" data-id="<%= address._id %>" onclick="return confirm('Are you sure you want to delete this address? ')">
+                                            <a href="/deleteAddress?id=<%=address._id%>" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition font-semibold delete-address" data-id="<%= address._id %>">
                                                 <i class="fas fa-trash mr-1"></i>Delete
                                             </a>
                                         </div>
@@ -132,382 +160,441 @@
                 </div>
             </div>
 
- <% const formatCurrency = (amount) => `₹${parseFloat(amount || 0).toFixed(2)}` %>
-<% const formatDate = (date) => new Date(date).toLocaleString('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true
-}) %>
+            <% const formatCurrency = (amount) => `₹${parseFloat(amount || 0).toFixed(2)}` %>
+            <% const formatDate = (date) => new Date(date).toLocaleString('en-IN', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            }) %>
 
-<div id="orders" class="content-section">
-    <div class="bg-white rounded-lg shadow-md p-8 max-w-4xl mx-auto border border-gray-300 mb-8">
-        <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-gray-300 pb-2 text-center">Your Orders</h2>
-        <div class="overflow-x-auto">
-            <table class="w-full text-left">
-                <thead>
-                    <tr class="border-b">
-                        <th class="p-2">Order ID</th>
-                        <th class="p-2">Products</th>
-                        <th class="p-2">Status</th>
-                        <th class="p-2">Total</th>
-                        <th class="p-2">Ordered At</th>
-                        <th class="p-2">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% if (orders && Array.isArray(orders) && orders.length > 0) { %>
-                        <% orders.forEach(order => { %>
-                            <tr class="border-b hover:bg-gray-50">
-                                <td class="p-2">ORD<%= order?.orderId || 'N/A' %></td>
-                                <td class="p-2">
-                                    <% if (order.items && order.items.length > 0) { %>
-                                        <% order.items.forEach(item => { %>
-                                            <div>
-                                                <%= item.productId?.productName || 'Unknown Product' %> 
-                                                (Qty: <%= item.quantity %>)
-                                            </div>
-                                        <% }) %>
-                                    <% } else { %>
-                                        No items
-                                    <% } %>
-                                </td>
-                                <td class="p-2">
-                                    <span class="status-badge status-<%= order?.status?.toLowerCase() || 'pending' %>">
-                                        <%= order?.status || 'Pending' %>
-                                    </span>
-                                </td>
-                                <td class="p-2">
-                                    <%= formatCurrency(
-                                        (order?.status === 'CANCELLED' || order?.status === 'RETURNED') && order.originalFinalAmount 
-                                        ? order.originalFinalAmount 
-                                        : (order.finalAmount || order.totalPrice || order.originalFinalAmount || 0)
-                                    ) %>
-                                </td>
-                                <td class="p-2"><%= formatDate(order?.createOn) %></td>
-                                <td class="p-2">
-                                    <a href="/userProfile/order-details/<%= order?.orderId || '' %>" 
-                                       class="text-blue-600 hover:text-blue-800 font-medium">
-                                        View Details
-                                    </a>
-                                </td>
-                            </tr>
-                        <% }); %>
-                    <% } else { %>
-                        <tr>
-                            <td colspan="6" class="p-2 text-center text-gray-600">No orders found</td>
-                        </tr>
-                    <% } %>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Orders Pagination -->
-        <% if (orderPagination.totalOrderPages > 1) { %>
-            <div class="flex justify-center mt-4 space-x-1">
-                <% for (let i = 1; i <= orderPagination.totalOrderPages; i++) { %>
-                    <a href="?orderPage=<%= i %>&walletPage=<%= walletPagination.walletPage %>" 
-                       class="px-3 py-1 border rounded 
-                       <% if (orderPagination.orderPage === i) { %>
-                           bg-gray-800 text-white
-                       <% } else { %>
-                           bg-white text-gray-800 hover:bg-gray-200
-                       <% } %>">
-                        <%= i %>
-                    </a>
-                <% } %>
-            </div>
-        <% } %>
-    </div>
-</div>
-
-<style>
-    .status-badge {
-        display: inline-block;
-        padding: 5px 12px;
-        border-radius: 20px;
-        font-size: 14px;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    .status-pending {
-        background-color: #fff4d4;
-        color: #9a7d27;
-    }
-    .status-confirmed {
-        background-color: #d4f4e2;
-        color: #2e7d32;
-    }
-    .status-shipped {
-        background-color: #e3f2fd;
-        color: #1565c0;
-    }
-    .status-delivered {
-        background-color: #e8f5e9;
-        color: #388e3c;
-    }
-    .status-cancelled {
-        background-color: #ffebee;
-        color: #c62828;
-    }
-</style>
-
-
- <!-- Wallet Section -->
- <!-- <div id="wallet" class="content-section">
-                    <div class="profile-card bg-white p-4 rounded">
-                        <h4 class="mb-4">Wallet Status</h4>
-                        <div class="text-center py-4">
-                            <div class="mb-4">
-                                <i class="fas fa-wallet fa-3x text-primary"></i>
-                            </div>
-                            <h3 class="mb-2">₹<%= user.wallet.toFixed(2)%>
-                            </h3>
-                            <p class="text-muted">Current Balance</p>
-                        </div>
+            <!-- Orders Section -->
+            <div id="orders" class="content-section">
+                <div class="bg-white rounded-lg shadow-md p-8 max-w-4xl mx-auto border border-gray-300 mb-8">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-gray-300 pb-2 text-center">Your Orders</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="border-b">
+                                    <th class="p-2">Order ID</th>
+                                    <th class="p-2">Products</th>
+                                    <th class="p-2">Status</th>
+                                    <th class="p-2">Total</th>
+                                    <th class="p-2">Ordered At</th>
+                                    <th class="p-2">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (orders && Array.isArray(orders) && orders.length > 0) { %>
+                                    <% orders.forEach(order => { %>
+                                        <tr class="border-b hover:bg-gray-50">
+                                            <td class="p-2">ORD<%= order?.orderId || 'N/A' %></td>
+                                            <td class="p-2">
+                                                <% if (order.items && order.items.length > 0) { %>
+                                                    <% order.items.forEach(item => { %>
+                                                        <div>
+                                                            <%= item.productId?.productName || 'Unknown Product' %> 
+                                                            (Qty: <%= item.quantity %>)
+                                                        </div>
+                                                    <% }) %>
+                                                <% } else { %>
+                                                    No items
+                                                <% } %>
+                                            </td>
+                                            <td class="p-2">
+                                                <span class="status-badge status-<%= order?.status?.toLowerCase() || 'pending' %>">
+                                                    <%= order?.status || 'Pending' %>
+                                                </span>
+                                            </td>
+                                            <td class="p-2">
+                                                <%= formatCurrency(
+                                                    (order?.status === 'CANCELLED' || order?.status === 'RETURNED') && order.originalFinalAmount 
+                                                    ? order.originalFinalAmount 
+                                                    : (order.finalAmount || order.totalPrice || order.originalFinalAmount || 0)
+                                                ) %>
+                                            </td>
+                                            <td class="p-2"><%= formatDate(order?.createOn) %></td>
+                                            <td class="p-2">
+                                                <a href="/userProfile/order-details/<%= order?.orderId || '' %>" 
+                                                   class="text-blue-600 hover:text-blue-800 font-medium">
+                                                    View Details
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="6" class="p-2 text-center text-gray-600">No orders found</td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
                     </div>
-                </div> -->
-<div id="wallet" class="content-section">
-  <div class="profile-card bg-white p-4 rounded">
-    <h4 class="mb-4">Wallet Status</h4>
-    <div class="text-center py-4">
-      <div class="mb-4">
-        <i class="fas fa-wallet fa-3x text-primary"></i>
-      </div>
-      <h3 class="mb-2">₹<%= (user.wallet || 0).toFixed(2) %></h3>
-      <p class="text-muted">Current Balance</p>
-    </div>
-  </div>
-</div>
 
-<div id="wallet-history" class="content-section">
-  <div class="bg-white rounded-lg shadow-md p-8 max-w-4xl mx-auto border border-gray-300 mb-8">
-    <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-gray-300 pb-2 text-center">Wallet History</h2>
-    <div class="overflow-x-auto">
-      <table class="w-full text-left">
-        <thead>
-          <tr class="border-b font-semibold text-gray-700">
-            <th class="p-2">Date</th>
-            <th class="p-2">Type</th>   
-            <th class="p-2">Amount</th>
-            <th class="p-2">Product/Description</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% if (user.walletHistory && user.walletHistory.length > 0) { %>
-            <% user.walletHistory.forEach(transaction => { %>
-              <tr class="border-b">
-                <td class="p-2"><%= new Date(transaction.date).toLocaleDateString() %></td>
-                <td class="p-2 capitalize"><%= transaction.type %></td> 
-                <td class="p-2 font-semibold <%= transaction.type === 'credit' ? 'text-green-600' : 'text-red-600' %>">
-                  ₹<%= transaction.amount.toFixed(2) %>
-                </td>
-                <td class="p-2">
-                  <%= transaction.productId && transaction.productId.productName ? transaction.productId.productName : transaction.description || '—' %>
-                </td>
-              </tr>
-            <% }) %>
-          <% } else { %>
-            <tr>
-              <td colspan="4" class="p-2 text-center text-gray-600">No transactions found</td>
-            </tr>
-          <% } %>
-        </tbody>
-      </table>
-    </div>
+                    <!-- Orders Pagination -->
+                    <% if (orderPagination.totalOrderPages > 1) { %>
+                        <div class="flex justify-center mt-4 space-x-1">
+                            <% for (let i = 1; i <= orderPagination.totalOrderPages; i++) { %>
+                                <a href="?orderPage=<%= i %>&walletPage=<%= walletPagination.walletPage %>" 
+                                   class="px-3 py-1 border rounded 
+                                   <% if (orderPagination.orderPage === i) { %>
+                                       bg-gray-800 text-white
+                                   <% } else { %>
+                                       bg-white text-gray-800 hover:bg-gray-200
+                                   <% } %>">
+                                    <%= i %>
+                                </a>
+                            <% } %>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
 
-    <!-- Pagination -->
-    <% if (walletPagination.totalWalletPages > 1) { %>
-      <div class="flex justify-center mt-4 space-x-1">
-        <% for (let i = 1; i <= walletPagination.totalWalletPages; i++) { %>
-          <a href="?walletPage=<%= i %>" class="px-3 py-1 border rounded 
-            <% if (walletPagination.walletPage === i) { %>
-              bg-gray-800 text-white
-            <% } else { %>
-              bg-white text-gray-800 hover:bg-gray-200
-            <% } %>">
-            <%= i %>
-          </a>
-        <% } %>
-      </div>
-    <% } %>
-  </div>
-</div>
-
-
+            <!-- Wallet Status Section -->
+            <div id="wallet" class="content-section">
+                <div class="profile-card bg-white p-4 rounded">
+                    <h4 class="mb-4">Wallet Status</h4>
+                    <div class="text-center py-4">
+                        <div class="mb-4">
+                            <i class="fas fa-wallet fa-3x text-primary"></i>
+                        </div>
+                        <h3 class="mb-2">₹<%= (user.wallet || 0).toFixed(2) %></h3>
+                        <p class="text-muted">Current Balance</p>
+                    </div>
+                </div>
+            </div>
 
          
+            <div id="wallet-history" class="content-section">
+                <div class="bg-white rounded-lg shadow-md p-8 max-w-4xl mx-auto border border-gray-300 mb-8">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-gray-300 pb-2 text-center">Wallet History</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="border-b font-semibold text-gray-700">
+                                    <th class="p-2">Date</th>
+                                    <th class="p-2">Type</th>   
+                                    <th class="p-2">Amount</th>
+                                    <th class="p-2">Product Name</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (user.walletHistory && user.walletHistory.length > 0) { %>
+                                    <% user.walletHistory.forEach(transaction => { %>
+                                        <tr class="border-b">
+                                            <td class="p-2"><%= new Date(transaction.date).toLocaleDateString() %></td>
+                                            <td class="p-2 capitalize"><%= transaction.type %></td> 
+                                            <td class="p-2 font-semibold <%= transaction.type === 'credit' ? 'text-green-600' : 'text-red-600' %>">
+                                                ₹<%= transaction.amount.toFixed(2) %>
+                                            </td>
+                                            <td class="p-2">
+                                                <%= transaction.productId && transaction.productId.productName ? transaction.productId.productName : transaction.description || '—' %>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="4" class="p-2 text-center text-gray-600">No transactions found</td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <% if (walletPagination.totalWalletPages > 1) { %>
+                        <div class="flex justify-center mt-4 space-x-1">
+                            <% for (let i = 1; i <= walletPagination.totalWalletPages; i++) { %>
+                                <a href="?walletPage=<%= i %>" class="px-3 py-1 border rounded 
+                                    <% if (walletPagination.walletPage === i) { %>
+                                        bg-gray-800 text-white
+                                    <% } else { %>
+                                        bg-white text-gray-800 hover:bg-gray-200
+                                    <% } %>">
+                                    <%= i %>
+                                </a>
+                            <% } %>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </main>
+    </div>
 
     <%- include("../../views/partials/user/footer") %>
-<script>
-    // Sidebar navigation with dynamic fetch for orders and wallet history
-    document.querySelectorAll('.sidebar-link').forEach(link => {
-        link.addEventListener('click', async (e) => {
-            e.preventDefault();
-            const sectionId = link.getAttribute('data-section');
 
-            document.querySelectorAll('.content-section').forEach(section => {
-                section.classList.remove('active');
-            });
-            document.querySelectorAll('.sidebar-link').forEach(l => {
-                l.classList.remove('active');
-            });
+    <script>
+    
+       
+function toggleEdit(field) {
+  const display = document.getElementById(`${field}-display`);
+  const form = document.getElementById(`${field}-form`);
+  const error = document.getElementById(`${field}-error`);
 
-            document.getElementById(sectionId).classList.add('active');
-            link.classList.add('active');
+  if (form.classList.contains("hidden")) {
+    form.classList.remove("hidden");
+    display.style.display = "none";
+  } else {
+    form.classList.add("hidden");
+    display.style.display = "inline";
+    if (error) error.classList.add("hidden");
+  }
+}
 
-            if (sectionId === 'orders') {
-                await refreshOrders();
-            } else if (sectionId === 'wallet-history') {
-                await refreshWalletHistory();
-            }
-        });
+async function submitName(event) {
+  event.preventDefault();
+  const form = document.getElementById("name-form");
+  const nameInputEl = form.querySelector("input[name='name']");
+  const nameInput = nameInputEl.value.trim(); 
+  const errorEl = document.getElementById("name-error");
+
+  if (!nameInput) {
+    errorEl.textContent = "Name cannot be empty";
+    errorEl.classList.remove("hidden");
+    return;
+  } else if (nameInput.length < 3) {
+    errorEl.textContent = "Name must be at least 3 characters long";
+    errorEl.classList.remove("hidden");
+    return;
+  } else if (nameInput.length > 20) {  
+    errorEl.textContent = "Name cannot exceed 50 characters";
+    errorEl.classList.remove("hidden");
+    return;
+  } else {
+    errorEl.classList.add("hidden");
+  }
+
+  try {
+    const res = await fetch("/update-name", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ name: nameInput })
     });
 
-    // Show temporary notification
-    function showNotification(message, type = 'success') {
-        const notification = document.createElement('div');
-        notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-md z-50 ${
-            type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-        }`;
-        notification.textContent = message;
-        document.body.appendChild(notification);
-        setTimeout(() => {
-            notification.style.opacity = '0';
-            notification.style.transition = 'opacity 0.5s ease';
-            setTimeout(() => notification.remove(), 500);
-        }, 3000);
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById("name-display").textContent = data.user.name;
+      toggleEdit("name");
+    } else {
+      errorEl.textContent = data.message || "Failed to update name";
+      errorEl.classList.remove("hidden");
     }
+  } catch (err) {
+    console.error(err);
+    errorEl.textContent = "Something went wrong. Try again.";
+    errorEl.classList.remove("hidden");
+  }
+}
 
-    // Delete address via fetch to avoid reload
-    document.querySelectorAll('.delete-address').forEach(button => {
-        button.addEventListener('click', async (e) => {
-            e.preventDefault();
-            const addressId = button.getAttribute('data-id');
-            if (confirm('Are you sure you want to delete this address?')) {
-                try {
-                    const response = await fetch(`/deleteAddress?id=${addressId}`, {
-                        method: 'DELETE',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                    });
 
-                    if (response.ok) {
-                        button.closest('.bg-white.rounded-lg.shadow-md').remove();
-                        showNotification('Address deleted successfully!');
+        // Sidebar navigation with dynamic fetch for orders and wallet history
+        document.querySelectorAll('.sidebar-link').forEach(link => {
+            link.addEventListener('click', async (e) => {
+                e.preventDefault();
+                const sectionId = link.getAttribute('data-section');
+
+                document.querySelectorAll('.content-section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                document.querySelectorAll('.sidebar-link').forEach(l => {
+                    l.classList.remove('active');
+                });
+
+                document.getElementById(sectionId).classList.add('active');
+                link.classList.add('active');
+
+                if (sectionId === 'orders') {
+                    await refreshOrders();
+                } else if (sectionId === 'wallet-history') {
+                    await refreshWalletHistory();
+                }
+            });
+        });
+
+        // Show temporary notification
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-md z-50 ${
+                type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+            }`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transition = 'opacity 0.5s ease';
+                setTimeout(() => notification.remove(), 500);
+            }, 3000);
+        }
+        
+        // Delete address with SweetAlert
+document.querySelectorAll('.delete-address').forEach(button => {
+    button.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const addressId = button.dataset.id;
+        if (!addressId) return;
+
+        const result = await Swal.fire({
+            title: 'Are you sure?',
+            text: "Do you want to delete this address?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!',
+            cancelButtonText: 'Cancel'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                const res = await fetch(`/deleteAddress?id=${addressId}`, { method: 'DELETE' });
+                const data = await res.json();
+
+                if (data.success) {
+                    button.closest('.bg-white.rounded-lg.shadow-md')?.remove();
+                    Swal.fire('Deleted!', data.message, 'success');
+                } else {
+                    Swal.fire('Error', data.message || 'Failed to delete address.', 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                Swal.fire('Error', 'Something went wrong.', 'error');
+            }
+        }
+    });
+});
+
+        // Copy to clipboard logic
+        document.getElementById('copyButton')?.addEventListener('click', function () {
+            const copyText = this.previousElementSibling;
+            copyText.select();
+            copyText.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(copyText.value);
+
+            this.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            setTimeout(() => {
+                this.innerHTML = '<i class="fas fa-copy"></i> Copy';
+            }, 2000);
+        });
+
+        // Fetch Orders dynamically
+        async function refreshOrders() {
+            try {
+                const response = await fetch(`/userProfile/orders?orderPage=1`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    const orders = data.orders || [];
+                    const tableBody = document.querySelector('#orders tbody');
+                    tableBody.innerHTML = '';
+
+                    if (orders.length > 0) {
+                        orders.forEach(order => {
+                            const row = document.createElement('tr');
+                            row.className = 'border-b hover:bg-gray-50';
+                            row.innerHTML = `
+                                <td class="p-2">ORD${order.orderId}</td>
+                                <td class="p-2">
+                                    ${order.items.map(item => `<div>${item.productId.productName} (Qty: ${item.quantity})</div>`).join('')}
+                                </td>
+                                <td class="p-2">
+                                    <span class="status-badge status-${order.status.toLowerCase()}">${order.status}</span>
+                                </td>
+                                <td class="p-2">₹${parseFloat(order.finalAmount).toFixed(2)}</td>
+                                <td class="p-2">${new Date(order.createOn).toLocaleString('en-IN')}</td>
+                                <td class="p-2">
+                                    <a href="/userProfile/order-details/${order.orderId}" class="text-blue-600 hover:text-blue-800 font-medium">View Details</a>
+                                </td>`;
+                            tableBody.appendChild(row);
+                        });
                     } else {
-                        showNotification('Failed to delete address. Please try again.', 'error');
+                        tableBody.innerHTML = `
+                            <tr>
+                                <td colspan="6" class="p-2 text-center text-gray-600">No orders found</td>
+                            </tr>`;
                     }
-                } catch (err) {
-                    console.error('Error deleting address:', err);
-                    showNotification('An error occurred while deleting the address.', 'error');
                 }
+            } catch (error) {
+                console.error('Error loading orders:', error);
             }
-        });
-    });
-
-    // Copy to clipboard logic
-    document.getElementById('copyButton')?.addEventListener('click', function () {
-        const copyText = this.previousElementSibling;
-        copyText.select();
-        copyText.setSelectionRange(0, 99999);
-        navigator.clipboard.writeText(copyText.value);
-
-        this.innerHTML = '<i class="fas fa-check"></i> Copied!';
-        setTimeout(() => {
-            this.innerHTML = '<i class="fas fa-copy"></i> Copy';
-        }, 2000);
-    });
-
-    // Fetch Orders dynamically
-    async function refreshOrders() {
-        try {
-            const response = await fetch(`/userProfile/orders?orderPage=1`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-            if (response.ok) {
-                const data = await response.json();
-                const orders = data.orders || [];
-                const tableBody = document.querySelector('#orders tbody');
-                tableBody.innerHTML = '';
-
-                if (orders.length > 0) {
-                    orders.forEach(order => {
-                        const row = document.createElement('tr');
-                        row.className = 'border-b hover:bg-gray-50';
-                        row.innerHTML = `
-                            <td class="p-2">ORD${order.orderId}</td>
-                            <td class="p-2">
-                                ${order.items.map(item => `<div>${item.productId.productName} (Qty: ${item.quantity})</div>`).join('')}
-                            </td>
-                            <td class="p-2">
-                                <span class="status-badge status-${order.status.toLowerCase()}">${order.status}</span>
-                            </td>
-                            <td class="p-2">₹${parseFloat(order.finalAmount).toFixed(2)}</td>
-                            <td class="p-2">${new Date(order.createOn).toLocaleString('en-IN')}</td>
-                            <td class="p-2">
-                                <a href="/userProfile/order-details/${order.orderId}" class="text-blue-600 hover:text-blue-800 font-medium">View Details</a>
-                            </td>`;
-                        tableBody.appendChild(row);
-                    });
-                } else {
-                    tableBody.innerHTML = `
-                        <tr>
-                            <td colspan="6" class="p-2 text-center text-gray-600">No orders found</td>
-                        </tr>`;
-                }
-            }
-        } catch (error) {
-            console.error('Error loading orders:', error);
         }
-    }
 
-    // Fetch Wallet History dynamically
-    async function refreshWalletHistory() {
-        try {
-            const response = await fetch(`/userProfile/wallet-history?walletPage=1`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-            if (response.ok) {
-                const data = await response.json();
-                const history = data.walletHistory || [];
-                const tableBody = document.querySelector('#wallet-history tbody');
-                tableBody.innerHTML = '';
+        // Fetch Wallet History dynamically
+        async function refreshWalletHistory() {
+            try {
+                const response = await fetch(`/userProfile/wallet-history?walletPage=1`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    const history = data.walletHistory || [];
+                    const tableBody = document.querySelector('#wallet-history tbody');
+                    tableBody.innerHTML = '';
 
-                if (history.length > 0) {
-                    history.forEach(txn => {
-                        const row = document.createElement('tr');
-                        row.className = 'border-b';
-                        row.innerHTML = `
-                            <td class="p-2">${new Date(txn.date).toLocaleDateString()}</td>
-                            <td class="p-2 capitalize">${txn.type}</td>
-                            <td class="p-2 font-semibold ${txn.type === 'credit' ? 'text-green-600' : 'text-red-600'}">₹${txn.amount.toFixed(2)}</td>
-                            <td class="p-2">${txn.productId?.productName || '—'}</td>`;
-                        tableBody.appendChild(row);
-                    });
-                } else {
-                    tableBody.innerHTML = `
-                        <tr>
-                            <td colspan="4" class="p-2 text-center text-gray-600">No transactions found</td>
-                        </tr>`;
+                    if (history.length > 0) {
+                        history.forEach(txn => {
+                            const row = document.createElement('tr');
+                            row.className = 'border-b';
+                            row.innerHTML = `
+                                <td class="p-2">${new Date(txn.date).toLocaleDateString()}</td>
+                                <td class="p-2 capitalize">${txn.type}</td>
+                                <td class="p-2 font-semibold ${txn.type === 'credit' ? 'text-green-600' : 'text-red-600'}">₹${txn.amount.toFixed(2)}</td>
+                                <td class="p-2">${txn.productId?.productName || '—'}</td>`;
+                            tableBody.appendChild(row);
+                        });
+                    } else {
+                        tableBody.innerHTML = `
+                            <tr>
+                                <td colspan="4" class="p-2 text-center text-gray-600">No transactions found</td>
+                            </tr>`;
+                    }
                 }
+            } catch (error) {
+                console.error('Error loading wallet history:', error);
             }
-        } catch (error) {
-            console.error('Error loading wallet history:', error);
         }
-    }
-</script>
+    </script>
 
-
+    <style>
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .status-pending {
+            background-color: #fff4d4;
+            color: #9a7d27;
+        }
+        .status-confirmed {
+            background-color: #d4f4e2;
+            color: #2e7d32;
+        }
+        .status-shipped {
+            background-color: #e3f2fd;
+            color: #1565c0;
+        }
+        .status-delivered {
+            background-color: #e8f5e9;
+            color: #388e3c;
+        }
+        .status-cancelled {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+    </style>
 </body>
 </html>

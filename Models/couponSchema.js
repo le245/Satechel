@@ -9,23 +9,33 @@ const couponSchema = new Schema(
       required: true,
       unique: true,
     },  
+
     expireOn: {
       type: Date,
       required: true,
     },
+
     offerPrice: {
       type: Number,
       required: true,
     },
+
     minimumPrice: {
       type: Number,
-      required: true,
+      required: true, 
     },
+
     isList: {
       type: Boolean,
       required: true,
     },
-      usedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }]
+
+      usedBy: [{ 
+        
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User" 
+      
+      }]
 
   },
 

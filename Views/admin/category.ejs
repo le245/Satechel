@@ -2,18 +2,19 @@
 
 <!-- Ensure SweetAlert2 is included -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
 
 <div class="container">
     <div class="header">
         <div class="title">Categories</div>
-        <button class="add-button" id="add-category-btn"><span class="plus-icon">+</span> Add Category</button>
+        <button class="add-button" id="add-category-btn" style="background-color: #010612"><span class="plus-icon" >+</span> Add Category</button>
     </div>
 
     <!-- Search Bar -->
     <div class="search-container">
         <form action="/admin/category" method="GET" class="search-form">
             <input type="text" id="search-input" name="search" placeholder="Search categories..." value="<%= search %>">
-            <button type="submit" id="search-btn" class="btn btn-primary">Search</button>
+            <button type="submit" id="search-btn" class="btn btn-primary" style="background-color: #010612  ;">Search</button>
             <a href="/admin/category" class="btn btn-secondary" id="clear-search-btn">Clear</a>
         </form>
     </div>
@@ -23,7 +24,7 @@
         <table class="categories-table">
             <thead>
                 <tr>
-                    <th>ID</th>
+                   
                     <th>Name</th>
                     <th>Description</th>
                     <th>Created At</th>
@@ -35,7 +36,7 @@
                 <% if (cat && cat.length > 0) { %>
                     <% cat.forEach(category => { %>
                         <tr>
-                            <td><%= category._id %></td>
+                          
                             <td><%= category.name %></td>
                             <td><%= category.description %></td>
                             <td><%= new Date(category.createdAt).toLocaleDateString() %></td>
@@ -44,14 +45,18 @@
                                     <%= category.isListed ? 'Listed' : 'Unlisted' %>
                                 </span>
                             </td>
-                            <td class="actions">
-                                <a href="/admin/editCategory?id=<%= category._id %>" class="btn btn-secondary btn-sm">Edit</a>
-                                <% if(category.isListed) { %>
-                                    <button class="btn btn-danger btn-sm unlist-btn" data-id="<%= category._id %>">Unlist</button>
-                                <% } else { %>
-                                    <a href="/admin/unlistCategory?id=<%= category._id %>" class="btn btn-success btn-sm">List</a>
-                                <% } %>
-                            </td>
+  <td class="actions">
+    <a href="/admin/editCategory?id=<%= category._id %>" class="btn btn-secondary btn-sm">Edit</a>
+    <% if(category.isListed) { %>
+        <!-- If category is listed → show Unlist button -->
+        <button class="btn btn-danger btn-sm unlist-btn" data-id="<%= category._id %>">Unlist</button>
+    <% } else { %>
+        <!-- If category is unlisted → show List button -->
+        <a href="/admin/listCategory?id=<%= category._id %>" class="btn btn-success btn-sm">List</a>
+    <% } %>
+</td>
+
+
                         </tr>
                     <% }); %>
                 <% } else { %>
@@ -64,7 +69,7 @@
     </div>
 
     <!-- Pagination -->
-    <div class="pagination" id="pagination">
+    <div class="pagination" id="pagination" >
         <% if (totalPages > 1) { %>
             <% if (currentPage > 1) { %>
                 <a href="/admin/category?page=<%= currentPage - 1 %><%= search ? '&search=' + search : '' %>" class="page-link">« </a>
@@ -99,7 +104,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary close-btn">Cancel</button>
-                    <button type="submit" class="btn btn-primary" id="save-category-btn">Save</button>
+                    <button type="submit" class="btn btn-primary" id="save-category-btn" style="background-color: #010612;">Save</button>
                 </div>
             </form>
         </div>
@@ -170,7 +175,7 @@
         font-weight: 500;
     }
     .btn-primary {
-        background-color: #007bff;
+        background-color: black;
         color: white;
     }
     .btn-secondary {
@@ -186,7 +191,7 @@
         color: white;
     }
     .btn-info {
-        background-color: #17a2b8;
+        background-color: black;
         color: white;
     }
     .btn-warning {
@@ -254,9 +259,9 @@
         color: #007bff;
     }
     .page-link.active {
-        background-color: #007bff;
+        background-color: #010612;
         color: white;
-        border-color: #007bff;
+        border-color: #010612;
     }
     .modal {
         display: none;
@@ -376,7 +381,7 @@
     errorElement.innerHTML = message;
     errorElement.style.display = 'block';
 
-    // Mapping error ID to input ID manually
+
     let inputId = '';
     if (elementId === 'name-error') inputId = 'category-name';
     else if (elementId === 'description-error') inputId = 'category-description';
@@ -531,25 +536,26 @@
         }
     });
 
-    document.querySelectorAll('.unlist-btn').forEach(button => {
-        button.addEventListener('click', (event) => {
-            const categoryId = event.target.getAttribute('data-id');
-            Swal.fire({
-                icon: 'warning',
-                title: 'Unlist Category',
-                text: 'Are you sure you want to unlist this category?',
-                showCancelButton: true,
-                confirmButtonText: 'Yes, Unlist',
-                cancelButtonText: 'Cancel',
-                confirmButtonColor: '#dc3545',
-                cancelButtonColor: '#6c757d'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = `/admin/listCategory?id=${categoryId}`;
-                }
-            });
+   document.querySelectorAll('.unlist-btn').forEach(button => {
+    button.addEventListener('click', (event) => {
+        const categoryId = event.target.getAttribute('data-id');
+        Swal.fire({
+            icon: 'warning',
+            title: 'Unlist Category',
+            text: 'Are you sure you want to unlist this category?',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, Unlist',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // ✅ Corrected route
+                window.location.href = `/admin/unlistCategory?id=${categoryId}`;
+            }
         });
     });
+});
 
 
 

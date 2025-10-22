@@ -8,6 +8,10 @@ const ExcelJS = require('exceljs');
 const { format } = require('date-fns');
 const PDFDocument = require('pdfkit-table');
 const STATUS_CODES= require("../../Models/status")
+const { startOfDay, endOfDay, subDays, subWeeks, subMonths, subYears } = require('date-fns');
+
+
+
 
 
 const loadLogin = async (req, res) => {
@@ -73,79 +77,47 @@ const logout = async (req, res) => {
 };
 
 
+
+
 const getSalesData = async (dateFilter, filterType = 'daily') => {
   let dateFormat;
   switch (filterType.toLowerCase()) {
-    case 'daily':
-      dateFormat = '%Y-%m-%d';
-      break;
-    case 'weekly':
-      dateFormat = '%Y-W%U';
-      break;
-    case 'monthly':
-      dateFormat = '%Y-%m';
-      break;
-    case 'yearly':
-      dateFormat = '%Y';
-      break;
-    case 'custom':
-      dateFormat = '%Y-%m-%d';
-      break;
-    default:
-      dateFormat = '%Y-%m-%d';
+    case 'daily': dateFormat = '%Y-%m-%d'; break;
+    case 'weekly': dateFormat = '%Y-W%U'; break;
+    case 'monthly': dateFormat = '%Y-%m'; break;
+    case 'yearly': dateFormat = '%Y'; break;
+    case 'custom': dateFormat = '%Y-%m-%d'; break;
+    default: dateFormat = '%Y-%m-%d';
   }
 
   const result = await Order.aggregate([
-
-
-           { $match: { ...dateFilter, status: 'Delivered' } },
-
-    
-    
-           { $unwind: '$orderedItems' },
-
-
-    
+    { $match: { ...dateFilter, status: 'Delivered' } },
+    { $unwind: '$items' },
     {
       $project: {
-        createdOn: 1,
-        itemRevenue: {
+        createOn: 1, 
+        itemRevenue: { 
           $multiply: [
-            {
-              $ifNull: [
-                '$orderedItems.salesPrice',
-                '$orderedItems.regularPrice',
-              ],
-            },
-            '$orderedItems.quantity',
-          ],
-        },
-      },
+            { $ifNull: ['$items.price', 0] }, 
+            { $ifNull: ['$items.quantity', 0] }
+          ]
+        }
+      }
     },
-
-
     {
       $group: {
-        _id: { $dateToString: { format: dateFormat, date: '$createdOn' } },
+        _id: { $dateToString: { format: dateFormat, date: '$createOn' } },
         revenue: { $sum: '$itemRevenue' },
-        orderCount: { $sum: 1 },
-      },
+        orderCount: { $sum: 1 }
+      }
     },
     { $sort: { _id: 1 } },
     { $project: { date: '$_id', revenue: 1, orderCount: 1, _id: 0 } },
   ]);
 
-
-
-  
-  
-  
   return result;
 };
-
-
-
-const { startOfDay, endOfDay, subDays, subWeeks, subMonths, subYears } = require('date-fns');
+  
 
 
 const createDateFilter = (filter, startDate, endDate) => {
@@ -180,6 +152,7 @@ const createDateFilter = (filter, startDate, endDate) => {
 
              return { createOn: { $gte: start, $lte: end } };
 };
+
 const getBestSellingProducts = async (dateFilter) => {
   try {
     const products = await Order.aggregate([
@@ -222,6 +195,7 @@ const getBestSellingProducts = async (dateFilter) => {
     return [];
   }
 };
+
 const getBestCategories = async (dateFilter) => {
   try {
     const categories = await Order.aggregate([
@@ -292,7 +266,7 @@ const loadDashboard = async (req, res) => {
         throw new Error('Dates cannot be in the future.');
       }
     }
-
+ 
     const dateFilter = createDateFilter(filter, startDate, endDate);
 
     const [
@@ -430,7 +404,7 @@ const generateSalesReport = async (req, res) => {
       },
     ]);
 
-    res.render('admin/sales-report', {
+    res.render('admin/dashboard', {
       filter,
       startDate,
       endDate,

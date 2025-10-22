@@ -65,7 +65,7 @@
     .content-title {
         font-size: 28px;
         font-weight: 600;
-        color: #1a2a6c;
+        color: #001010 ;
     }
 
     .card-header {
@@ -92,7 +92,7 @@
     }
 
     .btn {
-        background-color: #1a2a6c;
+        background-color: #001010;
         color: white;
         border-radius: 0 50px 50px 0 !important;
         padding: 10px 20px;
@@ -119,7 +119,7 @@
     }
 
     .table thead {
-        background-color: #1a2a6c;
+        background-color: #001010;
         color: white;
     }
 
@@ -202,13 +202,13 @@
     }
 
     .pagination .page-item.active .page-link {
-        background-color: #1a2a6c;
-        border-color: #1a2a6c;
+        background-color: #001010;
+        border-color: #001010;
         color: white;
     }
 
     a[href="/admin/addProducts"] {
-        background-color: #1a2a6c !important;
+        background-color: #001010 !important;
         transition: background 0.3s;
     }
 
@@ -285,28 +285,30 @@
     <div class="content-header">
         <h2 class="content-title card-title">Products</h2>
     </div>
-    <header class="card-header text-center mb-20">
-        <form action="" method="get" class="d-inline">
-            <div class="input-group input-group-sm border border-1 border-grey rounded-pill">
-                <input type="text" class="form-control border-0 rounded-pill" placeholder="Search products or brands" name="search">
-                <button class="btn border-0" type="submit">Search</button>
-            </div>
-        </form>
-    </header>
+  <header class="card-header text-center mb-20">
+    <form action="" method="get" class="d-inline" id="searchForm">
+        <div class="input-group input-group-sm rounded-pill shadow-sm" style="max-width: 400px; margin: auto;">
+            <input type="text" class="form-control rounded-start-pill border-0" placeholder="Search products or brands" name="search" id="searchInput">
+            <button class="btn btn-primary rounded-0" type="submit">Search</button>
+            <button class="btn btn-secondary rounded-end-pill" type="button" id="clearBtn">Clear</button>
+        </div>
+    </form>
+</header>
+
     
  
     <div class="right mt-5">
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th scope="col"><b>Image</b></th>
-                    <th scope="col"><b>Product Name</b></th>
-                    <th scope="col"><b>Category</b></th>
+                    <th scope="col" style="color: #001010;"><b>Image</b></th>
+                    <th scope="col" style="color: #001010;" ><b>Product Name</b></th>
+                    <th scope="col" style="color: #001010;"><b>Category</b></th>
                   
-                    <th scope="col"><b>Regular Price</b></th>
-                    <th scope="col"><b>Quantity</b></th>
-                    <th scope="col"><b>Action</b></th>
-                    <th scope="col"><b>Edit</b></th>
+                    <th scope="col" style="color: #001010;"><b>Regular Price</b></th>
+                    <th scope="col" style="color: #001010;"><b>Quantity</b></th>
+                    <th scope="col" style="color: #001010;"><b>Action</b></th>
+                    <th scope="col" style="color: #001010;"><b>Edit</b></th>
                 </tr>
             </thead>
             <tbody>
@@ -441,6 +443,11 @@
             }
         });
     }
+
+    document.getElementById('clearBtn').addEventListener('click', () => {
+        document.getElementById('searchInput').value = '';
+        window.location.href = window.location.pathname;   
+    });
 </script>
 
 <%- include("../../views/partials/admin/footer") %>
